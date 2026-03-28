@@ -1,0 +1,126 @@
+@model IEnumerable<CMS.Models.Complaint>
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h2 class="mt-4 mb-4">Admin Dashboard - Central Registry</h2>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search by Complaint No..." />
+    </div>
+    <div class="col-md-4">
+        <select id="statusFilter" class="form-select">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+        </select>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body table-responsive">
+        <table class="table table-hover table-bordered" id="adminTable">
+            <thead class="table-dark">
+                <tr>
+                    <th>Complaint No</th>
+                    <th>User ID (Mobile)</th>
+                    <th>Title</th>
+                    <th>Department</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="complaint-no">@item.ComplaintNo</td>
+                        <td>@item.UserId</td>
+                        <td>@item.ComplaintTitle</td>
+                        <td>@item.Department</td>
+                        <td>@item.CreatedDate.ToString("dd MMM yyyy")</td>
+                        <td class="status-cell">
+                            @if (item.Status == "Pending")
+                            {
+                                <span class="badge bg-danger">Pending</span>
+                            }
+                            else if (item.Status == "Assigned" || item.Status == "In Progress")
+                            {
+                                <span class="badge bg-warning text-dark">@item.Status</span>
+                            }
+                            else if (item.Status == "Resolved")
+                            {
+                                <span class="badge bg-success">Resolved</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@item.Status</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Status == "Pending")
+                            {
+                                <form asp-action="UpdateStatus" method="post" style="display:inline;">
+                                    <input type="hidden" name="complaintId" value="@item.Id" />
+                                    <input type="hidden" name="status" value="Assigned" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Assign</button>
+                                </form>
+                            }
+                            else if (item.Status == "Assigned" || item.Status == "In Progress")
+                            {
+                                <form asp-action="UpdateStatus" method="post" style="display:inline;">
+                                    <input type="hidden" name="complaintId" value="@item.Id" />
+                                    <input type="hidden" name="status" value="Resolved" />
+                                    <button type="submit" class="btn btn-sm btn-success">Resolve</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Filter by search text
+            $('#searchInput').on('keyup', function () {
+                filterTable();
+            });
+
+            // Filter by status dropdown
+            $('#statusFilter').on('change', function () {
+                filterTable();
+            });
+
+            function filterTable() {
+                var searchText = $('#searchInput').val().toLowerCase();
+                var statusText = $('#statusFilter').val().toLowerCase();
+
+                $('#adminTable tbody tr').each(function () {
+                    var $row = $(this);
+                    
+                    var complaintNo = $row.find('.complaint-no').text().toLowerCase();
+                    // Just basic match since td class was not mapped cleanly, map by column index:
+                    var status = $row.find('.status-cell').text().toLowerCase();
+
+                    var matchesSearch = complaintNo.includes(searchText) || searchText === "";
+                    var matchesStatus = status.includes(statusText) || statusText === "";
+
+                    if (matchesSearch && matchesStatus) {
+                        $row.show();
+                    } else {
+                        $row.hide();
+                    }
+                });
+            }
+        });
+    </script>
+}
