@@ -35,9 +35,14 @@ namespace CMS.Controllers
         [HttpGet("departments")]
         public async Task<IActionResult> GetDepartments()
         {
-            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
-            if (master == null) return NotFound();
-            return Ok(master.Departments);
+            var departments = await _context.Departments.Find(_ => true).Project(d => new { d.Code, d.Name }).ToListAsync();
+            return Ok(departments);
+        }
+        [HttpGet("next-sequence/{id}")]
+        public async Task<IActionResult> GetNextSequence(string id)
+        {
+            var counter = await _context.Counters.Find(c => c.Id == id).FirstOrDefaultAsync();
+            return Ok(new { currentValue = counter?.SequenceValue ?? 0 });
         }
     }
 }

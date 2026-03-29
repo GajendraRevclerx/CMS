@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using MongoDB.Driver;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -29,7 +31,19 @@ var app = builder.Build();
 // Seed database on startup
 using (var scope = app.Services.CreateScope())
 {
-    var _ = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
+    var adminNo = "7508185407";
+    var existingAdmin = db.Users.Find(u => u.MobileNo == adminNo).FirstOrDefault();
+    if (existingAdmin == null)
+    {
+        db.Users.InsertOne(new User
+        {
+            MobileNo = adminNo,
+            Password = "password123",
+            Role = "Admin",
+            FullName = "Sh. Sanjay Arrora (SE)"
+        });
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -39,7 +53,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();

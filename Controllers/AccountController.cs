@@ -30,6 +30,7 @@ namespace CMS.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Normal Citizen DB Check
                 var user = await _context.Users.Find(u => u.MobileNo == model.MobileNo && u.Password == model.Password).FirstOrDefaultAsync();
                 
                 if (user != null)
@@ -43,13 +44,17 @@ namespace CMS.Controllers
                     };
 
                     // Basic role mapping
-                    if (user.MobileNo == "admin")
+                    if (user.Role == "Admin")
                     {
                         claims.Add(new Claim(ClaimTypes.Role, "Admin"));
                     }
+                    else if (user.Role == "Officer")
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, "Officer")); // Optional support for officers
+                    }
                     else
                     {
-                        claims.Add(new Claim(ClaimTypes.Role, "User"));
+                        claims.Add(new Claim(ClaimTypes.Role, "Citizen")); // Assuming normal user is Citizen
                     }
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -58,7 +63,7 @@ namespace CMS.Controllers
                         CookieAuthenticationDefaults.AuthenticationScheme,
                         new ClaimsPrincipal(claimsIdentity));
 
-                    if (user.MobileNo == "admin")
+                    if (user.Role == "Admin" || user.Role == "Officer")
                         return RedirectToAction("Index", "Admin");
 
                     return RedirectToAction("Dashboard", "Complaint");
@@ -73,7 +78,8 @@ namespace CMS.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            return View();
+            // Registration is now done directly through the complaint submission form
+            return RedirectToAction("Submit", "Complaint");
         }
 
         [HttpPost]

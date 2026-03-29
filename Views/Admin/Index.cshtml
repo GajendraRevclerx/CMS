@@ -1,126 +1,1141 @@
-@model IEnumerable<CMS.Models.Complaint>
+@model CMS.Models.AdminDashboardViewModel
 
 @{
     ViewData["Title"] = "Admin Dashboard";
+    Layout = "_Layout";
 }
 
-<h2 class="mt-4 mb-4">Admin Dashboard - Central Registry</h2>
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" />
+    <style>
+        .admin-layout {
+            display: flex;
+            min-height: calc(100vh - 60px);
+            background: var(--bg-color);
+        }
+        .admin-sidebar {
+            width: 250px;
+            background: white;
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-nav-item {
+            padding: 12px 24px;
+            color: var(--text-mid);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+        .admin-nav-item:hover {
+            background: #f8fafc;
+            color: var(--navy);
+        }
+        .admin-nav-item.active {
+            background: #eff6ff;
+            color: var(--blue);
+            border-right: 3px solid var(--blue);
+        }
+        .admin-main {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .nav-section {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--text-light);
+            margin: 20px 24px 8px 24px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+}
 
-<div class="row mb-3">
-    <div class="col-md-4">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by Complaint No..." />
+<div class="admin-layout">
+    <!-- SIDEBAR NAVIGATION -->
+    <div class="admin-sidebar">
+        <div class="nav-section">Dashboard</div>
+        <div class="admin-nav-item active" onclick="showPanel('overview', this)">
+            <span>📊</span> Overview
+        </div>
+
+        
+        <div class="nav-section">Complaints Flow</div>
+        <div class="admin-nav-item" onclick="showPanel('complaints', this)">
+            <span>📋</span> All Complaints
+        </div>
+
+        <div class="admin-nav-item" onclick="showPanel('track', this)">
+            <span>🔍</span> Track Ticket
+        </div>
+
+        <div class="nav-section">Performance</div>
+        <div class="admin-nav-item" onclick="showPanel('analytics', this)">
+            <span>📈</span> Analytics
+        </div>
+        <div class="admin-nav-item" onclick="showPanel('sla', this)">
+            <span>⏱️</span> SLA Monitor
+        </div>
+        <div class="admin-nav-item" onclick="showPanel('escalations', this)">
+            <span>⚡</span> Escalations
+        </div>
+
+        <div class="nav-section">Master Data</div>
+        <div class="admin-nav-item" onclick="showPanel('departments', this)">
+            <span>🏛️</span> Departments
+        </div>
+        <div class="admin-nav-item" onclick="showPanel('officers', this)">
+            <span>👮</span> Officers
+        </div>
+
+        <div class="nav-section">System</div>
+        <div class="admin-nav-item" onclick="showPanel('notifications', this)">
+            <span>🔔</span> Notifications
+        </div>
+        <div class="admin-nav-item" onclick="showPanel('audit', this)">
+            <span>📁</span> Audit Log
+        </div>
+        <div class="admin-nav-item" onclick="showPanel('settings', this)">
+            <span>⚙️</span> Settings
+        </div>
     </div>
-    <div class="col-md-4">
-        <select id="statusFilter" class="form-select">
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Assigned">Assigned</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-        </select>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="admin-main">
+        <main class="main-content" style="padding: 0;">
+
+            <!-- ══════════════════════════════════
+                 PANEL: OVERVIEW
+            ══════════════════════════════════ -->
+            <div id="panel-overview" class="panel active">
+              <div class="page-hdr">
+                <div class="page-hdr-left">
+                  <h2>📊 Dashboard Overview</h2>
+                  <p>Electrical Department — Summary for @DateTime.Now.ToString("MMMM yyyy")</p>
+                </div>
+                <div class="page-hdr-actions">
+                  @* Buttons removed as target panels were deleted *@
+                </div>
+              </div>
+
+              <!-- Stats Row 1 -->
+              <div class="stats-grid">
+                <div class="stat-card blue">
+                  <div class="stat-top"><div class="stat-icon blue">📋</div><span class="stat-trend trend-flat">Live</span></div>
+                  <div class="stat-val">@Model.TotalComplaints</div>
+                  <div class="stat-lbl">Total Complaints (Dept.)</div>
+                </div>
+                <div class="stat-card saffron">
+                  <div class="stat-top"><div class="stat-icon saffron">⏳</div><span class="stat-trend trend-flat">→ Action Required</span></div>
+                  <div class="stat-val">@Model.PendingComplaints</div>
+                  <div class="stat-lbl">Unassigned / Pending</div>
+                </div>
+                <div class="stat-card green">
+                  <div class="stat-top"><div class="stat-icon green">✅</div><span class="stat-trend trend-flat">Resolved</span></div>
+                  <div class="stat-val">@Model.ResolvedComplaints</div>
+                  <div class="stat-lbl">Resolved This Year</div>
+                </div>
+                <div class="stat-card red">
+                  <div class="stat-top"><div class="stat-icon red">⚡</div><span class="stat-trend trend-down">Critical</span></div>
+                  <div class="stat-val">@Model.EscalatedComplaints</div>
+                  <div class="stat-lbl">Escalated (SLA Breach)</div>
+                </div>
+              </div>
+
+              <!-- Row 2 -->
+              <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+                <div class="stat-card amber">
+                  <div class="stat-top"><div class="stat-icon amber">🔄</div><span class="stat-trend trend-flat">Active</span></div>
+                  <div class="stat-val">@Model.InProgressComplaints</div>
+                  <div class="stat-lbl">In Progress</div>
+                </div>
+                <div class="stat-card purple">
+                  <div class="stat-top"><div class="stat-icon purple">⭐</div><span class="stat-trend trend-up">Good</span></div>
+                  <div class="stat-val">@Model.AvgCitizenRating</div>
+                  <div class="stat-lbl">Avg. Citizen Rating</div>
+                </div>
+                <div class="stat-card teal">
+                  <div class="stat-top"><div class="stat-icon teal">⏱️</div><span class="stat-trend trend-flat">Average</span></div>
+                  <div class="stat-val">@Model.AvgResolutionTimeDays.ToString("F1")d</div>
+                  <div class="stat-lbl">Avg. Resolution Time</div>
+                </div>
+                <div class="stat-card green">
+                  <div class="stat-top"><div class="stat-icon green">👮</div><span class="stat-trend trend-flat">Active</span></div>
+                  <div class="stat-val">@Model.OfficersOnDuty</div>
+                  <div class="stat-lbl">Officers On Duty</div>
+                </div>
+              </div>
+
+              <!-- Charts + Activity -->
+              <div class="grid-2" style="margin-bottom:24px;">
+                <!-- Complaint Distribution -->
+                <div class="card">
+                  <div class="card-hdr"><h3>Complaint Status Distribution</h3></div>
+                  <div class="card-body">
+                    <div class="donut-wrap">
+                      @{
+                        double resPct = Model.TotalComplaints > 0 ? (double)Model.ResolvedComplaints / Model.TotalComplaints * 100 : 0;
+                        double ipPct = Model.TotalComplaints > 0 ? (double)Model.InProgressComplaints / Model.TotalComplaints * 100 : 0;
+                        double penPct = Model.TotalComplaints > 0 ? (double)Model.PendingComplaints / Model.TotalComplaints * 100 : 0;
+                      }
+                      <div class="donut"><div class="donut-inner"><div class="dv">@Model.TotalComplaints</div><div class="dl">Total</div></div></div>
+                      <div class="donut-legend">
+                        <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>Resolved — @Model.ResolvedComplaints (@resPct.ToString("F0")%)</div>
+                        <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>In Progress — @Model.InProgressComplaints (@ipPct.ToString("F0")%)</div>
+                        <div class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span>Pending — @Model.PendingComplaints (@penPct.ToString("F0")%)</div>
+                        <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Escalated — @Model.EscalatedComplaints</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Monthly Bar Chart -->
+                <div class="card">
+                  <div class="card-hdr"><h3>Monthly Filings (2024–25)</h3></div>
+                  <div class="card-body">
+                    <div class="bar-chart">
+                      <div class="bar-col"><div class="bar-val">182</div><div class="bar-fill" style="height:60px;background:var(--blue-light)"></div><div class="bar-lbl">Sep</div></div>
+                      <div class="bar-col"><div class="bar-val">204</div><div class="bar-fill" style="height:68px;background:var(--blue-light)"></div><div class="bar-lbl">Oct</div></div>
+                      <div class="bar-col"><div class="bar-val">230</div><div class="bar-fill" style="height:76px;background:var(--blue-light)"></div><div class="bar-lbl">Nov</div></div>
+                      <div class="bar-col"><div class="bar-val">195</div><div class="bar-fill" style="height:65px;background:var(--blue-light)"></div><div class="bar-lbl">Dec</div></div>
+                      <div class="bar-col"><div class="bar-val">@Model.TotalComplaints</div><div class="bar-fill" style="height:100px;background:var(--saffron)"></div><div class="bar-lbl">Current ▲</div></div>
+                    </div>
+                    <div style="font-size:12px;color:var(--text-light);margin-top:10px;">@DateTime.Now.ToString("MMMM") showing live volume — review officer capacity.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recent Complaints + Top Officers -->
+              <div class="grid-2-1" style="margin-bottom:0;">
+                <!-- Recent complaints -->
+                <div class="card">
+                  <div class="card-hdr">
+                    <h3>Recent Complaints</h3>
+                    <div class="card-actions">
+                      <button class="btn btn-outline btn-sm" onclick="showPanel('complaints')">View All →</button>
+                    </div>
+                  </div>
+                  <div class="card-body no-pad">
+                    <table class="data-table">
+                      <thead><tr>
+                        <th>Ack. No.</th><th>Issue</th><th>Ward</th><th>Status</th><th>Action</th>
+                      </tr></thead>
+                      <tbody>
+                        @foreach (var item in Model.RecentComplaints)
+                        {
+                            <tr>
+                              <td><span class="mono">@item.ComplaintNo</span></td>
+                              <td>@item.ComplaintTitle</td>
+                              <td>@item.City</td>
+                              <td>
+                                  @if(item.Status == "Pending") { <span class="pill pill-amber">@item.Status</span> }
+                                  else if(item.Status == "In Progress") { <span class="pill pill-blue">@item.Status</span> }
+                                  else if(item.Status == "Resolved") { <span class="pill pill-green">@item.Status</span> }
+                                  else if(item.Status == "Assigned") { <span class="pill pill-blue-light" style="background:#e0f2fe;color:#0369a1;">@item.Status</span> }
+                                  else { <span class="pill pill-red">@item.Status</span> }
+                              </td>
+                              <td>
+                                  <button class="btn btn-outline btn-sm">View</button>
+                                  @if(item.Status == "Pending") {
+                                      <button class="btn btn-primary btn-sm" onclick="openAssignModal('@item.Id')">Assign</button>
+                                  }
+                              </td>
+                            </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- Top Officers -->
+                <div class="card">
+                  <div class="card-hdr"><h3>Officer Performance</h3></div>
+                  <div class="card-body" style="padding-top:12px;">
+                    @foreach(var off in Model.Officers.Take(3)) {
+                        <div class="officer-card">
+                          <div class="officer-avatar" style="background:var(--blue)">@(off.FullName.Length > 1 ? off.FullName.Substring(0,2).ToUpper() : "O")</div>
+                          <div class="officer-info">
+                            <div class="oname">@off.FullName</div>
+                            <div class="orole"><span class="role-tag role-je">@off.Designation</span> @off.AreaOfJurisdiction</div>
+                          </div>
+                          <div class="officer-stats"><div class="ocount">0</div><div class="olbl">Resolved</div></div>
+                        </div>
+                    }
+                    <div style="margin-top:12px;">
+                      <button class="btn btn-outline btn-sm" style="width:100%;" onclick="showPanel('officers')">Manage Officer Roster →</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ALL COMPLAINTS PANEL -->
+            <div id="panel-complaints" class="panel">
+              <div class="page-hdr">
+                <div class="page-hdr-left"><h2>📋 All Complaints</h2><p>Manage, filter, and take action on all registered complaints</p></div>
+                <div class="page-hdr-actions">
+                  <button class="btn btn-outline btn-sm" onclick="exportComplaintsCSV()">⬇ Export CSV</button>
+                </div>
+              </div>
+
+              <!-- FILTER BAR -->
+              <div class="card" style="margin-bottom:18px;">
+                <div class="card-body" style="padding:14px 18px;">
+                  <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:12px;align-items:end;">
+                    <div class="form-group" style="margin-bottom:0;">
+                      <label style="font-size:12px;font-weight:600;color:var(--text-mid);">Search</label>
+                      <div class="search-bar">
+                        <span class="icon">🔍</span>
+                        <input type="text" id="cFilter_search" placeholder="Ack. No., issue, citizen mobile..." oninput="filterComplaints()">
+                      </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                      <label style="font-size:12px;font-weight:600;color:var(--text-mid);">Status</label>
+                      <select id="cFilter_status" onchange="filterComplaints()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:white;">
+                        <option value="">All Statuses</option>
+                        <option>Pending</option>
+                        <option>Assigned</option>
+                        <option>In Progress</option>
+                        <option>Resolved</option>
+                        <option>Escalated</option>
+                      </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                      <label style="font-size:12px;font-weight:600;color:var(--text-mid);">Department</label>
+                      <select id="cFilter_dept" onchange="filterComplaints()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:white;">
+                        <option value="">All Depts</option>
+                        @foreach(var d in Model.Departments) { <option value="@d.Code">@d.Name</option> }
+                      </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                      <label style="font-size:12px;font-weight:600;color:var(--text-mid);">Officer</label>
+                      <select id="cFilter_officer" onchange="filterComplaints()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:white;">
+                        <option value="">All Officers</option>
+                        @foreach(var o in Model.Officers) { <option value="@o.Id">@o.FullName</option> }
+                      </select>
+                    </div>
+                    <button class="btn btn-outline" onclick="clearComplaintFilters()" style="white-space:nowrap;margin-top:auto;">✕ Clear</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-hdr">
+                  <h3>Complaint Registry <span id="complaintCount" style="font-size:13px;font-weight:400;color:var(--text-light);">(Showing @Model.AllComplaints.Count)</span></h3>
+                </div>
+                <div class="card-body no-pad">
+                  <table class="data-table" id="complaintsTable">
+                    <thead><tr>
+                      <th>Ack. No.</th>
+                      <th>Citizen (Mobile)</th>
+                      <th>Issue</th>
+                      <th>Department</th>
+                      <th>Assigned To</th>
+                      <th>Status</th>
+                      <th>Filed On</th>
+                      <th>Action</th>
+                    </tr></thead>
+                    <tbody id="complaintsBody">
+                      @foreach (var item in Model.AllComplaints)
+                      {
+                        <tr class="complaint-row"
+                            data-search="@item.ComplaintNo @item.UserId @item.ComplaintTitle @item.Department @item.AssignedToOfficerName".ToLower()
+                            data-status="@item.Status"
+                            data-dept="@item.Department"
+                            data-officer="@item.AssignedToOfficerId">
+                            <td><span class="mono">@(string.IsNullOrEmpty(item.ComplaintNo) ? item.Id : item.ComplaintNo)</span></td>
+                            <td>@item.UserId</td>
+                            <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="@item.ComplaintTitle">@item.ComplaintTitle</td>
+                            <td><span class="pill pill-blue">@item.Department</span></td>
+                            <td>@(item.AssignedToOfficerName ?? "—")</td>
+                            <td>
+                                @if(item.Status == "Pending") { <span class="pill pill-amber">@item.Status</span> }
+                                else if(item.Status == "In Progress") { <span class="pill pill-blue">@item.Status</span> }
+                                else if(item.Status == "Resolved") { <span class="pill pill-green">@item.Status</span> }
+                                else if(item.Status == "Assigned") { <span class="pill" style="background:#e0f2fe;color:#0369a1;">@item.Status</span> }
+                                else if(item.Status == "Escalated") { <span class="pill pill-red">@item.Status</span> }
+                                else { <span class="pill pill-grey">@item.Status</span> }
+                            </td>
+                            <td>@item.CreatedDate.ToString("dd MMM yy")</td>
+                            <td style="white-space:nowrap;">
+                                <button class="btn btn-outline btn-sm" onclick="trackComplaint('@(string.IsNullOrEmpty(item.ComplaintNo) ? item.Id : item.ComplaintNo)')">View</button>
+                                @if(item.Status == "Pending" || item.Status == "Assigned") {
+                                    <button class="btn btn-primary btn-sm" onclick="openAssignModal('@item.Id')">Assign</button>
+                                }
+                                @if(item.Status != "Resolved") {
+                                  <form asp-action="UpdateStatus" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="complaintId" value="@item.Id">
+                                    <input type="hidden" name="status" value="Resolved">
+                                    <button type="submit" class="btn btn-green btn-sm">✓ Resolve</button>
+                                  </form>
+                                }
+                            </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                  <div id="noResultsMsg" style="display:none;text-align:center;padding:40px;color:var(--text-light);">
+                    <div style="font-size:32px;margin-bottom:10px;">🔍</div>
+                    <div style="font-weight:600;">No complaints match your filters.</div>
+                    <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="clearComplaintFilters()">Clear Filters</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: DEPARTMENTS
+            ══════════════════════════════════ -->
+            <div id="panel-departments" class="panel">
+              <div class="page-hdr">
+                <div class="page-hdr-left">
+                  <h2>🏛️ Department Management</h2>
+                  <p>Edit department details, officers, and configuration</p>
+                </div>
+                <div class="page-hdr-actions">
+                  <button class="btn btn-primary" onclick="openDeptModal()">+ Add Department</button>
+                </div>
+              </div>
+              <div class="grid-3">
+                @foreach (var dept in Model.Departments)
+                {
+                    var deptComplaints = Model.AllComplaints.Where(c => c.Department == dept.Code).ToList();
+                    var deptTotal = deptComplaints.Count;
+                    var deptPending = deptComplaints.Count(c => c.Status == "Pending");
+                    var deptResolved = deptComplaints.Count(c => c.Status == "Resolved");
+                    
+                    <div class="dept-card">
+                      <div class="dept-top"><div class="dept-icon">@dept.Icon</div>
+                      <div class="dept-actions">
+                        <button class="btn btn-outline btn-sm" onclick='openDeptModal(@Json.Serialize(dept.Id), @Json.Serialize(dept.Name), @Json.Serialize(dept.Code), @Json.Serialize(dept.HeadName), @Json.Serialize(dept.Division), @dept.SlaDays, @Json.Serialize(dept.Email), @Json.Serialize(dept.Status), @Json.Serialize(dept.Icon))'>Edit</button>
+                      </div></div>
+                      <h4>@dept.Name</h4>
+                      <div class="dept-meta">Head: @dept.HeadName · @dept.Division</div>
+                      <div class="progress-wrap" style="margin-bottom:8px;"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div>
+                      <div class="dept-stats">
+                        <div class="ds"><div class="dv">@deptTotal</div><div class="dl">Total</div></div>
+                        <div class="ds"><div class="dv" style="color:var(--saffron)">@deptPending</div><div class="dl">Pending</div></div>
+                        <div class="ds"><div class="dv" style="color:var(--green)">@deptResolved</div><div class="dl">Resolved</div></div>
+                      </div>
+                    </div>
+                }
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: OFFICERS
+            ══════════════════════════════════ -->
+            <div id="panel-officers" class="panel">
+              <div class="page-hdr">
+                <div class="page-hdr-left">
+                  <h2>👮 Officer Management</h2>
+                  <p>Manage designations and department assignments</p>
+                </div>
+                <div class="page-hdr-actions">
+                  <button class="btn btn-primary" onclick="openOfficerModal()">+ Add Officer</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-body no-pad">
+                  <table class="data-table">
+                    <thead><tr><th>Officer Name</th><th>Mobile</th><th>Department</th><th>Designation</th><th>Action</th></tr></thead>
+                    <tbody>
+                      @foreach (var off in Model.Officers)
+                      {
+                        <tr>
+                            <td><strong>@off.FullName</strong></td>
+                            <td>@off.MobileNo</td>
+                            <td><span class="pill pill-blue">@off.Department</span></td>
+                            <td>@off.Designation</td>
+                             <td><button class="btn btn-outline btn-sm" onclick='openOfficerModal(@Json.Serialize(off.Id), @Json.Serialize(off.FullName), @Json.Serialize(off.Department), @Json.Serialize(off.Designation), @Json.Serialize(off.AreaOfJurisdiction), @Json.Serialize(off.MobileNo), @Json.Serialize(off.Email), @Json.Serialize(off.Landline))'>Transfer / Edit</button></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: TRACK TICKET
+            ══════════════════════════════════ -->
+            <div id="panel-track" class="panel">
+              <div class="page-hdr">
+                <div class="page-hdr-left"><h2>🔍 Track a Ticket</h2><p>Lookup any complaint by Acknowledgement Number</p></div>
+              </div>
+              <div style="max-width:640px;">
+                <div class="card" style="margin-bottom:20px;">
+                  <div class="card-hdr"><h3>Search by Ack. Number</h3></div>
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label>Acknowledgement Number <span class="required">*</span></label>
+                      <div style="display:flex;gap:10px;">
+                        <input type="text" id="trackInput" placeholder="e.g. CHD/ELE/2025/0001">
+                        <button class="btn btn-primary" onclick="doTrack()">Search →</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="trackResult" style="display:none;">
+                  <div class="card">
+                    <div class="ticket-hdr-banner" id="trackBanner">
+                      <div class="ack" id="trackAck"></div>
+                      <div class="t-title" id="trackTitle"></div>
+                      <div class="ticket-meta-row">
+                        <span class="tm">Dept: <strong id="trackDept"></strong></span>
+                        <span class="tm">Filed: <strong id="trackDate"></strong></span>
+                        <span class="tm">Status: <strong id="trackStatus"></strong></span>
+                        <span class="tm">Assigned: <strong id="trackOfficer"></strong></span>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div style="margin-bottom:16px;">
+                        <span id="trackStatusPill" class="pill pill-blue"></span>
+                      </div>
+                      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;">Complaint Timeline</div>
+                      <div class="timeline">
+                        <div class="tl-item">
+                          <div class="tl-dot-wrap"><div class="tl-dot" style="background:var(--green)"></div><div class="tl-line"></div></div>
+                          <div class="tl-content">
+                            <div class="tl-title">✅ Complaint Registered</div>
+                            <div class="tl-sub" id="tl-reg-sub">Auto-mapped to department. Ack. No. issued.</div>
+                            <div class="tl-time" id="tl-reg-time"></div>
+                          </div>
+                        </div>
+                        <div class="tl-item" id="tl-assigned-row">
+                          <div class="tl-dot-wrap"><div class="tl-dot" id="tl-assigned-dot" style="background:var(--green)"></div><div class="tl-line"></div></div>
+                          <div class="tl-content">
+                            <div class="tl-title" id="tl-assigned-title">✅ Assigned to Officer</div>
+                            <div class="tl-sub" id="tl-assigned-sub"></div>
+                          </div>
+                        </div>
+                        <div class="tl-item">
+                          <div class="tl-dot-wrap"><div class="tl-dot" id="tl-status-dot" style="background:#d0dce8"></div></div>
+                          <div class="tl-content">
+                            <div class="tl-title" id="tl-status-title" style="color:var(--text-light);">⏳ In Progress / Resolution Pending</div>
+                            <div class="tl-sub" id="tl-status-sub" style="color:var(--text-light);">Awaiting officer action or closure confirmation.</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div style="margin-top:18px;display:flex;gap:10px;">
+                        <button class="btn btn-primary btn-sm" onclick="openAssignModal(document.getElementById('trackAck').innerText)">Reassign Officer</button>
+                        <button class="btn btn-outline btn-sm">Add Remark</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="trackNotFound" style="display:none;">
+                  <div class="card"><div class="card-body" style="text-align:center;padding:40px;"><div style="font-size:40px;margin-bottom:12px;">🔍</div><div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">Ticket Not Found</div><div style="color:var(--text-mid);font-size:13px;">No complaint found with that acknowledgement number. Please check and try again.</div></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: ESCALATIONS
+            ══════════════════════════════════ -->
+            <div id="panel-escalations" class="panel">
+              <div class="page-hdr">
+                <div class="page-hdr-left"><h2>⚡ Escalations</h2><p>Complaints escalated due to SLA breach or unresolved assignment</p></div>
+              </div>
+              <div class="card">
+                <div class="card-body no-pad">
+                  <table class="data-table">
+                    <thead><tr><th>Ack. No.</th><th>Issue</th><th>Department</th><th>Assigned To</th><th>Status</th><th>Filed On</th><th>Action</th></tr></thead>
+                    <tbody>
+                      @{
+                        var escalated = Model.AllComplaints.Where(c => c.Status == "Escalated").ToList();
+                      }
+                      @if (escalated.Any()) {
+                        @foreach (var item in escalated) {
+                          <tr>
+                            <td><span class="mono">@item.ComplaintNo</span></td>
+                            <td>@item.ComplaintTitle</td>
+                            <td><span class="pill pill-blue">@item.Department</span></td>
+                            <td>@(item.AssignedToOfficerName ?? "—")</td>
+                            <td><span class="pill pill-red">Escalated</span></td>
+                            <td>@item.CreatedDate.ToString("dd MMM yy")</td>
+                            <td>
+                              <button class="btn btn-primary btn-sm" onclick="openAssignModal('@item.Id')">Reassign</button>
+                              <form asp-action="UpdateStatus" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="complaintId" value="@item.Id">
+                                <input type="hidden" name="status" value="In Progress">
+                                <button type="submit" class="btn btn-outline btn-sm">Mark Active</button>
+                              </form>
+                            </td>
+                          </tr>
+                        }
+                      } else {
+                        <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-light);">✅ No escalated complaints at this time.</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: ANALYTICS
+            ══════════════════════════════════ -->
+            <div id="panel-analytics" class="panel">
+              <div class="page-hdr">
+                <div class="page-hdr-left"><h2>📈 Analytics &amp; Reports</h2><p>Department-wide complaint performance metrics</p></div>
+              </div>
+              <div class="stats-grid" style="margin-bottom:20px;">
+                <div class="stat-card blue"><div class="stat-top"><div class="stat-icon blue">📊</div><span class="stat-trend trend-flat">Live</span></div><div class="stat-val">@Model.TotalComplaints</div><div class="stat-lbl">Total Filed</div></div>
+                <div class="stat-card green"><div class="stat-top"><div class="stat-icon green">✅</div><span class="stat-trend trend-up">@(Model.TotalComplaints > 0 ? ((double)Model.ResolvedComplaints/Model.TotalComplaints*100).ToString("F0") : "0")%</span></div><div class="stat-val">@Model.ResolvedComplaints</div><div class="stat-lbl">Resolved</div></div>
+                <div class="stat-card teal"><div class="stat-top"><div class="stat-icon teal">⏱️</div><span class="stat-trend trend-flat">Avg</span></div><div class="stat-val">@Model.AvgResolutionTimeDays.ToString("F1")d</div><div class="stat-lbl">Avg. Resolution Time</div></div>
+                <div class="stat-card purple"><div class="stat-top"><div class="stat-icon purple">⭐</div><span class="stat-trend trend-flat">Rated</span></div><div class="stat-val">@Model.AvgCitizenRating/5</div><div class="stat-lbl">Avg. Citizen Rating</div></div>
+              </div>
+              <div class="grid-2">
+                <div class="card">
+                  <div class="card-hdr"><h3>Complaints by Department</h3></div>
+                  <div class="card-body">
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                      @foreach (var dept in Model.Departments) {
+                        var dc = Model.AllComplaints.Count(c => c.Department == dept.Code);
+                        var dPct = Model.TotalComplaints > 0 ? (int)((double)dc / Model.TotalComplaints * 100) : 0;
+                        <div>
+                          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+                            <span style="color:var(--text-mid);">@dept.Icon @dept.Name</span>
+                            <span style="font-weight:700;">@dc (@dPct%)</span>
+                          </div>
+                          <div class="progress-wrap"><div class="progress-fill" style="width:@dPct%;background:var(--blue)"></div></div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="card-hdr"><h3>Officer Activity</h3></div>
+                  <div class="card-body no-pad">
+                    <table class="data-table">
+                      <thead><tr><th>#</th><th>Officer</th><th>Dept.</th><th>Designation</th><th>Assigned</th></tr></thead>
+                      <tbody>
+                        @{ int rank = 1; }
+                        @foreach (var off in Model.Officers.Take(10)) {
+                          var assigned = Model.AllComplaints.Count(c => c.AssignedToOfficerId == off.Id);
+                          <tr>
+                            <td style="font-weight:700;color:var(--text-mid);">@(rank++)</td>
+                            <td>@off.FullName</td>
+                            <td><span class="pill pill-blue">@off.Department</span></td>
+                            <td>@off.Designation</td>
+                            <td>@assigned</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: SLA MONITOR
+            ══════════════════════════════════ -->
+            <div id="panel-sla" class="panel">
+              <div class="page-hdr">
+                <div class="page-hdr-left"><h2>⏱️ SLA Monitor</h2><p>Track resolution time compliance across departments (Target: 7 days)</p></div>
+              </div>
+              <div class="grid-2">
+                <div class="card">
+                  <div class="card-hdr"><h3>SLA Compliance by Department</h3></div>
+                  <div class="card-body">
+                    @foreach (var dept in Model.Departments) {
+                      var dc = Model.AllComplaints.Where(c => c.Department == dept.Code).ToList();
+                      var res = dc.Count(c => c.Status == "Resolved");
+                      var pct = dc.Count > 0 ? (int)((double)res / dc.Count * 100) : 0;
+                      var clr = pct >= 80 ? "var(--green)" : pct >= 60 ? "var(--amber)" : "var(--red)";
+                      <div class="sla-item">
+                        <span class="sla-dept">@dept.Icon @dept.Name</span>
+                        <div class="sla-bar-wrap"><div class="progress-wrap"><div class="progress-fill" style="width:@pct%;background:@clr"></div></div></div>
+                        <span class="sla-pct" style="color:@clr;">@pct%</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="card-hdr"><h3>Long-Pending Complaints (&gt;7 Days)</h3></div>
+                  <div class="card-body no-pad">
+                    <table class="data-table">
+                      <thead><tr><th>Ack. No.</th><th>Issue</th><th>Dept.</th><th>Days Open</th><th>Action</th></tr></thead>
+                      <tbody>
+                        @{
+                          var overdue = Model.AllComplaints
+                            .Where(c => c.Status != "Resolved" && (DateTime.UtcNow - c.CreatedDate).TotalDays > 7)
+                            .OrderByDescending(c => (DateTime.UtcNow - c.CreatedDate).TotalDays)
+                            .Take(8).ToList();
+                        }
+                        @if (overdue.Any()) {
+                          @foreach (var item in overdue) {
+                            var days = (int)(DateTime.UtcNow - item.CreatedDate).TotalDays;
+                            <tr>
+                              <td><span class="mono">@item.ComplaintNo</span></td>
+                              <td>@item.ComplaintTitle</td>
+                              <td>@item.Department</td>
+                              <td style="color:var(--red);font-weight:700;">+@days days</td>
+                              <td>
+                                <form asp-action="UpdateStatus" method="post" style="display:inline;">
+                                  @Html.AntiForgeryToken()
+                                  <input type="hidden" name="complaintId" value="@item.Id">
+                                  <input type="hidden" name="status" value="Escalated">
+                                  <button type="submit" class="btn btn-danger btn-sm">Escalate</button>
+                                </form>
+                              </td>
+                            </tr>
+                          }
+                        } else {
+                          <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-light);">✅ No overdue complaints.</td></tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: NOTIFICATIONS
+            ══════════════════════════════════ -->
+            <div id="panel-notifications" class="panel">
+              <div class="page-hdr"><div class="page-hdr-left"><h2>🔔 Notifications</h2><p>System alerts, escalations, and status updates</p></div></div>
+              <div class="card">
+                <div class="card-body">
+                  @{
+                    var unassigned = Model.AllComplaints.Where(c => c.Status == "Pending" && string.IsNullOrEmpty(c.AssignedToOfficerId)).ToList();
+                    var esc = Model.AllComplaints.Where(c => c.Status == "Escalated").ToList();
+                    var overdueNotif = Model.AllComplaints.Where(c => c.Status != "Resolved" && (DateTime.UtcNow - c.CreatedDate).TotalDays > 7).ToList();
+                  }
+                  @if (esc.Any()) {
+                    <div class="notif-item">
+                      <div class="notif-dot-wrap" style="background:#ffebee;">⚡</div>
+                      <div class="notif-content">
+                        <div class="n-title">@esc.Count Escalated Complaint(s) Require Attention</div>
+                        <div class="n-sub">@string.Join(", ", esc.Take(3).Select(c => c.ComplaintNo)) and more are escalated.</div>
+                        <div class="n-time">Action Required</div>
+                      </div>
+                      <span class="pill pill-red" style="flex-shrink:0;">Urgent</span>
+                    </div>
+                  }
+                  @if (unassigned.Any()) {
+                    <div class="notif-item">
+                      <div class="notif-dot-wrap" style="background:#fff3e0;">📋</div>
+                      <div class="notif-content">
+                        <div class="n-title">@unassigned.Count Unassigned Complaint(s) Pending</div>
+                        <div class="n-sub">@string.Join(", ", unassigned.Take(3).Select(c => c.ComplaintNo)) require officer assignment.</div>
+                        <div class="n-time">Action Required</div>
+                      </div>
+                      <span class="pill pill-amber" style="flex-shrink:0;">Action Req.</span>
+                    </div>
+                  }
+                  @if (overdueNotif.Any()) {
+                    <div class="notif-item">
+                      <div class="notif-dot-wrap" style="background:#fff8e1;">⏰</div>
+                      <div class="notif-content">
+                        <div class="n-title">@overdueNotif.Count Complaint(s) Past 7-Day SLA</div>
+                        <div class="n-sub">These complaints have exceeded the default SLA of 7 days and may need escalation.</div>
+                        <div class="n-time">SLA Breach — Review Immediately</div>
+                      </div>
+                      <span class="pill pill-red" style="flex-shrink:0;">SLA Breach</span>
+                    </div>
+                  }
+                  @if (!esc.Any() && !unassigned.Any() && !overdueNotif.Any()) {
+                    <div style="text-align:center;padding:40px;">
+                      <div style="font-size:40px;margin-bottom:12px;">✅</div>
+                      <div style="font-size:16px;font-weight:700;color:var(--navy);">All Clear!</div>
+                      <div style="color:var(--text-mid);font-size:13px;">No pending alerts at this time.</div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: AUDIT LOG
+            ══════════════════════════════════ -->
+            <div id="panel-audit" class="panel">
+              <div class="page-hdr"><div class="page-hdr-left"><h2>📁 Audit Log</h2><p>Recent complaint activity and status changes</p></div></div>
+              <div class="card">
+                <div class="card-body no-pad">
+                  <table class="data-table">
+                    <thead><tr><th>Date</th><th>Complaint No.</th><th>Issue</th><th>Department</th><th>Status</th><th>Assigned To</th></tr></thead>
+                    <tbody>
+                      @foreach (var item in Model.AllComplaints.Take(20)) {
+                        <tr>
+                          <td style="color:var(--text-light);font-size:12px;">@item.CreatedDate.ToString("dd MMM · hh:mm tt")</td>
+                          <td><span class="mono">@item.ComplaintNo</span></td>
+                          <td>@item.ComplaintTitle</td>
+                          <td><span class="pill pill-blue">@item.Department</span></td>
+                          <td>
+                            @if(item.Status == "Pending") { <span class="pill pill-amber">@item.Status</span> }
+                            else if(item.Status == "Resolved") { <span class="pill pill-green">@item.Status</span> }
+                            else if(item.Status == "Escalated") { <span class="pill pill-red">@item.Status</span> }
+                            else { <span class="pill pill-blue">@item.Status</span> }
+                          </td>
+                          <td>@(item.AssignedToOfficerName ?? "—")</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════
+                 PANEL: SETTINGS
+            ══════════════════════════════════ -->
+            <div id="panel-settings" class="panel">
+              <div class="page-hdr"><div class="page-hdr-left"><h2>⚙️ Portal Settings</h2><p>Configure SLA, notifications, and department rules</p></div></div>
+              <div class="grid-2">
+                <div class="card" style="margin-bottom:0;">
+                  <div class="card-hdr"><h3>SLA Configuration</h3></div>
+                  <div class="card-body">
+                    <div class="form-group"><label>Default SLA (days) <span class="required">*</span></label><input type="number" value="7" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;outline:none;"></div>
+                    <div class="form-group"><label>Auto-Escalate After (hrs)</label><input type="number" value="48" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;outline:none;"></div>
+                    <div class="form-group"><label>Auto-Close (no feedback, days)</label><input type="number" value="7" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;outline:none;"></div>
+                    <button class="btn btn-primary" onclick="alert('SLA settings saved!')">Save SLA Settings</button>
+                  </div>
+                </div>
+                <div class="card" style="margin-bottom:0;">
+                  <div class="card-hdr"><h3>Notification Settings</h3></div>
+                  <div class="card-body">
+                    <div class="form-group"><label>SMS on Assignment</label><select style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;outline:none;"><option>Enabled</option><option>Disabled</option></select></div>
+                    <div class="form-group"><label>SMS on Resolution</label><select style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;outline:none;"><option>Enabled</option><option>Disabled</option></select></div>
+                    <div class="form-group"><label>Admin Email Alerts</label><input type="email" value="cms-admin@chandigarh.gov.in" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;outline:none;"></div>
+                    <button class="btn btn-primary" onclick="alert('Notification settings saved!')">Save Notification Settings</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+        </main>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body table-responsive">
-        <table class="table table-hover table-bordered" id="adminTable">
-            <thead class="table-dark">
-                <tr>
-                    <th>Complaint No</th>
-                    <th>User ID (Mobile)</th>
-                    <th>Title</th>
-                    <th>Department</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td class="complaint-no">@item.ComplaintNo</td>
-                        <td>@item.UserId</td>
-                        <td>@item.ComplaintTitle</td>
-                        <td>@item.Department</td>
-                        <td>@item.CreatedDate.ToString("dd MMM yyyy")</td>
-                        <td class="status-cell">
-                            @if (item.Status == "Pending")
-                            {
-                                <span class="badge bg-danger">Pending</span>
-                            }
-                            else if (item.Status == "Assigned" || item.Status == "In Progress")
-                            {
-                                <span class="badge bg-warning text-dark">@item.Status</span>
-                            }
-                            else if (item.Status == "Resolved")
-                            {
-                                <span class="badge bg-success">Resolved</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">@item.Status</span>
-                            }
-                        </td>
-                        <td>
-                            @if (item.Status == "Pending")
-                            {
-                                <form asp-action="UpdateStatus" method="post" style="display:inline;">
-                                    <input type="hidden" name="complaintId" value="@item.Id" />
-                                    <input type="hidden" name="status" value="Assigned" />
-                                    <button type="submit" class="btn btn-sm btn-primary">Assign</button>
-                                </form>
-                            }
-                            else if (item.Status == "Assigned" || item.Status == "In Progress")
-                            {
-                                <form asp-action="UpdateStatus" method="post" style="display:inline;">
-                                    <input type="hidden" name="complaintId" value="@item.Id" />
-                                    <input type="hidden" name="status" value="Resolved" />
-                                    <button type="submit" class="btn btn-sm btn-success">Resolve</button>
-                                </form>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
+
+<!-- DEPARTMENT MODAL -->
+<div id="deptModal" class="cms-modal-overlay" style="display:none;">
+    <div class="cms-modal" style="max-width:500px;">
+        <form asp-action="SaveDepartment" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="deptId">
+            <div class="cms-modal-hdr"><h3>🏛️ Department Details</h3><button type="button" class="cms-modal-close" onclick="closeModal('deptModal')">✕</button></div>
+            <div class="cms-modal-body">
+              <div class="form-row-2">
+                <div class="form-group"><label>Department Name</label><input type="text" name="Name" id="deptName" required></div>
+                <div class="form-group"><label>Dept. Code</label><input type="text" name="Code" id="deptCode" required></div>
+              </div>
+              <div class="form-group"><label>Head Name</label><input type="text" name="HeadName" id="deptHead"></div>
+              <div class="form-group"><label>Division / Zone</label><input type="text" name="Division" id="deptDiv"></div>
+              <div class="form-row-2">
+                <div class="form-group"><label>SLA (Days)</label><input type="number" name="SlaDays" id="deptSla" value="7"></div>
+                <div class="form-group"><label>Icon (Emoji)</label><input type="text" name="Icon" id="deptIcon" value="💡"></div>
+              </div>
+              <div class="form-group"><label>Email</label><input type="email" name="Email" id="deptEmail"></div>
+              <div class="form-group"><label>Status</label><select name="Status" id="deptStatus"><option>Active</option><option>Inactive</option></select></div>
+            </div>
+            <div class="cms-modal-footer">
+              <button type="button" class="btn btn-outline" onclick="closeModal('deptModal')">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Department</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- OFFICER MODAL -->
+<div id="officerModal" class="cms-modal-overlay" style="display:none;">
+    <div class="cms-modal" style="max-width:600px;">
+        <form asp-action="SaveOfficer" method="post" autocomplete="off">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="offId">
+            <div class="cms-modal-hdr"><h3 id="offModalTitle">👮 Officer Details</h3><button type="button" class="cms-modal-close" onclick="closeModal('officerModal')">✕</button></div>
+            <div class="cms-modal-body">
+              <div class="form-row-2">
+                <div class="form-group"><label>Full Name</label><input type="text" name="FullName" id="offName" required></div>
+                <div class="form-group"><label>Mobile No</label><input type="text" name="MobileNo" id="offMobile" required></div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group"><label>Email</label><input type="email" name="Email" id="offEmail"></div>
+                <div class="form-group"><label>Landline</label><input type="text" name="Landline" id="offLand"></div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                    <label>Department</label>
+                    <select name="Department" id="offDept" required>
+                        <option value="">-- Select Dept --</option>
+                        @foreach(var d in Model.Departments) { <option value="@d.Name">@d.Name</option> }
+                    </select>
+                </div>
+                <div class="form-group"><label>Designation</label><input type="text" name="Designation" id="offDesig" required></div>
+              </div>
+              <div class="form-group" id="passGroup">
+                  <label>Password</label>
+                  <input type="password" name="Password" id="offPass" placeholder="Leave blank to keep current">
+              </div>
+              <div class="form-group"><label>Area of Jurisdiction</label><textarea name="AreaOfJurisdiction" id="offArea" rows="3"></textarea></div>
+            </div>
+            <div class="cms-modal-footer">
+              <button type="button" class="btn btn-outline" onclick="closeModal('officerModal')">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="offSubmitBtn">Save Officer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ASSIGN MODAL -->
+<div id="assignModal" class="cms-modal-overlay" style="display:none;">
+    <div class="cms-modal" style="max-width:400px;">
+        <form asp-action="AssignComplaint" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="complaintId" id="assignCompId">
+            <input type="hidden" name="officerName" id="assignOffName">
+            <div class="cms-modal-hdr"><h3>🔀 Assign Officer</h3><button type="button" class="cms-modal-close" onclick="closeModal('assignModal')">✕</button></div>
+            <div class="cms-modal-body">
+              <div class="form-group">
+                  <label>Select Officer</label>
+                  <select name="officerId" id="assignOffId" required onchange="document.getElementById('assignOffName').value = this.options[this.selectedIndex].text;">
+                      <option value="">-- Select Officer --</option>
+                      @foreach(var o in Model.Officers) { <option value="@o.Id">@o.FullName (@o.Department)</option> }
+                  </select>
+              </div>
+            </div>
+            <div class="cms-modal-footer">
+              <button type="button" class="btn btn-outline" onclick="closeModal('assignModal')">Cancel</button>
+              <button type="submit" class="btn btn-primary">Assign Now</button>
+            </div>
+        </form>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
-            // Filter by search text
-            $('#searchInput').on('keyup', function () {
-                filterTable();
-            });
+        function showPanel(panelId, navElement) {
+            document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+            const panel = document.getElementById('panel-' + panelId);
+            if(panel) panel.classList.add('active');
 
-            // Filter by status dropdown
-            $('#statusFilter').on('change', function () {
-                filterTable();
-            });
-
-            function filterTable() {
-                var searchText = $('#searchInput').val().toLowerCase();
-                var statusText = $('#statusFilter').val().toLowerCase();
-
-                $('#adminTable tbody tr').each(function () {
-                    var $row = $(this);
-                    
-                    var complaintNo = $row.find('.complaint-no').text().toLowerCase();
-                    // Just basic match since td class was not mapped cleanly, map by column index:
-                    var status = $row.find('.status-cell').text().toLowerCase();
-
-                    var matchesSearch = complaintNo.includes(searchText) || searchText === "";
-                    var matchesStatus = status.includes(statusText) || statusText === "";
-
-                    if (matchesSearch && matchesStatus) {
-                        $row.show();
-                    } else {
-                        $row.hide();
-                    }
-                });
+            if(navElement) {
+                document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
             }
+        }
+
+        function openDeptModal(id='', name='', code='', head='', div='', sla=7, email='', status='Active', icon='💡') {
+            document.getElementById('deptId').value = id;
+            document.getElementById('deptName').value = name;
+            document.getElementById('deptCode').value = code;
+            document.getElementById('deptHead').value = head;
+            document.getElementById('deptDiv').value = div;
+            document.getElementById('deptSla').value = sla;
+            document.getElementById('deptEmail').value = email;
+            document.getElementById('deptStatus').value = status;
+            document.getElementById('deptIcon').value = icon;
+            document.getElementById('deptModal').style.display = 'flex';
+        }
+
+        function openOfficerModal(id='', name='', dept='', desig='', area='', mobile='', email='', landline='') {
+            document.getElementById('offId').value = id;
+            document.getElementById('offName').value = name;
+            document.getElementById('offDept').value = dept;
+            document.getElementById('offDesig').value = desig;
+            document.getElementById('offArea').value = area;
+            document.getElementById('offMobile').value = mobile;
+            document.getElementById('offEmail').value = email;
+            document.getElementById('offLand').value = landline;
+            document.getElementById('offPass').value = '';
+
+            const isEdit = id && id.length > 0;
+            document.getElementById('offModalTitle').innerText = isEdit ? '👮 Officer Edit / Transfer' : '👮 Add New Officer';
+            document.getElementById('offSubmitBtn').innerText = isEdit ? 'Update Officer' : 'Create Officer';
+            document.getElementById('offMobile').readOnly = isEdit;
+            
+            if (!isEdit) {
+                document.getElementById('offPass').required = true;
+                document.getElementById('offPass').placeholder = 'Initial Password';
+            } else {
+                document.getElementById('offPass').required = false;
+                document.getElementById('offPass').placeholder = 'Leave blank to keep current';
+            }
+
+            document.getElementById('officerModal').style.display = 'flex';
+        }
+
+        function openAssignModal(compId) {
+            document.getElementById('assignCompId').value = compId;
+            document.getElementById('assignModal').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // ── Track Ticket ──
+        const complaintsData = @Html.Raw(Json.Serialize(Model.AllComplaints));
+
+        function doTrack() {
+            const query = document.getElementById('trackInput').value.trim().toLowerCase();
+            document.getElementById('trackResult').style.display = 'none';
+            document.getElementById('trackNotFound').style.display = 'none';
+
+            if (!query) return;
+
+            const found = complaintsData.find(c =>
+                (c.complaintNo && c.complaintNo.toLowerCase() === query) ||
+                (c.id && c.id.toLowerCase() === query)
+            );
+
+            if (!found) {
+                document.getElementById('trackNotFound').style.display = 'block';
+                return;
+            }
+
+            // Fill banner
+            document.getElementById('trackAck').innerText = found.complaintNo || found.id;
+            document.getElementById('trackTitle').innerText = found.complaintTitle || '(No Title)';
+            document.getElementById('trackDept').innerText = found.department || '—';
+            document.getElementById('trackDate').innerText = new Date(found.createdDate).toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+            document.getElementById('trackStatus').innerText = found.status;
+            document.getElementById('trackOfficer').innerText = found.assignedToOfficerName || 'Unassigned';
+
+            // Status pill
+            const pillMap = {Pending:'pill-amber',Assigned:'pill-blue',Resolved:'pill-green',Escalated:'pill-red','In Progress':'pill-blue'};
+            const sp = document.getElementById('trackStatusPill');
+            sp.className = 'pill ' + (pillMap[found.status] || 'pill-grey');
+            sp.innerText = found.status;
+
+            // Timeline
+            const regDate = new Date(found.createdDate);
+            document.getElementById('tl-reg-sub').innerText = `Mapped to ${found.department} dept. Ack No: ${found.complaintNo}`;
+            document.getElementById('tl-reg-time').innerText = regDate.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+            if (found.assignedToOfficerName) {
+                document.getElementById('tl-assigned-dot').style.background = 'var(--green)';
+                document.getElementById('tl-assigned-title').innerText = '✅ Assigned to Officer';
+                document.getElementById('tl-assigned-sub').innerText = found.assignedToOfficerName + ' · SMS notification sent.';
+            } else {
+                document.getElementById('tl-assigned-dot').style.background = '#d0dce8';
+                document.getElementById('tl-assigned-title').innerText = '⏳ Awaiting Assignment';
+                document.getElementById('tl-assigned-sub').innerText = 'No officer has been assigned yet.';
+            }
+
+            const statusDot = document.getElementById('tl-status-dot');
+            const statusTitle = document.getElementById('tl-status-title');
+            const statusSub = document.getElementById('tl-status-sub');
+            if (found.status === 'Resolved') {
+                statusDot.style.background = 'var(--green)';
+                statusTitle.style.color = 'var(--text-main)';
+                statusTitle.innerText = '✅ Resolved';
+                statusSub.innerText = 'Complaint successfully resolved and closed.';
+                statusSub.style.color = 'var(--text-mid)';
+            } else if (found.status === 'Escalated') {
+                statusDot.style.background = 'var(--red)';
+                statusTitle.style.color = 'var(--red)';
+                statusTitle.innerText = '⚡ Escalated — SLA Breached';
+                statusSub.innerText = 'This complaint has been escalated due to delayed resolution.';
+                statusSub.style.color = 'var(--text-mid)';
+            } else {
+                statusDot.style.background = '#d0dce8';
+                statusTitle.style.color = 'var(--text-light)';
+                statusTitle.innerText = '⏳ In Progress / Resolution Pending';
+                statusSub.innerText = 'Awaiting officer action or closure confirmation.';
+                statusSub.style.color = 'var(--text-light)';
+            }
+
+            document.getElementById('trackResult').style.display = 'block';
+        }
+
+        // Allow pressing Enter in the track input
+        document.getElementById('trackInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') doTrack();
         });
+
+        // ── All Complaints Filters ──
+        function filterComplaints() {
+            const search  = (document.getElementById('cFilter_search').value || '').toLowerCase().trim();
+            const status  = (document.getElementById('cFilter_status').value || '').toLowerCase();
+            const dept    = (document.getElementById('cFilter_dept').value || '').toLowerCase();
+            const officer = (document.getElementById('cFilter_officer').value || '').toLowerCase();
+
+            const rows = document.querySelectorAll('#complaintsBody .complaint-row');
+            let visible = 0;
+
+            rows.forEach(row => {
+                const rowSearch  = (row.dataset.search  || '').toLowerCase();
+                const rowStatus  = (row.dataset.status  || '').toLowerCase();
+                const rowDept    = (row.dataset.dept    || '').toLowerCase();
+                const rowOfficer = (row.dataset.officer || '').toLowerCase();
+
+                const matchSearch  = !search  || rowSearch.includes(search);
+                const matchStatus  = !status  || rowStatus === status;
+                const matchDept    = !dept    || rowDept === dept;
+                const matchOfficer = !officer || rowOfficer === officer;
+
+                const show = matchSearch && matchStatus && matchDept && matchOfficer;
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            document.getElementById('complaintCount').innerText = `(Showing ${visible} of ${rows.length})`;
+            document.getElementById('noResultsMsg').style.display = (visible === 0) ? 'block' : 'none';
+        }
+
+        function clearComplaintFilters() {
+            document.getElementById('cFilter_search').value  = '';
+            document.getElementById('cFilter_status').value  = '';
+            document.getElementById('cFilter_dept').value    = '';
+            document.getElementById('cFilter_officer').value = '';
+            filterComplaints();
+        }
+
+        // "View" button on All Complaints → navigate to Track Ticket panel and pre-fill
+        function trackComplaint(ackNo) {
+            // Switch to Track panel — find the nav item by text
+            const navItems = document.querySelectorAll('.admin-nav-item');
+            navItems.forEach(nav => {
+                if (nav.innerText.trim().includes('Track Ticket')) {
+                    showPanel('track', nav);
+                }
+            });
+            // Pre-fill and search
+            const inp = document.getElementById('trackInput');
+            if (inp) {
+                inp.value = ackNo;
+                setTimeout(doTrack, 100);
+            }
+        }
+
+        // CSV Export for All Complaints
+        function exportComplaintsCSV() {
+            const rows = document.querySelectorAll('#complaintsBody .complaint-row');
+            let csv = 'Ack. No.,Citizen (Mobile),Issue,Department,Assigned To,Status,Filed On\n';
+            rows.forEach(row => {
+                if (row.style.display === 'none') return; // respect filters
+                const cells = row.querySelectorAll('td');
+                const rowData = [
+                    cells[0] ? cells[0].innerText.trim() : '',
+                    cells[1] ? cells[1].innerText.trim() : '',
+                    cells[2] ? cells[2].innerText.trim() : '',
+                    cells[3] ? cells[3].innerText.trim() : '',
+                    cells[4] ? cells[4].innerText.trim() : '',
+                    cells[5] ? cells[5].innerText.trim() : '',
+                    cells[6] ? cells[6].innerText.trim() : '',
+                ].map(v => `"${v.replace(/"/g, '""')}"`);
+                csv += rowData.join(',') + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'complaints_export.csv';
+            a.click();
+        }
     </script>
 }

@@ -43,7 +43,7 @@ namespace CMS.Services
             // In a real scenario, you'd match the Codes from Master table.
             // Our seed creates Code="ELE" etc, let's assume the frontend passes the Code directly.
             
-            complaint.ComplaintNo = $"{complaint.State}/{complaint.Department}/{year}/{sequence:D4}";
+            complaint.ComplaintNo = $"{year}/{sequence:D5}";
             complaint.CreatedDate = DateTime.UtcNow;
             complaint.Status = "Pending";
 

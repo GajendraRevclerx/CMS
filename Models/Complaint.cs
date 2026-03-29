@@ -25,6 +25,16 @@ namespace CMS.Models
         // Pending, Assigned, Resolved
         public string Status { get; set; } = "Pending";
 
+        // Assignment Fields
+        public string? AssignedToOfficerId { get; set; }
+        public string? AssignedToOfficerName { get; set; }
+
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public string Street { get; set; } = string.Empty;
+        public string Locality { get; set; } = string.Empty;
+        public string PinCode { get; set; } = string.Empty;
+        public string Source { get; set; } = string.Empty;
+        public string Site { get; set; } = string.Empty;
+        public string IncidentDate { get; set; } = string.Empty;
     }
 }
