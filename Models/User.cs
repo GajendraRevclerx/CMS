@@ -16,7 +16,13 @@ namespace CMS.Models
         public string MobileNo { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;
-
         public string Email { get; set; } = string.Empty;
+
+        // Citizen, DeptHead, Admin
+        public string Role { get; set; } = "Citizen";
+        
+        // For DeptHead role
+        public string? Department { get; set; }
+        public string? Area { get; set; }
     }
 }

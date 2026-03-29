@@ -35,12 +35,24 @@ namespace CMS.Services
         private void SeedData()
         {
             var mastersCollection = Masters;
-            if (mastersCollection.CountDocuments(FilterDefinition<Master>.Empty) == 0)
+            var master = mastersCollection.Find(FilterDefinition<Master>.Empty).FirstOrDefault();
+            
+            if (master == null)
             {
-                var masterData = new Master
+                master = new Master
                 {
                     States = new List<string> { "CHD", "PUN", "HAR", "DEL" },
                     Cities = new List<string> { "Chandigarh", "Mohali", "Panchkula", "New Delhi" },
+                    Areas = new List<string> { "North Zone", "South Zone", "East Zone", "West Zone", "Central Mall" },
+                    Sectors = new List<SectorMapping> 
+                    {
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 1" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 2" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 17" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 22" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 34" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 35" }
+                    },
                     Departments = new List<DepartmentMaster>
                     {
                         new DepartmentMaster { Name = "Electrical", Code = "ELE" },
@@ -49,7 +61,59 @@ namespace CMS.Services
                         new DepartmentMaster { Name = "Roads", Code = "ROA" }
                     }
                 };
-                mastersCollection.InsertOne(masterData);
+                mastersCollection.InsertOne(master);
+            }
+            else if (master.Sectors == null || master.Sectors.Count == 0)
+            {
+                // Force seed sectors if missing in existing master record
+                var update = Builders<Master>.Update.Set(m => m.Sectors, new List<SectorMapping> 
+                {
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 1" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 2" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 17" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 22" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 34" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 35" }
+                });
+                mastersCollection.UpdateOne(m => m.Id == master.Id, update);
+            }
+
+            // Seed Users (Admin & Dept Heads)
+            var usersCollection = Users;
+            
+            // Check by MobileNo to ensure exact accounts exist
+            if (usersCollection.CountDocuments(u => u.MobileNo == "admin") == 0)
+            {
+                usersCollection.InsertOne(new User { 
+                    MobileNo = "admin", 
+                    Password = "admin", 
+                    FullName = "Super Administrator", 
+                    Role = "Admin" 
+                });
+            }
+
+            if (usersCollection.CountDocuments(u => u.MobileNo == "head_ele") == 0)
+            {
+                usersCollection.InsertOne(new User { 
+                    MobileNo = "head_ele", 
+                    Password = "password", 
+                    FullName = "Electrical Head (North)", 
+                    Role = "DeptHead", 
+                    Department = "ELE", 
+                    Area = "North Zone" 
+                });
+            }
+
+            if (usersCollection.CountDocuments(u => u.MobileNo == "head_wat") == 0)
+            {
+                usersCollection.InsertOne(new User { 
+                    MobileNo = "head_wat", 
+                    Password = "password", 
+                    FullName = "Water Head (South)", 
+                    Role = "DeptHead", 
+                    Department = "WAT", 
+                    Area = "South Zone" 
+                });
             }
         }
     }

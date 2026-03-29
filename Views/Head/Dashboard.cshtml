@@ -1,0 +1,206 @@
+@model IEnumerable<CMS.Models.Complaint>
+
+@{
+    ViewData["Title"] = "Department Head Hub";
+    var total = ViewBag.Total ?? 0;
+    var pending = ViewBag.Pending ?? 0;
+    var inProgress = ViewBag.InProgress ?? 0;
+    var resolved = ViewBag.Resolved ?? 0;
+}
+
+<style>
+    :root {
+        --head-primary: #0f172a;
+        --head-accent: #6366f1;
+        --vibrant-1: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+        --vibrant-2: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        --vibrant-3: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    body { background-color: #f8fafc; }
+
+    .head-wrapper { padding: 50px 0; animation: headFadeIn 0.8s ease; }
+
+    /* Vibrant Head Tiles */
+    .head-metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 30px;
+        margin-bottom: 50px;
+    }
+
+    .head-tile {
+        background: white;
+        border-radius: 30px;
+        padding: 35px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .head-tile:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1);
+    }
+
+    .head-tile-val { font-size: 2.75rem; font-weight: 900; color: var(--head-primary); margin-bottom: 5px; }
+    .head-tile-label { font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .head-tile-icon {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    /* Incident Registry */
+    .head-panel {
+        background: white;
+        border-radius: 40px;
+        padding: 45px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    }
+
+    .head-table { width: 100%; border-collapse: separate; border-spacing: 0 15px; }
+    .head-table th { padding: 15px 30px; color: #94a3b8; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+    .head-table td { padding: 25px 30px; background: #fafafa; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+    .head-table td:first-child { border-left: 1px solid #f1f5f9; border-top-left-radius: 20px; border-bottom-left-radius: 20px; }
+    .head-table td:last-child { border-right: 1px solid #f1f5f9; border-top-right-radius: 20px; border-bottom-right-radius: 20px; }
+
+    .head-table tr:hover td { background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+
+    .btn-resolve-pro {
+        background: var(--head-primary);
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        transition: all 0.3s;
+    }
+
+    .btn-resolve-pro:hover {
+        background: var(--head-accent);
+        transform: scale(1.05);
+    }
+
+    @@keyframes headFadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="container head-wrapper">
+    <div class="mb-5">
+        <h2 class="fw-black mb-1" style="font-weight: 900; letter-spacing: -1px;">Unit Command Center</h2>
+        <p class="text-muted small">Managing @total incidents assigned to your direct supervision</p>
+    </div>
+
+    <!-- Tier 1: Departmental Metrics -->
+    <div class="head-metric-grid">
+        <div class="head-tile">
+            <div class="head-tile-icon" style="background: var(--vibrant-1);"><i data-lucide="inbox"></i></div>
+            <div class="head-tile-val">@total</div>
+            <div class="head-tile-label">Assigned Workload</div>
+        </div>
+        <div class="head-tile">
+            <div class="head-tile-icon" style="background: var(--vibrant-2);"><i data-lucide="clock"></i></div>
+            <div class="head-tile-val">@pending</div>
+            <div class="head-tile-label">Awaiting Initial Action</div>
+        </div>
+        <div class="head-tile">
+            <div class="head-tile-icon" style="background: #f59e0b;"><i data-lucide="activity"></i></div>
+            <div class="head-tile-val">@inProgress</div>
+            <div class="head-tile-label">Resolution Phase</div>
+        </div>
+        <div class="head-tile">
+            <div class="head-tile-icon" style="background: var(--vibrant-3);"><i data-lucide="shield-check"></i></div>
+            <div class="head-tile-val">@resolved</div>
+            <div class="head-tile-label">Case Finalized</div>
+        </div>
+    </div>
+
+    <!-- Tier 2: Incident Registry -->
+    <div class="head-panel">
+        <h5 class="fw-bold mb-4">Direct Incident Stream</h5>
+        <div class="table-responsive">
+            <table class="head-table">
+                <thead>
+                    <tr>
+                        <th>Access ID</th>
+                        <th>Brief</th>
+                        <th>Area Zone</th>
+                        <th>Workflow State</th>
+                        <th>Command</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold" style="color: var(--head-accent)">#@item.ComplaintNo.Split('/').Last()</td>
+                            <td>
+                                <div class="fw-bold">@item.ComplaintTitle</div>
+                                <div class="text-muted small">By: @item.UserId</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark px-3 py-2 border rounded-pill">@item.Area</span></td>
+                            <td>
+                                @if(item.Status == "Assigned") { <span class="text-danger fw-bold"><i data-lucide="circle-slash" class="me-1" style="width:14px"></i> New Assignment</span> }
+                                else if(item.Status == "Resolved") { <span class="text-success fw-bold"><i data-lucide="check-circle" class="me-1" style="width:14px"></i> Resolved</span> }
+                                else { <span class="text-warning fw-bold"><i data-lucide="loader-2" class="me-1" style="width:14px"></i> @item.Status</span> }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    @if(item.Status == "Assigned") {
+                                        <button class="btn btn-sm btn-dark px-3" onclick="updateHeadStatus('@item.Id', 'In Progress')">Start</button>
+                                    } else if(item.Status == "In Progress") {
+                                        <button class="btn btn-sm btn-success px-3" onclick="updateHeadStatus('@item.Id', 'Resolved')">Resolve</button>
+                                    }
+                                    <button class="btn btn-sm btn-light border px-3" onclick="viewHeadWorkflow('@item.ComplaintNo', '@item.Status')">Track</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            lucide.createIcons();
+        });
+
+        function updateHeadStatus(id, newStatus) {
+            $.post('/Head/UpdateStatus', { id: id, status: newStatus }, function(res) {
+                if(res.success) {
+                    Swal.fire({ icon: 'success', title: 'Confirmed', text: 'Incident state updated to ' + newStatus, timer: 2000, showConfirmButton: false })
+                    .then(() => location.reload());
+                }
+            });
+        }
+
+        function viewHeadWorkflow(id, status) {
+            // Already implemented in previous layout logic - reusing the visual logic
+            let s = 1; if(status=="Assigned") s=2; if(status=="In Progress") s=3; if(status=="Resolved") s=4;
+            const html = `<div style="text-align:left; border-left:2px dashed #e2e8f0; margin-left:14px; padding-left:20px;">
+                <div style="margin-bottom:20px; position:relative;"><div style="position:absolute; left:-27px; background:${s>=1?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Logged</strong></div>
+                <div style="margin-bottom:20px; position:relative;"><div style="position:absolute; left:-27px; background:${s>=2?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Assigned to You</strong></div>
+                <div style="margin-bottom:20px; position:relative;"><div style="position:absolute; left:-27px; background:${s>=3?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Resolution Phase</strong></div>
+                <div style="position:relative;"><div style="position:absolute; left:-27px; background:${s>=4?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Finalized</strong></div>
+            </div>`;
+            Swal.fire({ title: 'Incident Lifecycle: ' + id, html: html, confirmButtonText: 'Command Exit', confirmButtonColor: '#0f172a', customClass: { popup: 'rounded-40' } });
+        }
+    </script>
+}

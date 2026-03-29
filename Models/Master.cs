@@ -12,7 +12,16 @@ namespace CMS.Models
 
         public List<string> States { get; set; } = new List<string>();
         public List<string> Cities { get; set; } = new List<string>();
+        public List<string> Areas { get; set; } = new List<string>();
+        public List<SectorMapping> Sectors { get; set; } = new List<SectorMapping>();
         public List<DepartmentMaster> Departments { get; set; } = new List<DepartmentMaster>();
+    }
+
+    public class SectorMapping
+    {
+        public string State { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string SectorName { get; set; } = string.Empty;
     }
 
     public class DepartmentMaster

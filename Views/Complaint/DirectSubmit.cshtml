@@ -1,0 +1,398 @@
+@model CMS.Models.DirectComplaintViewModel
+
+@{
+    ViewData["Title"] = "Direct Complaint Registration";
+}
+
+<style>
+    .form-container {
+        max-width: 1000px;
+        margin: 60px auto;
+    }
+
+    .glass-card {
+        background: var(--card-bg);
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+        padding: 50px;
+        position: relative;
+    }
+
+    .form-header {
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .form-header h2 {
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 2.25rem;
+        margin-bottom: 10px;
+    }
+
+    .form-header p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--secondary);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f1f5f9;
+    }
+
+    .section-number {
+        background: var(--primary);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .form-group-custom {
+        margin-bottom: 25px;
+    }
+
+    .form-label-custom {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+        color: var(--text-main);
+    }
+
+    .form-control-custom {
+        border-radius: 12px;
+        padding: 14px 18px;
+        background: #f8fafc;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control-custom:focus {
+        background: white;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.1);
+        outline: none;
+    }
+
+    .btn-submit-premium {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        color: white;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
+    }
+
+    .btn-submit-premium:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(249, 115, 22, 0.35);
+    }
+
+    .form-note {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+
+    .badge-dynamic {
+        background: #dcfce7;
+        color: #166534;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+
+    @@keyframes slideUp {
+        from { opacity: 0; transform: translateY(50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    @@media (max-width: 768px) {
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        .glass-card { padding: 30px 20px; }
+    }
+</style>
+
+<div class="container form-container">
+    <div class="glass-card">
+        <div class="form-header">
+            <h2>Submit Instant Complaint</h2>
+            <p>Your issues matter. Fill in your details below to file a request and get it resolved.</p>
+        </div>
+
+        <form id="directSubmitForm">
+
+
+            <!-- SECTION 1: Personal Info -->
+            <div class="section-title">
+                <div class="section-number">1</div>
+                Personal Details
+            </div>
+            
+            <div class="grid-2">
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Full Name <span class="text-danger">*</span></label>
+                    <input type="text" id="FullName" name="FullName" class="form-control-custom" placeholder="e.g. John Doe" required>
+                </div>
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Email Address <span class="text-danger">*</span></label>
+                    <input type="email" id="Email" name="Email" class="form-control-custom" placeholder="e.g. john@example.com" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Mobile Number <span class="text-danger">*</span></label>
+                    <input type="text" id="MobileNo" name="MobileNo" class="form-control-custom" placeholder="10 digit number" maxlength="10" required>
+                    <div class="form-note">Used as your tracking ID</div>
+                </div>
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Password <span id="pwdRequired" class="text-danger">*</span></label>
+                    <input type="password" id="Password" name="Password" class="form-control-custom" placeholder="Enter new or existing password">
+                    <div id="pwdNote" class="form-note">Required for new accounts.</div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Complaint Details -->
+            <div class="section-title mt-4">
+                <div class="section-number">2</div>
+                Complaint Information
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group-custom" style="grid-column: span 2;">
+                    <label class="form-label-custom">Complaint Title <span class="text-danger">*</span></label>
+                    <input type="text" id="ComplaintTitle" name="ComplaintTitle" class="form-control-custom" placeholder="Brief summary of your issue" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Department Category <span class="text-danger">*</span></label>
+                    <select id="Department" name="Department" class="form-control-custom" required>
+                        <option value="">Select Department</option>
+                    </select>
+                </div>
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Source <span class="text-danger">*</span></label>
+                    <select id="Source" name="Source" class="form-control-custom" required>
+                        <option value="Web Portal" selected>Web Portal</option>
+                        <option value="Mobile App">Mobile App</option>
+                        <option value="Helpline">Helpline</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- SECTION 3: Location -->
+            <div class="section-title mt-4">
+                <div class="section-number">3</div>
+                Location Specification
+            </div>
+
+            <div class="grid-3">
+                <div class="form-group-custom">
+                    <label class="form-label-custom">State <span class="text-danger">*</span></label>
+                    <select id="State" name="State" class="form-control-custom" required>
+                        <option value="">Select State</option>
+                    </select>
+                </div>
+                <div class="form-group-custom">
+                    <label class="form-label-custom">City <span class="text-danger">*</span></label>
+                    <select id="City" name="City" class="form-control-custom" required>
+                        <option value="">Select City</option>
+                    </select>
+                </div>
+                <div class="form-group-custom">
+                    <label class="form-label-custom">PIN Code <span class="text-danger">*</span></label>
+                    <input type="text" id="PinCode" name="PinCode" class="form-control-custom" placeholder="e.g. 160022" maxlength="6" required>
+                </div>
+            </div>
+
+            <div class="grid-2 mt-2">
+                <div class="form-group-custom" style="grid-column: span 2;">
+                    <label class="form-label-custom">Sector / Ward <span class="text-danger">*</span></label>
+                    <select id="Area" name="Area" class="form-control-custom" required>
+                        <option value="">Select Sector/Ward</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- SECTION 4: Detailed Description -->
+            <div class="section-title mt-4">
+                <div class="section-number">4</div>
+                Detailed Description & Evidence
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Description <span class="text-danger">*</span></label>
+                    <textarea id="Description" name="Description" rows="6" class="form-control-custom" placeholder="Provide as much detail as possible (Min. 200 characters)..." required></textarea>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span id="charCount" class="fw-bold text-danger small">0 / 200 (Min)</span>
+                    </div>
+                </div>
+                <div class="form-group-custom">
+                    <label class="form-label-custom">Upload Evidence (Optional)</label>
+                    <label for="Attachment" class="form-control-custom d-flex flex-column align-items-center justify-content-center mb-0" style="border: 2px dashed var(--border); height: 165px; cursor: pointer;">
+                        <span style="font-size: 2rem;">📎</span>
+                        <span class="text-muted mt-2">Click to upload photo/document</span>
+                        <input type="file" id="Attachment" name="Attachment" style="display: none;" onclick="event.stopPropagation()">
+                        <div id="fileNameDisplay" class="mt-2 text-primary fw-bold small"></div>
+                    </label>
+                    <div class="form-note">Supported formats: JPG, PNG, PDF (Max 5MB)</div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <button type="submit" id="btnSubmitDirect" class="btn-submit-premium px-5">Submit Registration & Complaint &rarr;</button>
+                <div class="mt-3">
+                    <a href="/" class="text-muted text-decoration-none small hover-underline">&larr; Back to Home</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Load States
+            $.get('/api/MasterData/states', function(data) {
+                var s = $('#State'); s.empty();
+                s.append('<option value="">Select State</option>');
+                data.forEach(x => s.append($('<option>').val(x).text(x)));
+            });
+
+            // Dependent: Cities by State
+            $('#State').on('change', function() {
+                var state = $(this).val();
+                var c = $('#City'); c.empty();
+                c.append('<option value="">Select City</option>');
+                $('#Area').empty().append('<option value="">Select Sector/Ward</option>');
+                
+                if (state) {
+                    $.get('/api/MasterData/cities-by-state?state=' + state, function(data) {
+                        data.forEach(x => c.append($('<option>').val(x).text(x)));
+                    });
+                }
+            });
+
+            // Dependent: Sectors by City
+            $('#City').on('change', function() {
+                var city = $(this).val();
+                var a = $('#Area'); a.empty();
+                a.append('<option value="">Select Sector/Ward</option>');
+                
+                if (city) {
+                    $.get('/api/MasterData/sectors-by-city?city=' + city, function(data) {
+                        data.forEach(x => a.append($('<option>').val(x).text(x)));
+                    });
+                }
+            });
+
+            // Load Departments
+            $.get('/api/MasterData/departments', function(data) {
+                var d = $('#Department'); d.empty();
+                d.append('<option value="">Select Department</option>');
+                data.forEach(x => d.append($('<option>').val(x.code).text(x.name)));
+            });
+
+
+
+            // Char counter
+            $('#Description').on('input', function() {
+                var len = $(this).val().length;
+                $('#charCount').text(len + ' / 200 (Min)');
+                $('#charCount').toggleClass('text-danger', len < 200).toggleClass('text-success', len >= 200);
+            });
+
+            // Auto-Department Selector
+            $('#ComplaintTitle').on('keyup', function() {
+                var t = $(this).val().toLowerCase();
+                var map = { 'ELE': ['wire', 'electricity', 'spark', 'light', 'pole'], 'WAT': ['water', 'leak', 'drain', 'sew'], 'SAN': ['garbage', 'trash', 'clean'], 'ROA': ['road', 'pothole', 'street'] };
+                for (var key in map) {
+                    if (map[key].some(kw => t.includes(kw))) { $('#Department').val(key); break; }
+                }
+            });
+
+            // File name display
+            $('#Attachment').on('change', function() {
+                var fileName = $(this).val().split('\\').pop();
+                $('#fileNameDisplay').text(fileName ? "Selected File: " + fileName : "");
+            });
+
+            // Submit logic
+            $('#directSubmitForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                if ($('#Description').val().length < 200) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Description Too Short',
+                        text: 'Description must be at least 200 characters.',
+                        confirmButtonColor: '#f97316'
+                    });
+                    return;
+                }
+
+                var formData = new FormData(this);
+
+                $('#btnSubmitDirect').prop('disabled', true).text('Processing Submission...');
+
+                $.ajax({
+                    url: '/Complaint/DirectSubmit',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Complaint Registered!',
+                            text: res.message,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            willClose: () => {
+                                window.location.href = '/';
+                            }
+                        });
+                    },
+                    error: function(xhr) {
+                        var msg = xhr.responseJSON ? xhr.responseJSON.message : "Submission failed.";
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Submission Failed',
+                            text: msg,
+                            confirmButtonColor: '#f97316'
+                        });
+                        $('#btnSubmitDirect').prop('disabled', false).text('Try Again');
+                    }
+                });
+            });
+
+
+        });
+    </script>
+}

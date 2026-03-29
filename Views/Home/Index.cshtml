@@ -1,8 +1,250 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        --accent-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --text-dark: #1e293b;
+        --text-light: #64748b;
+    }
+
+    body {
+        background: #f1f5f9;
+        overflow-x: hidden;
+    }
+
+    .hero-section {
+        background: var(--primary-gradient);
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 50px 20px;
+        position: relative;
+        color: white;
+        clip-path: ellipse(150% 100% at 50% 0%);
+    }
+
+    .hero-content {
+        text-align: center;
+        max-width: 900px;
+        z-index: 2;
+        animation: fadeIn 1s ease-out;
+    }
+
+    .hero-content h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        letter-spacing: -1px;
+    }
+
+    .hero-content p {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-bottom: 40px;
+    }
+
+    .feature-cards {
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .card-item {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px);
+        width: 320px;
+        padding: 40px 30px;
+        border-radius: 24px;
+        text-align: center;
+        color: var(--text-dark);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-item:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    }
+
+    .card-item .icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .card-item:hover .icon {
+        transform: scale(1.2);
+    }
+
+    .card-item h3 {
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .card-item p {
+        color: var(--text-light);
+        font-size: 0.95rem;
+        margin-bottom: 0;
+    }
+
+    .card-btn {
+        margin-top: 25px;
+        display: inline-block;
+        padding: 10px 25px;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-track {
+        background: var(--primary-gradient);
+        color: white !important;
+    }
+
+    .btn-register {
+        background: var(--accent-gradient);
+        color: white !important;
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 25px;
+    }
+
+    .modal-body {
+        padding: 40px;
+    }
+
+    .form-control-custom {
+        border-radius: 12px;
+        padding: 12px 20px;
+        background: #f8fafc;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-custom:focus {
+        background: white;
+        border-color: #2a5298;
+        box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.1);
+        outline: none;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @@media (max-width: 768px) {
+        .hero-content h1 { font-size: 2.5rem; }
+        .feature-cards { flex-direction: column; align-items: center; }
+        .card-item { width: 100%; max-width: 350px; }
+    }
+</style>
+
+<div class="hero-section">
+    <div class="hero-content">
+        <h1>Empowering Citizens,<br>Enhancing Governance</h1>
+        <p>A seamless platform to voice your concerns and track resolutions in real-time. Join thousands of citizens in making our city better.</p>
+
+        <div class="feature-cards">
+            <!-- Box 1: Track -->
+            <div class="card-item" onclick="$('#loginModal').modal('show')">
+                <span class="icon">🔍</span>
+                <h3>Track Your Complaint</h3>
+                <p>Check the real-time status of your existing service request.</p>
+                <div class="card-btn btn-track">Login to Track</div>
+            </div>
+
+            <!-- Box 2: Register -->
+            <a href="/Complaint/DirectSubmit" class="card-item" style="text-decoration: none;">
+                <span class="icon">📝</span>
+                <h3>Register a Complaint</h3>
+                <p>Submit a new request instantly without a complex login process.</p>
+                <div class="card-btn btn-register">File Instant Complaint</div>
+            </a>
+        </div>
+    </div>
 </div>
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Welcome Back</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="loginAlert"></div>
+                <form id="ajaxLoginForm" method="post">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Mobile Number</label>
+                        <input type="text" name="MobileNo" class="form-control form-control-custom" placeholder="Enter your 10 digit number" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Password</label>
+                        <input type="password" name="Password" class="form-control form-control-custom" placeholder="Enter your password" required>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill py-3 fw-bold" style="background: var(--primary-gradient); border: none;">Login & Track</button>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="text-muted small">Don't have an account? <a href="/Account/Register" class="text-primary fw-bold">Register Now</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#ajaxLoginForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+                
+                $.ajax({
+                    url: '/Account/Login',
+                    type: 'POST',
+                    data: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function(response) {
+                        if(response.success) {
+                            window.location.href = response.redirectUrl;
+                        }
+                    },
+                    error: function(xhr) {
+                        var msg = xhr.responseJSON ? xhr.responseJSON.message : "An error occurred. Please try again.";
+                        $('#loginAlert').html('<div class="alert alert-danger p-2 small">' + msg + '</div>');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -21,9 +21,24 @@ namespace CMS.Models
         public string City { get; set; } = string.Empty;
         public string Department { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        
+        public string? Street { get; set; }
+        public string? Locality { get; set; }
+        public string? PinCode { get; set; }
+        public string? Site { get; set; }
+        public string? Source { get; set; }
+        public DateTime? IncidentDate { get; set; }
 
-        // Pending, Assigned, Resolved
+        // Pending, Assigned, In Progress, Resolved
         public string Status { get; set; } = "Pending";
+
+        public string? Area { get; set; }
+        
+        // Assigned to a specific Department Head (User Id)
+        public string? AssignedToId { get; set; }
+        public string? AssignedToName { get; set; }
+
+        public string? AttachmentPath { get; set; }
 
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     }
