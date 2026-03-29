@@ -527,12 +527,13 @@
     <div id="panel-departments" class="panel">
       <div class="page-hdr"><div class="page-hdr-left"><h2>🏛️ Department Management</h2><p>Configure departments and divisions</p></div><button class="btn btn-primary" onclick="openDeptModal()">+ Add Dept</button></div>
       <div class="grid-3">
-        @foreach(var dept in masters.Departments) {
+        @if (masters != null && masters.Departments != null) {
+          @foreach(var dept in masters.Departments) {
             <div class="dept-card">
               <div class="dept-top">
                   <div class="dept-icon">🏢</div>
                   <div style="display:flex;gap:5px;">
-                      <button class="btn btn-outline btn-sm" onclick="openEditDeptModal('@dept.Code', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.Name))')">Edit</button>
+                      <button class="btn btn-outline btn-sm" onclick="openEditDeptModal('@dept.Code', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.Name))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.HeadName ?? ""))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.DivisionZone ?? ""))', @dept.SLADays, '@dept.Icon', '@dept.Email', '@dept.Status')">Edit</button>
                       <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);" onclick="deleteDept('@dept.Code')">Delete</button>
                   </div>
               </div>
@@ -541,6 +542,7 @@
               <div class="progress-wrap" style="margin-bottom:8px;"><div class="progress-fill" style="width:75%;background:var(--green)"></div></div>
               <div class="dept-stats"><div class="ds"><div class="dv">Active</div><div class="dl">Status</div></div></div>
             </div>
+          }
         }
       </div>
     </div>
@@ -551,16 +553,17 @@
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
-            <thead><tr><th>Officer</th><th>Mobile</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Officer</th><th>Mobile</th><th>Department</th><th>Jurisdiction</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
                 @foreach(var off in allOfficers) {
                     <tr>
                       <td><div style="display:flex;align-items:center;gap:10px;"><div class="officer-avatar" style="background:var(--blue-light);width:32px;height:32px;font-size:12px;">@(off.FullName.Substring(0,1))</div><div><div style="font-weight:600;">@off.FullName</div></div></div></td>
                       <td>@off.MobileNo</td>
                       <td><span class="role-tag role-je">JE</span> @off.Department</td>
+                      <td>@(off.AreaOfJurisdiction ?? off.Area ?? "N/A")</td>
                       <td><span class="pill pill-green">On Duty</span></td>
                       <td>
-                          <button class="btn btn-outline btn-sm" onclick="openEditOfficerModal('@off.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.FullName))', '@off.MobileNo', '@off.Email', '@off.Department')">Edit</button>
+                          <button class="btn btn-outline btn-sm" onclick="openEditOfficerModal('@off.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.FullName))', '@off.MobileNo', '@off.Email', '@off.Department', '@off.Landline', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.Designation ?? ""))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.AreaOfJurisdiction ?? off.Area ?? ""))')">Edit</button>
                           <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);" onclick="deleteOfficer('@off.Id')">Delete</button>
                       </td>
                     </tr>
@@ -620,7 +623,7 @@
           <table class="data-table">
             <thead><tr><th>State</th><th>City</th><th>Sector / Ward Name</th><th>Actions</th></tr></thead>
             <tbody>
-                @if(masters.Sectors != null) {
+                @if(masters != null && masters.Sectors != null) {
                     @foreach(var sec in masters.Sectors) {
                         <tr>
                           <td><span class="pill pill-blue">@sec.State</span></td>
@@ -735,17 +738,48 @@
 </div>
 
 <div class="modal-overlay" id="deptModal">
-  <div class="modal" style="max-width:500px;">
-    <div class="modal-hdr"><h3 id="deptModalTitle">Add Department</h3><button class="modal-close" onclick="closeModal('deptModal')">✕</button></div>
+  <div class="modal" style="max-width:550px;">
+    <div class="modal-hdr"><h3 id="deptModalTitle">Department Details</h3><button class="modal-close" onclick="closeModal('deptModal')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="oldDeptCode">
-      <div class="form-group">
-        <label>Department Name <span class="required">*</span></label>
-        <input type="text" id="deptName" placeholder="e.g. Electrical">
+      <div class="form-row-2">
+          <div class="form-group">
+            <label>Department Name <span class="required">*</span></label>
+            <input type="text" id="deptName" placeholder="e.g. Electrical">
+          </div>
+          <div class="form-group">
+            <label>Dept. Code <span class="required">*</span></label>
+            <input type="text" id="deptCode" placeholder="e.g. ELE">
+          </div>
       </div>
       <div class="form-group">
-        <label>Department Code <span class="required">*</span></label>
-        <input type="text" id="deptCode" placeholder="e.g. ELE">
+        <label>Head Name</label>
+        <input type="text" id="deptHeadName" placeholder="Officer in charge">
+      </div>
+      <div class="form-group">
+        <label>Division / Zone</label>
+        <input type="text" id="deptDivision" placeholder="e.g. North Zone">
+      </div>
+      <div class="form-row-2">
+          <div class="form-group">
+            <label>SLA (Days)</label>
+            <input type="number" id="deptSLA" value="7">
+          </div>
+          <div class="form-group">
+            <label>Icon (Emoji)</label>
+            <input type="text" id="deptIcon" value="💡">
+          </div>
+      </div>
+      <div class="form-group">
+        <label>Department Email</label>
+        <input type="email" id="deptEmail" placeholder="dept@example.com">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="deptStatus">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
       </div>
     </div>
     <div class="modal-footer">
@@ -756,46 +790,56 @@
 </div>
 
 <div class="modal-overlay" id="officerModal">
-  <div class="modal" style="max-width:500px;">
-    <div class="modal-hdr"><h3>Add Officer</h3><button class="modal-close" onclick="closeModal('officerModal')">✕</button></div>
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-hdr"><h3>👨‍✈️ Add New Officer</h3><button class="modal-close" onclick="closeModal('officerModal')">✕</button></div>
     <div class="modal-body">
       <input type="hidden" id="offId" />
-      <div class="form-group">
-        <label>Full Name <span class="required">*</span></label>
-        <input type="text" id="offName" placeholder="e.g. John Doe">
+      <div class="form-row-2">
+          <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <input type="text" id="offName" placeholder="e.g. John Doe">
+          </div>
+          <div class="form-group">
+            <label>Mobile No <span class="required">*</span></label>
+            <input type="text" id="offMobile" placeholder="10-digit number">
+          </div>
       </div>
-      <div class="form-group">
-        <label>Mobile Number <span class="required">*</span></label>
-        <input type="text" id="offMobile" placeholder="10-digit number">
-      </div>
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="offEmail" placeholder="john@example.com">
+      <div class="form-row-2">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="offEmail" placeholder="john@example.com">
+          </div>
+          <div class="form-group">
+            <label>Landline</label>
+            <input type="text" id="offLandline" placeholder="Office extension">
+          </div>
       </div>
       <div class="form-row-2">
         <div class="form-group">
           <label>Department</label>
           <select id="offDept">
             <option value="">Select Dept</option>
-            @foreach(var d in masters.Departments) {
-                <option value="@d.Code">@d.Name (@d.Code)</option>
+            @if(masters != null && masters.Departments != null) {
+                @foreach(var d in masters.Departments) {
+                    <option value="@d.Code">@d.Name (@d.Code)</option>
+                }
             }
           </select>
         </div>
         <div class="form-group">
-          <label>Role</label>
-          <select id="offRole">
-            <option value="DeptHead">Dept Head</option>
-          </select>
+          <label>Designation</label>
+          <input type="text" id="offDesignation" placeholder="e.g. Senior JE">
         </div>
       </div>
-      <div class="form-group" style="margin-top:-10px;">
-          <small class="text-muted" style="font-size:11px;color:var(--text-light);">* Default password will be set to: <strong>welcome123</strong></small>
+      <div class="form-group">
+        <label>Area of Jurisdiction</label>
+        <textarea id="offAreaOfJurisdiction" rows="4" placeholder="Mention sectors or wards..."></textarea>
       </div>
+      <input type="hidden" id="offRole" value="DeptHead">
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('officerModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveOfficer()">Add Officer</button>
+      <button class="btn btn-primary" onclick="saveOfficer()">Create Officer</button>
     </div>
   </div>
 </div>
@@ -916,14 +960,26 @@
       $('#oldDeptCode').val('');
       $('#deptName').val('');
       $('#deptCode').val('');
+      $('#deptHeadName').val('');
+      $('#deptDivision').val('');
+      $('#deptSLA').val(7);
+      $('#deptIcon').val('💡');
+      $('#deptEmail').val('');
+      $('#deptStatus').val('Active');
       document.getElementById('deptModal').classList.add('show');
   }
 
-  function openEditDeptModal(code, name) {
+  function openEditDeptModal(code, name, head, division, sla, icon, email, status) {
       $('#deptModalTitle').text('Edit Department');
       $('#oldDeptCode').val(code);
       $('#deptCode').val(code);
       $('#deptName').val(name);
+      $('#deptHeadName').val(head || '');
+      $('#deptDivision').val(division || '');
+      $('#deptSLA').val(sla || 7);
+      $('#deptIcon').val(icon || '💡');
+      $('#deptEmail').val(email || '');
+      $('#deptStatus').val(status || 'Active');
       document.getElementById('deptModal').classList.add('show');
   }
 
@@ -934,9 +990,20 @@
 
       if(!name || !code) { Swal.fire('Error', 'Please fill all required fields.', 'error'); return; }
       
+      const dept = {
+          Name: name,
+          Code: code,
+          HeadName: $('#deptHeadName').val(),
+          DivisionZone: $('#deptDivision').val(),
+          SLADays: parseInt($('#deptSLA').val()),
+          Icon: $('#deptIcon').val(),
+          Email: $('#deptEmail').val(),
+          Status: $('#deptStatus').val()
+      };
+
       const endpoint = oldCode ? '/Admin/EditDepartment' : '/Admin/AddDepartment';
 
-      $.post(endpoint, { oldCode, name, code })
+      $.post(endpoint, { oldCode: oldCode, dept: dept })
       .done(function() {
           Swal.fire('Saved', 'Department modified successfully.', 'success').then(() => location.reload());
       })
@@ -950,17 +1017,23 @@
       $('#offName').val('');
       $('#offMobile').val('');
       $('#offEmail').val('');
+      $('#offLandline').val('');
       $('#offDept').val('');
+      $('#offDesignation').val('');
+      $('#offAreaOfJurisdiction').val('');
       $('#officerModal .modal-hdr h3').text('Add Officer');
       document.getElementById('officerModal').classList.add('show');
   }
 
-  function openEditOfficerModal(id, name, mobile, email, dept) {
+  function openEditOfficerModal(id, name, mobile, email, dept, landline, designation, area) {
       $('#offId').val(id);
       $('#offName').val(name);
       $('#offMobile').val(mobile);
       $('#offEmail').val(email);
+      $('#offLandline').val(landline || '');
       $('#offDept').val(dept);
+      $('#offDesignation').val(designation || '');
+      $('#offAreaOfJurisdiction').val(area || '');
       $('#officerModal .modal-hdr h3').text('Edit Officer');
       document.getElementById('officerModal').classList.add('show');
   }
@@ -970,8 +1043,11 @@
       const name = $('#offName').val().trim();
       const mobile = $('#offMobile').val().trim();
       const email = $('#offEmail').val().trim();
+      const landline = $('#offLandline').val().trim();
       const dept = $('#offDept').val();
-      const role = $('#offRole').val();
+      const designation = $('#offDesignation').val().trim();
+      const area = $('#offAreaOfJurisdiction').val().trim();
+      const role = 'DeptHead';
 
       if(!name || !mobile) { Swal.fire('Error', 'Name and Mobile are required.', 'error'); return; }
 
@@ -979,11 +1055,15 @@
           FullName: name,
           MobileNo: mobile,
           Email: email,
+          Landline: landline,
           Department: dept,
+          Designation: designation,
+          AreaOfJurisdiction: area,
+          Area: area,
           Role: role,
           Password: 'welcome123'
       };
-      // Only append ID if it is an edit operation. Appending an empty string breaks Model Binding ID translation.
+      
       if (id) {
           payload.Id = id;
       }
@@ -991,12 +1071,15 @@
       const endpoint = id ? '/Admin/EditUser' : '/Admin/CreateUser';
 
       $.post(endpoint, payload)
-      .done(function() {
-          Swal.fire('Saved', 'Officer details have been updated.', 'success').then(() => location.reload());
+      .done(function(res) {
+          if (res.success) {
+              Swal.fire('Saved', 'Officer details have been updated.', 'success').then(() => location.reload());
+          } else {
+              Swal.fire('Error', res.message || 'Failed to save officer.', 'error');
+          }
       })
       .fail(function(err) {
-          console.error(err);
-          Swal.fire('Error', 'Failed to update roster. Make sure data is valid.', 'error');
+          Swal.fire('Error', 'Failed to communicate with server.', 'error');
       });
   }
 

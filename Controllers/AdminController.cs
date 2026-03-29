@@ -54,28 +54,46 @@ namespace CMS.Controllers
         [HttpPost]
         public async Task<IActionResult> EditUser(User user)
         {
-            var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
-            var update = Builders<User>.Update
-                .Set(u => u.FullName, user.FullName)
-                .Set(u => u.MobileNo, user.MobileNo)
-                .Set(u => u.Email, user.Email)
-                .Set(u => u.Role, user.Role)
-                .Set(u => u.Department, user.Department)
-                .Set(u => u.Area, user.Area);
+            try
+            {
+                var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
+                var update = Builders<User>.Update
+                    .Set(u => u.FullName, user.FullName)
+                    .Set(u => u.MobileNo, user.MobileNo)
+                    .Set(u => u.Email, user.Email)
+                    .Set(u => u.Role, user.Role)
+                    .Set(u => u.Department, user.Department)
+                    .Set(u => u.Area, user.Area)
+                    .Set(u => u.AreaOfJurisdiction, user.AreaOfJurisdiction)
+                    .Set(u => u.Landline, user.Landline)
+                    .Set(u => u.Designation, user.Designation);
 
-            await _context.Users.UpdateOneAsync(filter, update);
-            return RedirectToAction("Index");
+                await _context.Users.UpdateOneAsync(filter, update);
+                return Json(new { success = true });
+            }
+            catch (System.Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateUser(User user)
         {
-            await _context.Users.InsertOneAsync(user);
-            return RedirectToAction("Index");
+            try
+            {
+                await _context.Users.InsertOneAsync(user);
+                return Json(new { success = true });
+            }
+            catch (System.Exception)
+            {
+                // Likely duplicate key error for MobileNo
+                return Json(new { success = false, message = "Could not create user. Mobile number might already be registered." });
+            }
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddDepartment(string name, string code)
+        public async Task<IActionResult> AddDepartment(DepartmentMaster dept)
         {
             var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
             if (master == null)
@@ -85,29 +103,36 @@ namespace CMS.Controllers
             }
 
             var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
-            var update = Builders<Master>.Update.Push(m => m.Departments, new DepartmentMaster { Name = name, Code = code });
+            var update = Builders<Master>.Update.Push(m => m.Departments, dept);
             await _context.Masters.UpdateOneAsync(filter, update);
 
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditDepartment(string oldCode, string name, string code)
+        public async Task<IActionResult> EditDepartment(string oldCode, DepartmentMaster dept)
         {
             var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
             if (master != null)
             {
-                var dept = master.Departments.FirstOrDefault(d => d.Code == oldCode);
-                if (dept != null)
+                var existing = master.Departments.FirstOrDefault(d => d.Code == oldCode);
+                if (existing != null)
                 {
-                    dept.Name = name;
-                    dept.Code = code;
+                    existing.Name = dept.Name;
+                    existing.Code = dept.Code;
+                    existing.HeadName = dept.HeadName;
+                    existing.DivisionZone = dept.DivisionZone;
+                    existing.SLADays = dept.SLADays;
+                    existing.Icon = dept.Icon;
+                    existing.Email = dept.Email;
+                    existing.Status = dept.Status;
+
                     var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
                     var update = Builders<Master>.Update.Set(m => m.Departments, master.Departments);
                     await _context.Masters.UpdateOneAsync(filter, update);
                 }
             }
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
 
         [HttpPost]
@@ -120,7 +145,7 @@ namespace CMS.Controllers
                 .Set(c => c.Status, "Assigned");
 
             await _context.Complaints.UpdateOneAsync(filter, update);
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
 
         [HttpPost]
@@ -131,7 +156,7 @@ namespace CMS.Controllers
 
             await _context.Complaints.UpdateOneAsync(filter, update);
 
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
 
         [HttpPost]
@@ -166,7 +191,7 @@ namespace CMS.Controllers
                     await _context.Masters.UpdateOneAsync(filter, update);
                 }
             }
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
         [HttpPost]
         public async Task<IActionResult> DeleteDepartment(string code)
@@ -183,7 +208,7 @@ namespace CMS.Controllers
                     await _context.Masters.UpdateOneAsync(filter, update);
                 }
             }
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
 
         [HttpPost]
@@ -191,7 +216,7 @@ namespace CMS.Controllers
         {
             var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
             await _context.Users.DeleteOneAsync(filter);
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
     }
 }

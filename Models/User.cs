@@ -4,6 +4,7 @@ using System;
 
 namespace CMS.Models
 {
+    [BsonIgnoreExtraElements]
     public class User
     {
         [BsonId]
@@ -24,5 +25,8 @@ namespace CMS.Models
         // For DeptHead role
         public string? Department { get; set; }
         public string? Area { get; set; }
+        public string? AreaOfJurisdiction { get; set; }
+        public string? Landline { get; set; }
+        public string? Designation { get; set; }
     }
 }

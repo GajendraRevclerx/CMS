@@ -89,7 +89,8 @@ namespace CMS.Controllers
                     Description = model.Description,
                     State = model.State,
                     City = model.City,
-                    Area = model.Area,
+                    Area = model.Area ?? model.AreaOfJurisdiction,
+                    AreaOfJurisdiction = model.AreaOfJurisdiction ?? model.Area,
                     Department = model.Department,
                     Street = model.Street,
                     Locality = model.Locality,
@@ -131,6 +132,13 @@ namespace CMS.Controllers
                 return Ok(new { success = true, complaintNo = model.ComplaintNo });
             }
             return BadRequest(new { success = false, message = "Invalid data" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNextId()
+        {
+            var nextId = await _complaintService.GetNextComplaintIdAsync();
+            return Ok(new { nextId });
         }
 
         [HttpGet]

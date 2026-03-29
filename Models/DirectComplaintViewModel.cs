@@ -52,6 +52,7 @@ namespace CMS.Models
         public IFormFile? Attachment { get; set; }
 
         public string? Area { get; set; }
+        public string? AreaOfJurisdiction { get; set; }
         public string? AssignedToId { get; set; }
         public string? AssignedToName { get; set; }
     }

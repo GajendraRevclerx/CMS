@@ -4,6 +4,7 @@ using System;
 
 namespace CMS.Models
 {
+    [BsonIgnoreExtraElements]
     public class Complaint
     {
         [BsonId]
@@ -33,6 +34,7 @@ namespace CMS.Models
         public string Status { get; set; } = "Pending";
 
         public string? Area { get; set; }
+        public string? AreaOfJurisdiction { get; set; }
         
         // Assigned to a specific Department Head (User Id)
         public string? AssignedToId { get; set; }
