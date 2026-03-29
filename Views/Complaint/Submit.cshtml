@@ -250,10 +250,11 @@
             </div>
             <div class="form-group span-2">
               <label>Upload Evidence (Optional)</label>
-              <div class="upload-area">
+              <div class="upload-area" id="dropZone">
                 <div style="font-size:28px;margin-bottom:8px;color:var(--primary);">📎</div>
-                <p style="margin:0 0 4px;font-weight:600;color:var(--text-main);">Click to upload or drag &amp; drop</p>
+                <p style="margin:0 0 4px;font-weight:600;color:var(--text-main);" id="fileName">Click to upload or drag &amp; drop</p>
                 <small style="color:var(--text-muted);">Supported: JPG, PNG, MP4 (Max 10 MB)</small>
+                <input type="file" id="EvidenceFile" style="display:none;" accept=".jpg,.jpeg,.png,.mp4">
               </div>
             </div>
           </div>
@@ -287,15 +288,34 @@
       $.ajax({ url: '/api/MasterData/states', type: 'GET', success: function(data) {
         var $s = $('#State').empty();
         $s.append('<option value="">— Select State —</option>');
-        data.forEach(function(v) { $s.append($('<option>').val(v).text(v)); });
+        data.forEach(function(v) { 
+          $s.append($('<option>').val(v.shortCode).text(v.name + ' (' + v.shortCode + ')')); 
+        });
       }});
 
-      // Load cities
-      $.ajax({ url: '/api/MasterData/cities', type: 'GET', success: function(data) {
-        var $c = $('#City').empty();
-        $c.append('<option value="">— Select City —</option>');
-        data.forEach(function(v) { $c.append($('<option>').val(v).text(v)); });
-      }});
+      // Dynamic city loading based on state
+      $('#State').on('change', function() {
+        var stateCode = $(this).val();
+        var $c = $('#City').empty().append('<option value="">Loading...</option>');
+        
+        if (!stateCode) {
+            $c.empty().append('<option value="">Select State First</option>');
+            return;
+        }
+
+        $.ajax({ 
+            url: '/api/MasterData/cities/' + stateCode, 
+            type: 'GET', 
+            success: function(data) {
+                $c.empty().append('<option value="">— Select City —</option>');
+                data.forEach(function(v) { $c.append($('<option>').val(v).text(v)); });
+            },
+            error: function() {
+                $c.empty().append('<option value="">Error loading cities</option>');
+            }
+        });
+      });
+
 
       // Load departments
       $.ajax({ url: '/api/MasterData/departments', type: 'GET', success: function(data) {
@@ -337,8 +357,31 @@
         }
         // Updates preview using the sequence already displayed
         var currentPreview = $('#generatedComplaintNo').text();
-        // Just keep what's there if it was loaded, or re-calculate if needed.
-        // For simplicity, since it's loaded on document.ready, we don't need to change anything here unless year changes.
+      });
+
+      // --- File Upload UI Interactions ---
+      const $dropZone = $('#dropZone');
+      const $fileInput = $('#EvidenceFile');
+      const $fileNameLabel = $('#fileName');
+
+      $dropZone.on('click', () => $fileInput.click());
+
+      $fileInput.on('change', function() {
+          if (this.files && this.files[0]) {
+              $fileNameLabel.text('Selected: ' + this.files[0].name).css('color', 'var(--primary)');
+          }
+      });
+
+      $dropZone.on('dragover', function(e) {
+          e.preventDefault();
+          $(this).css('border-color', 'var(--primary)').css('background', '#eff6ff');
+      }).on('dragleave drop', function(e) {
+          e.preventDefault();
+          $(this).css('border-color', '#cbd5e1').css('background', '#f8fafc');
+          if (e.type === 'drop' && e.originalEvent.dataTransfer.files.length) {
+              $fileInput[0].files = e.originalEvent.dataTransfer.files;
+              $fileInput.trigger('change');
+          }
       });
 
       // Form submit
@@ -353,34 +396,39 @@
 
         var isLoggedIn = @Json.Serialize(isLoggedIn);
 
-        var payload = {
-          ComplaintTitle : $('#ComplaintTitle').val(),
-          Description    : desc,
-          Department     : $('#Department').val(),
-          State          : $('#State').val(),
-          City           : $('#City').val(),
-          Street         : $('#Street').val(),
-          Locality       : $('#Locality').val(),
-          PinCode        : $('#PinCode').val(),
-          Source         : $('#Source').val(),
-          Site           : $('#Site').val(),
-          IncidentDate   : $('#incidentDate').val()
-        };
+        var formData = new FormData();
+        formData.append('ComplaintTitle', $('#ComplaintTitle').val());
+        formData.append('Description', desc);
+        formData.append('Department', $('#Department').val());
+        formData.append('State', $('#State').val());
+        formData.append('City', $('#City').val());
+        formData.append('Street', $('#Street').val());
+        formData.append('Locality', $('#Locality').val());
+        formData.append('PinCode', $('#PinCode').val());
+        formData.append('Source', $('#Source').val());
+        formData.append('Site', $('#Site').val());
+        formData.append('IncidentDate', $('#incidentDate').val());
+
+        // File
+        if ($fileInput[0].files.length > 0) {
+            formData.append('EvidenceFile', $fileInput[0].files[0]);
+        }
 
         if (!isLoggedIn) {
-          payload.FullName = $('#FullName').val();
-          payload.MobileNo = $('#MobileNo').val();
-          payload.Password = $('#Password').val();
-          payload.Email    = $('#CitizenEmail').val();
+            formData.append('FullName', $('#FullName').val());
+            formData.append('MobileNo', $('#MobileNo').val());
+            formData.append('Password', $('#Password').val());
+            formData.append('Email', $('#CitizenEmail').val());
 
-          if (!payload.FullName || !payload.MobileNo || !payload.Password) {
-            showAlert('danger', 'Please fill in your Full Name, Mobile Number, and Password.');
-            return;
-          }
-          if (payload.MobileNo.length !== 10 || isNaN(payload.MobileNo)) {
-            showAlert('danger', 'Mobile number must be a 10-digit number.');
-            return;
-          }
+            var mobile = $('#MobileNo').val();
+            if (!$('#FullName').val() || !mobile || !$('#Password').val()) {
+                showAlert('danger', 'Please fill in your Full Name, Mobile Number, and Password.');
+                return;
+            }
+            if (mobile.length !== 10 || isNaN(mobile)) {
+                showAlert('danger', 'Mobile number must be a 10-digit number.');
+                return;
+            }
         }
 
         $('#btnSubmit').prop('disabled', true).text('Submitting...');
@@ -388,8 +436,9 @@
         $.ajax({
           url         : '/Complaint/Submit',
           type        : 'POST',
-          contentType : 'application/json',
-          data        : JSON.stringify(payload),
+          processData : false,
+          contentType : false,
+          data        : formData,
           success     : function (res) {
             if (res.success) {
               showAlert('success',

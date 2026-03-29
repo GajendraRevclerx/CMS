@@ -36,5 +36,6 @@ namespace CMS.Models
         public string Source { get; set; } = string.Empty;
         public string Site { get; set; } = string.Empty;
         public string IncidentDate { get; set; } = string.Empty;
+        public string? EvidencePath { get; set; }
     }
 }

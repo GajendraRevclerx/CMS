@@ -26,5 +26,7 @@ namespace CMS.Models
         public string Department { get; set; } = string.Empty; // Department Name or ID
         public string AreaOfJurisdiction { get; set; } = string.Empty;
         public string Landline { get; set; } = string.Empty;
+
+        public string Status { get; set; } = "Active"; // "Active" or "Inactive"
     }
 }

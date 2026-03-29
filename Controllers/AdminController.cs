@@ -44,7 +44,7 @@ namespace CMS.Controllers
                 EscalatedComplaints = allComplaints.Count(c => c.Status == "Escalated"),
                 AvgResolutionTimeDays = 3.8,
                 AvgCitizenRating = 4.1,
-                OfficersOnDuty = officers.Count,
+                OfficersOnDuty = officers.Count(o => o.Status != "Inactive"),
                 
                 RecentComplaints = allComplaints.Take(5).ToList(),
                 AllComplaints = allComplaints,
@@ -60,7 +60,6 @@ namespace CMS.Controllers
         {
             if (string.IsNullOrEmpty(dept.Id))
             {
-                dept.Id = null; // Let Mongo handle it
                 await _context.Departments.InsertOneAsync(dept);
             }
             else
@@ -72,12 +71,53 @@ namespace CMS.Controllers
         }
 
         [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> DeleteDepartment([FromForm] string id)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+                var filter = Builders<Department>.Filter.Eq(d => d.Id, id);
+                var result = await _context.Departments.DeleteOneAsync(filter);
+                if (result.DeletedCount > 0)
+                {
+                    TempData["SuccessMsg"] = "Department permanently deleted.";
+                }
+                else
+                {
+                    TempData["ErrorMsg"] = "Department not found in database.";
+                }
+            }
+            else
+            {
+                TempData["ErrorMsg"] = "Empty ID submitted.";
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> DeleteOfficer([FromForm] string id)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+                var filter = Builders<User>.Filter.Eq(u => u.Id, id);
+                var result = await _context.Users.DeleteOneAsync(filter);
+                TempData[result.DeletedCount > 0 ? "SuccessMsg" : "ErrorMsg"] =
+                    result.DeletedCount > 0 ? "Officer permanently deleted." : "Officer not found.";
+            }
+            else
+            {
+                TempData["ErrorMsg"] = "Empty ID submitted.";
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
         public async Task<IActionResult> SaveOfficer(User officer)
         {
             if (string.IsNullOrEmpty(officer.Id))
             {
                 // Create New
-                officer.Id = null;
                 officer.Role = "Officer";
                 
                 // Check if mobile already exists
@@ -93,7 +133,8 @@ namespace CMS.Controllers
                         .Set(u => u.Designation, officer.Designation)
                         .Set(u => u.Email, officer.Email)
                         .Set(u => u.Landline, officer.Landline)
-                        .Set(u => u.AreaOfJurisdiction, officer.AreaOfJurisdiction);
+                        .Set(u => u.AreaOfJurisdiction, officer.AreaOfJurisdiction)
+                        .Set(u => u.Status, string.IsNullOrEmpty(officer.Status) ? "Active" : officer.Status);
                     
                     if (!string.IsNullOrEmpty(officer.Password))
                         update = update.Set(u => u.Password, officer.Password);
@@ -115,7 +156,8 @@ namespace CMS.Controllers
                     .Set(u => u.Designation, officer.Designation)
                     .Set(u => u.Email, officer.Email)
                     .Set(u => u.Landline, officer.Landline)
-                    .Set(u => u.AreaOfJurisdiction, officer.AreaOfJurisdiction);
+                    .Set(u => u.AreaOfJurisdiction, officer.AreaOfJurisdiction)
+                    .Set(u => u.Status, string.IsNullOrEmpty(officer.Status) ? "Active" : officer.Status);
                 
                 if (!string.IsNullOrEmpty(officer.Password))
                 {

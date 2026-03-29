@@ -31,14 +31,7 @@ namespace CMS.Services
         public async Task CreateComplaintAsync(Complaint complaint)
         {
             var sequence = await GetNextSequenceValueAsync("complaint_seq");
-            
-            // Format: [StateCode]/[DeptCode]/[Year]/[Sequence]
-            // We assume State and Department logic mapping passes the codes
             var year = DateTime.UtcNow.Year;
-            
-            // Just map some basic defaults if not provided to avoid crash
-            var stateCode = !string.IsNullOrEmpty(complaint.State) ? complaint.State.Substring(0, 3).ToUpper() : "XXX";
-            var deptCode = !string.IsNullOrEmpty(complaint.Department) ? complaint.Department.Substring(0, 3).ToUpper() : "XXX";
             
             // In a real scenario, you'd match the Codes from Master table.
             // Our seed creates Code="ELE" etc, let's assume the frontend passes the Code directly.

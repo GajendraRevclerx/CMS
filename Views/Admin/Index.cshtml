@@ -315,7 +315,7 @@
                       <label style="font-size:12px;font-weight:600;color:var(--text-mid);">Officer</label>
                       <select id="cFilter_officer" onchange="filterComplaints()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:white;">
                         <option value="">All Officers</option>
-                        @foreach(var o in Model.Officers) { <option value="@o.Id">@o.FullName</option> }
+                        @foreach(var o in Model.Officers.Where(o => o.Status != "Inactive")) { <option value="@o.Id">@o.FullName</option> }
                       </select>
                     </div>
                     <button class="btn btn-outline" onclick="clearComplaintFilters()" style="white-space:nowrap;margin-top:auto;">✕ Clear</button>
@@ -401,6 +401,12 @@
                   <button class="btn btn-primary" onclick="openDeptModal()">+ Add Department</button>
                 </div>
               </div>
+              @if (TempData["ErrorMsg"] != null) {
+                  <div class="alert alert-danger" style="background:#fca5a5;color:#991b1b;padding:12px;border-radius:6px;margin-bottom:16px;">@TempData["ErrorMsg"]</div>
+              }
+              @if (TempData["SuccessMsg"] != null) {
+                  <div class="alert alert-success" style="background:#bbf7d0;color:#166534;padding:12px;border-radius:6px;margin-bottom:16px;">@TempData["SuccessMsg"]</div>
+              }
               <div class="grid-3">
                 @foreach (var dept in Model.Departments)
                 {
@@ -413,8 +419,13 @@
                       <div class="dept-top"><div class="dept-icon">@dept.Icon</div>
                       <div class="dept-actions">
                         <button class="btn btn-outline btn-sm" onclick='openDeptModal(@Json.Serialize(dept.Id), @Json.Serialize(dept.Name), @Json.Serialize(dept.Code), @Json.Serialize(dept.HeadName), @Json.Serialize(dept.Division), @dept.SlaDays, @Json.Serialize(dept.Email), @Json.Serialize(dept.Status), @Json.Serialize(dept.Icon))'>Edit</button>
+                        <form asp-controller="Admin" asp-action="DeleteDepartment" method="post" style="display:inline;" onsubmit="return confirm('WARNING: Are you sure you want to PERMANENTLY delete this department?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@dept.Id">
+                            <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red);border-color:#fca5a5;margin-left:5px;">Delete</button>
+                        </form>
                       </div></div>
-                      <h4>@dept.Name</h4>
+                      <h4>@dept.Name @if(dept.Status == "Inactive") { <span class="pill pill-grey" style="font-size:12px;margin-left:8px;">Inactive</span> }</h4>
                       <div class="dept-meta">Head: @dept.HeadName · @dept.Division</div>
                       <div class="progress-wrap" style="margin-bottom:8px;"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div>
                       <div class="dept-stats">
@@ -440,10 +451,16 @@
                   <button class="btn btn-primary" onclick="openOfficerModal()">+ Add Officer</button>
                 </div>
               </div>
+              @if (TempData["SuccessMsg"] != null) {
+                  <div style="background:#bbf7d0;color:#166534;padding:12px;border-radius:6px;margin-bottom:16px;">@TempData["SuccessMsg"]</div>
+              }
+              @if (TempData["ErrorMsg"] != null) {
+                  <div style="background:#fca5a5;color:#991b1b;padding:12px;border-radius:6px;margin-bottom:16px;">@TempData["ErrorMsg"]</div>
+              }
               <div class="card">
                 <div class="card-body no-pad">
                   <table class="data-table">
-                    <thead><tr><th>Officer Name</th><th>Mobile</th><th>Department</th><th>Designation</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Officer Name</th><th>Mobile</th><th>Department</th><th>Designation</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                       @foreach (var off in Model.Officers)
                       {
@@ -452,7 +469,21 @@
                             <td>@off.MobileNo</td>
                             <td><span class="pill pill-blue">@off.Department</span></td>
                             <td>@off.Designation</td>
-                             <td><button class="btn btn-outline btn-sm" onclick='openOfficerModal(@Json.Serialize(off.Id), @Json.Serialize(off.FullName), @Json.Serialize(off.Department), @Json.Serialize(off.Designation), @Json.Serialize(off.AreaOfJurisdiction), @Json.Serialize(off.MobileNo), @Json.Serialize(off.Email), @Json.Serialize(off.Landline))'>Transfer / Edit</button></td>
+                            <td>
+                              @if (off.Status == "Inactive") {
+                                <span class="pill pill-grey">Inactive</span>
+                              } else {
+                                <span class="pill pill-green">Active</span>
+                              }
+                            </td>
+                            <td style="display:flex;gap:6px;align-items:center;">
+                              <button class="btn btn-outline btn-sm" onclick='openOfficerModal(@Json.Serialize(off.Id), @Json.Serialize(off.FullName), @Json.Serialize(off.Department), @Json.Serialize(off.Designation), @Json.Serialize(off.AreaOfJurisdiction), @Json.Serialize(off.MobileNo), @Json.Serialize(off.Email), @Json.Serialize(off.Landline), @Json.Serialize(off.Status))'>Edit</button>
+                              <form asp-controller="Admin" asp-action="DeleteOfficer" method="post" style="display:inline;" onsubmit="return confirm('PERMANENTLY delete officer @off.FullName? This cannot be undone.')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@off.Id">
+                                <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red);border-color:#fca5a5;">Delete</button>
+                              </form>
+                            </td>
                         </tr>
                       }
                     </tbody>
@@ -881,7 +912,17 @@
                   <label>Password</label>
                   <input type="password" name="Password" id="offPass" placeholder="Leave blank to keep current">
               </div>
-              <div class="form-group"><label>Area of Jurisdiction</label><textarea name="AreaOfJurisdiction" id="offArea" rows="3"></textarea></div>
+              <div class="form-row-2">
+                <div class="form-group"><label>Area of Jurisdiction</label><textarea name="AreaOfJurisdiction" id="offArea" rows="3"></textarea></div>
+                <div class="form-group" id="offStatusGroup" style="display:none;">
+                  <label>Officer Status</label>
+                  <select name="Status" id="offStatus">
+                    <option value="Active">✅ Active</option>
+                    <option value="Inactive">🚫 Inactive</option>
+                  </select>
+                  <small style="color:var(--text-light);font-size:11px;">Inactive officers cannot be assigned complaints.</small>
+                </div>
+              </div>
             </div>
             <div class="cms-modal-footer">
               <button type="button" class="btn btn-outline" onclick="closeModal('officerModal')">Cancel</button>
@@ -942,7 +983,7 @@
             document.getElementById('deptModal').style.display = 'flex';
         }
 
-        function openOfficerModal(id='', name='', dept='', desig='', area='', mobile='', email='', landline='') {
+        function openOfficerModal(id='', name='', dept='', desig='', area='', mobile='', email='', landline='', status='Active') {
             document.getElementById('offId').value = id;
             document.getElementById('offName').value = name;
             document.getElementById('offDept').value = dept;
@@ -952,12 +993,15 @@
             document.getElementById('offEmail').value = email;
             document.getElementById('offLand').value = landline;
             document.getElementById('offPass').value = '';
+            document.getElementById('offStatus').value = status || 'Active';
 
             const isEdit = id && id.length > 0;
             document.getElementById('offModalTitle').innerText = isEdit ? '👮 Officer Edit / Transfer' : '👮 Add New Officer';
             document.getElementById('offSubmitBtn').innerText = isEdit ? 'Update Officer' : 'Create Officer';
             document.getElementById('offMobile').readOnly = isEdit;
-            
+            // Show status dropdown only when editing
+            document.getElementById('offStatusGroup').style.display = isEdit ? 'block' : 'none';
+
             if (!isEdit) {
                 document.getElementById('offPass').required = true;
                 document.getElementById('offPass').placeholder = 'Initial Password';
@@ -1134,8 +1178,11 @@
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
+            document.body.appendChild(a);
             a.download = 'complaints_export.csv';
             a.click();
+            document.body.removeChild(a);
         }
+
     </script>
 }

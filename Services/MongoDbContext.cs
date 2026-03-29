@@ -23,6 +23,8 @@ namespace CMS.Services
         public IMongoCollection<Complaint> Complaints => _database.GetCollection<Complaint>("Complaints");
         public IMongoCollection<Counter> Counters => _database.GetCollection<Counter>("Counters");
         public IMongoCollection<Master> Masters => _database.GetCollection<Master>("Masters");
+        public IMongoCollection<StateMaster> States => _database.GetCollection<StateMaster>("States");
+        public IMongoCollection<CityMaster> Cities => _database.GetCollection<CityMaster>("Cities");
 
         private void ConfigureIndices()
         {
@@ -31,6 +33,10 @@ namespace CMS.Services
             var indexOptions = new CreateIndexOptions { Unique = true };
             var indexModel = new CreateIndexModel<User>(indexKeysDefinition, indexOptions);
             usersCollection.Indexes.CreateOne(indexModel);
+
+            // States / Cities indices
+            States.Indexes.CreateOne(new CreateIndexModel<StateMaster>(Builders<StateMaster>.IndexKeys.Ascending(s => s.ShortCode), new CreateIndexOptions { Unique = true }));
+            Cities.Indexes.CreateOne(new CreateIndexModel<CityMaster>(Builders<CityMaster>.IndexKeys.Ascending(c => c.StateCode)));
         }
 
         private void SeedData()
@@ -41,8 +47,17 @@ namespace CMS.Services
             {
                 var masterData = new Master
                 {
-                    States = new List<string> { "CHD", "PUN", "HAR", "DEL" },
-                    Cities = new List<string> { "Chandigarh", "Mohali", "Panchkula", "New Delhi" },
+                    States = new List<StateData>
+                    {
+                        new StateData { ShortCode = "PB", FullName = "Punjab", Cities = new List<string> { "Chandigarh", "Amritsar", "Ludhiana", "Jalandhar", "Patiala", "Mohali" } },
+                        new StateData { ShortCode = "HR", FullName = "Haryana", Cities = new List<string> { "Panchkula", "Gurugram", "Faridabad", "Rohtak", "Ambala", "Karnal" } },
+                        new StateData { ShortCode = "UP", FullName = "Uttar Pradesh", Cities = new List<string> { "Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Ghaziabad", "Prayagraj" } },
+                        new StateData { ShortCode = "DL", FullName = "Delhi", Cities = new List<string> { "New Delhi", "North Delhi", "South Delhi", "Central Delhi" } },
+                        new StateData { ShortCode = "RJ", FullName = "Rajasthan", Cities = new List<string> { "Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer", "Bikaner" } },
+                        new StateData { ShortCode = "MH", FullName = "Maharashtra", Cities = new List<string> { "Mumbai", "Pune", "Nagpur", "Thane", "Nashik" } },
+                        new StateData { ShortCode = "KA", FullName = "Karnataka", Cities = new List<string> { "Bengaluru", "Mysuru", "Hubballi", "Mangaluru" } },
+                        new StateData { ShortCode = "TN", FullName = "Tamil Nadu", Cities = new List<string> { "Chennai", "Coimbatore", "Madurai", "Salem" } }
+                    },
                     Departments = new List<DepartmentMaster>
                     {
                         new DepartmentMaster { Name = "Construction-1", Code = "CON1" },
@@ -52,6 +67,53 @@ namespace CMS.Services
                     }
                 };
                 mastersCollection.InsertOne(masterData);
+            }
+
+            // Seed States
+            if (States.CountDocuments(_ => true) == 0)
+            {
+                var states = new List<StateMaster>
+                {
+                    new StateMaster { ShortCode = "PB", Name = "Punjab" },
+                    new StateMaster { ShortCode = "HR", Name = "Haryana" },
+                    new StateMaster { ShortCode = "UP", Name = "Uttar Pradesh" },
+                    new StateMaster { ShortCode = "DL", Name = "Delhi" },
+                    new StateMaster { ShortCode = "RJ", Name = "Rajasthan" },
+                    new StateMaster { ShortCode = "MH", Name = "Maharashtra" },
+                    new StateMaster { ShortCode = "KA", Name = "Karnataka" },
+                    new StateMaster { ShortCode = "TN", Name = "Tamil Nadu" }
+                };
+                States.InsertMany(states);
+            }
+
+            // Seed Cities
+            if (Cities.CountDocuments(_ => true) == 0)
+            {
+                var cities = new List<CityMaster>
+                {
+                    // Punjab
+                    new CityMaster { Name = "Chandigarh", StateCode = "PB" },
+                    new CityMaster { Name = "Amritsar", StateCode = "PB" },
+                    new CityMaster { Name = "Ludhiana", StateCode = "PB" },
+                    new CityMaster { Name = "Patiala", StateCode = "PB" },
+                    new CityMaster { Name = "Mohali", StateCode = "PB" },
+                    // Haryana
+                    new CityMaster { Name = "Panchkula", StateCode = "HR" },
+                    new CityMaster { Name = "Gurugram", StateCode = "HR" },
+                    new CityMaster { Name = "Faridabad", StateCode = "HR" },
+                    new CityMaster { Name = "Rohtak", StateCode = "HR" },
+                    // Uttar Pradesh
+                    new CityMaster { Name = "Lucknow", StateCode = "UP" },
+                    new CityMaster { Name = "Noida", StateCode = "UP" },
+                    new CityMaster { Name = "Ghaziabad", StateCode = "UP" },
+                    new CityMaster { Name = "Kanpur", StateCode = "UP" },
+                    new CityMaster { Name = "Varanasi", StateCode = "UP" },
+                    // Delhi
+                    new CityMaster { Name = "New Delhi", StateCode = "DL" },
+                    new CityMaster { Name = "North Delhi", StateCode = "DL" },
+                    new CityMaster { Name = "South Delhi", StateCode = "DL" }
+                };
+                Cities.InsertMany(cities);
             }
 
             // Seed Departments

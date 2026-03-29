@@ -1,6 +1,7 @@
 using CMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CMS.Controllers
@@ -19,17 +20,19 @@ namespace CMS.Controllers
         [HttpGet("states")]
         public async Task<IActionResult> GetStates()
         {
-            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
-            if (master == null) return NotFound();
-            return Ok(master.States);
+            var states = await _context.States.Find(_ => true)
+                .Project(s => new { s.Name, s.ShortCode })
+                .ToListAsync();
+            return Ok(states);
         }
 
-        [HttpGet("cities")]
-        public async Task<IActionResult> GetCities()
+        [HttpGet("cities/{stateCode}")]
+        public async Task<IActionResult> GetCities(string stateCode)
         {
-            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
-            if (master == null) return NotFound();
-            return Ok(master.Cities);
+            var cities = await _context.Cities.Find(c => c.StateCode == stateCode)
+                .Project(c => c.Name)
+                .ToListAsync();
+            return Ok(cities);
         }
 
         [HttpGet("departments")]

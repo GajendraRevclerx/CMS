@@ -3,9 +3,13 @@ using CMS.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -17,11 +21,13 @@ namespace CMS.Controllers
     {
         private readonly MongoDbContext _context;
         private readonly ComplaintService _complaintService;
+        private readonly IWebHostEnvironment _environment;
 
-        public ComplaintController(MongoDbContext context, ComplaintService complaintService)
+        public ComplaintController(MongoDbContext context, ComplaintService complaintService, IWebHostEnvironment environment)
         {
             _context = context;
             _complaintService = complaintService;
+            _environment = environment;
         }
 
         [AllowAnonymous]
@@ -38,7 +44,7 @@ namespace CMS.Controllers
         /// </summary>
         [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> Submit([FromBody] ComplaintSubmitRequest model)
+        public async Task<IActionResult> Submit([FromForm] ComplaintSubmitRequest model)
         {
             if (model == null)
                 return BadRequest(new { success = false, message = "Invalid request." });
@@ -106,18 +112,34 @@ namespace CMS.Controllers
             var complaint = new Complaint
             {
                 UserId         = userMobile,
-                ComplaintTitle = model.ComplaintTitle,
-                Description    = model.Description,
-                Department     = model.Department,
-                State          = model.State,
-                City           = model.City,
-                Street         = model.Street,
-                Locality       = model.Locality,
-                PinCode        = model.PinCode,
-                Source         = model.Source,
-                Site           = model.Site,
-                IncidentDate   = model.IncidentDate
+                ComplaintTitle = model.ComplaintTitle ?? string.Empty,
+                Description    = model.Description ?? string.Empty,
+                Department     = model.Department ?? string.Empty,
+                State          = model.State ?? string.Empty,
+                City           = model.City ?? string.Empty,
+                Street         = model.Street ?? string.Empty,
+                Locality       = model.Locality ?? string.Empty,
+                PinCode        = model.PinCode ?? string.Empty,
+                Source         = model.Source ?? string.Empty,
+                Site           = model.Site ?? string.Empty,
+                IncidentDate   = model.IncidentDate ?? string.Empty
             };
+
+            // Handle Evidence Upload
+            if (model.EvidenceFile != null && model.EvidenceFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "evidence");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = $"{Guid.NewGuid()}_{model.EvidenceFile.FileName}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.EvidenceFile.CopyToAsync(fileStream);
+                }
+                complaint.EvidencePath = $"/uploads/evidence/{uniqueFileName}";
+            }
 
             if (complaint.Description == null || complaint.Description.Length < 10)
                 return BadRequest(new { success = false, message = "Description must be at least 10 characters." });

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace CMS.Models
 {
     /// <summary>
@@ -24,5 +26,6 @@ namespace CMS.Models
         public string? Source         { get; set; }
         public string? Site           { get; set; }
         public string? IncidentDate   { get; set; }
+        public IFormFile? EvidenceFile { get; set; }
     }
 }
