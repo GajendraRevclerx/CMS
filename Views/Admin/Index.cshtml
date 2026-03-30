@@ -328,6 +328,12 @@
     <div class="nav-item" onclick="showPanel('locations')" id="nav-locations">
       <span class="icon">📍</span><span>Location Master</span>
     </div>
+    <div class="nav-item" onclick="showPanel('divisions')" id="nav-divisions">
+      <span class="icon">📂</span><span>Divisions</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('subdivisions')" id="nav-subdivisions">
+      <span class="icon">📁</span><span>Sub-Divisions</span>
+    </div>
     <div class="nav-item" onclick="showPanel('assignments')" id="nav-assignments">
       <span class="icon">🔀</span><span>Assign Complaints</span>
       <span class="nav-badge amber">@unassigned</span>
@@ -481,13 +487,55 @@
         <div class="page-hdr-left"><h2>📋 All Complaints</h2><p>Registry of all tickets filed in the system</p></div>
         <div class="page-hdr-actions"><button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
       </div>
+
+      <!-- FILTER BAR -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-body" style="padding:14px 18px;">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:12px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Search</label>
+              <div class="search-bar"><span class="icon">🔍</span><input type="text" id="complaintSearch" placeholder="Ack. No., name, issue..."></div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label>Status</label>
+              <select id="filterStatus">
+                  <option value="">All Statuses</option>
+                  <option>Pending</option>
+                  <option>Assigned</option>
+                  <option>In Progress</option>
+                  <option>Resolved</option>
+                  <option>Closed</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label>Officer</label>
+              <select id="filterOfficer">
+                  <option value="">All Officers</option>
+                  @foreach(var off in allOfficers) {
+                      <option value="@off.FullName">@off.FullName</option>
+                  }
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label>Priority</label>
+              <select id="filterPriority">
+                  <option value="">All</option>
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="applyFilters()" style="margin-top:17px;">Filter</button>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
             <thead><tr><th>Ack. No.</th><th>Citizen</th><th>Issue</th><th>Dept.</th><th>Assigned To</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
             <tbody>
                 @foreach(var item in Model) {
-                    <tr>
+                    <tr class="complaint-row" 
+                        data-status="@item.Status" 
+                        data-officer="@(item.AssignedToName ?? "")" 
+                        data-priority="@(item.Priority ?? "Medium")">
                       <td><span class="mono">@item.ComplaintNo</span></td>
                       <td>@item.UserId</td>
                       <td>@item.ComplaintTitle</td>
@@ -495,7 +543,7 @@
                       <td>@(item.AssignedToName ?? "—")</td>
                       <td><span class="pill @(item.Status == "Pending" ? "pill-amber" : item.Status == "Resolved" ? "pill-green" : "pill-blue")">@item.Status</span></td>
                       <td>@item.CreatedDate.ToString("dd MMM yyyy")</td>
-                      <td><button class="btn btn-outline btn-sm" onclick="openTicketModal('@item.Id', '@item.ComplaintNo', '@item.ComplaintTitle', '@item.Department', '@item.Status', '@item.AssignedToName')">Manage</button></td>
+                      <td><button class="btn btn-outline btn-sm" onclick="openTicketModal('@item.Id', '@item.ComplaintNo', '@item.ComplaintTitle', '@item.Department', '@item.Status', '@item.AssignedToName', '@(item.Priority ?? "Medium")')">Manage</button></td>
                     </tr>
                 }
             </tbody>
@@ -563,7 +611,7 @@
                       <td>@(off.AreaOfJurisdiction ?? off.Area ?? "N/A")</td>
                       <td><span class="pill pill-green">On Duty</span></td>
                       <td>
-                          <button class="btn btn-outline btn-sm" onclick="openEditOfficerModal('@off.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.FullName))', '@off.MobileNo', '@off.Email', '@off.Department', '@off.Landline', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.Designation ?? ""))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.AreaOfJurisdiction ?? off.Area ?? ""))')">Edit</button>
+                          <button class="btn btn-outline btn-sm" onclick="openEditOfficerModal('@off.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.FullName))', '@off.MobileNo', '@off.Email', '@off.Department', '@off.Landline', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.Designation ?? ""))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.AreaOfJurisdiction ?? off.Area ?? ""))', '@off.Division', '@off.SubDivision')">Edit</button>
                           <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);" onclick="deleteOfficer('@off.Id')">Delete</button>
                       </td>
                     </tr>
@@ -646,6 +694,63 @@
       </div>
     </div>
 
+    <!-- DIVISIONS PANEL -->
+    <div id="panel-divisions" class="panel">
+      <div class="page-hdr"><div class="page-hdr-left"><h2>📂 Division Management</h2><p>Manage divisions within departments</p></div><button class="btn btn-primary" onclick="openDivisionModal()">+ Add Division</button></div>
+      <div class="card">
+        <div class="card-body no-pad">
+          <table class="data-table">
+            <thead><tr><th>Division Name</th><th>Code</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                @if(masters != null && masters.Divisions != null) {
+                    @foreach(var div in masters.Divisions) {
+                        <tr>
+                          <td><strong>@div.Name</strong></td>
+                          <td><span class="mono">@div.Code</span></td>
+                          <td>@div.DepartmentName</td>
+                          <td><span class="pill @(div.Status == "Active" ? "pill-green" : "pill-red")">@div.Status</span></td>
+                          <td>
+                              <button class="btn btn-outline btn-sm" onclick="openEditDivisionModal('@div.Code', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(div.Name))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(div.DepartmentName))', '@div.Status')">Edit</button>
+                              <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);" onclick="deleteDivision('@div.Code')">Delete</button>
+                          </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-DIVISIONS PANEL -->
+    <div id="panel-subdivisions" class="panel">
+      <div class="page-hdr"><div class="page-hdr-left"><h2>📁 Sub-Division Management</h2><p>Manage sub-divisions within divisions</p></div><button class="btn btn-primary" onclick="openSubDivisionModal()">+ Add Sub-Division</button></div>
+      <div class="card">
+        <div class="card-body no-pad">
+          <table class="data-table">
+            <thead><tr><th>Sub-Division Name</th><th>Code</th><th>Department</th><th>Division</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                @if(masters != null && masters.SubDivisions != null) {
+                    @foreach(var sub in masters.SubDivisions) {
+                        <tr>
+                          <td><strong>@sub.Name</strong></td>
+                          <td><span class="mono">@sub.Code</span></td>
+                          <td>@sub.DepartmentName</td>
+                          <td>@sub.DivisionName</td>
+                          <td><span class="pill @(sub.Status == "Active" ? "pill-green" : "pill-red")">@sub.Status</span></td>
+                          <td>
+                              <button class="btn btn-outline btn-sm" onclick="openEditSubDivisionModal('@sub.Code', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(sub.Name))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(sub.DepartmentName))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(sub.DivisionName))', '@sub.Status')">Edit</button>
+                              <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);" onclick="deleteSubDivision('@sub.Code')">Delete</button>
+                          </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- OTHER PANELS -->
     <div id="panel-notifications" class="panel">
         <div class="page-hdr"><h2>🔔 Notifications</h2><p>Recent unassigned complaints submitted in the last 24hrs</p></div>
@@ -694,9 +799,93 @@
         </div>
     </div>
     
+    <!-- ANALYTICS PANEL -->
     <div id="panel-analytics" class="panel">
-        <div class="page-hdr"><h2>📈 Analytics</h2></div>
-        <div class="card"><div class="card-body"><p class="text-muted">Analytics engine starting up...</p></div></div>
+      <div class="page-hdr">
+        <div class="page-hdr-left">
+          <h2>📈 Analytics & Reports</h2>
+          <p>Department-wide complaint performance metrics</p>
+        </div>
+        <div class="page-hdr-actions">
+          <button class="btn btn-outline btn-sm" onclick="window.print()">⬇ Print Report</button>
+          <select class="btn btn-outline btn-sm" style="font-family:'Rajdhani',sans-serif;font-weight:700;">
+              <option>All Time</option>
+              <option>This Month</option>
+              <option>This Year</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="stats-grid" style="margin-bottom:20px;">
+        <div class="stat-card blue">
+            <div class="stat-top"><div class="stat-icon blue">📊</div><span class="stat-trend trend-up">Current</span></div>
+            <div class="stat-val">@ViewBag.Total</div>
+            <div class="stat-lbl">Total Filed (Dept.)</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-top"><div class="stat-icon green">✅</div><span class="stat-trend trend-up">@(ViewBag.Total > 0 ? (ViewBag.Resolved * 100 / ViewBag.Total) : 0)%</span></div>
+            <div class="stat-val">@ViewBag.Resolved</div>
+            <div class="stat-lbl">Resolved</div>
+        </div>
+        <div class="stat-card teal">
+            <div class="stat-top"><div class="stat-icon teal">⏱️</div><span class="stat-trend trend-up">Avg.</span></div>
+            <div class="stat-val">@ViewBag.AvgResolutionTime</div>
+            <div class="stat-lbl">Avg. Resolution Time</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-top"><div class="stat-icon purple">⭐</div><span class="stat-trend trend-up">Global</span></div>
+            <div class="stat-val">@ViewBag.AvgRating</div>
+            <div class="stat-lbl">Avg. Citizen Rating</div>
+        </div>
+      </div>
+      
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-hdr"><h3>Category Breakdown</h3></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              @{
+                  var colors = new[] { "var(--blue)", "var(--saffron)", "var(--red)", "var(--purple)", "var(--teal)" };
+                  int idx = 0;
+              }
+              @foreach(var cat in ViewBag.CategoryBreakdown) {
+                  <div>
+                      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+                          <span style="color:var(--text-mid);">@cat.CategoryName</span>
+                          <span style="font-weight:700;">@cat.Count (@cat.Percentage%)</span>
+                      </div>
+                      <div class="progress-wrap">
+                          <div class="progress-fill" style="width:@(cat.Percentage)%;background:@(colors[idx % 5])"></div>
+                      </div>
+                  </div>
+                  idx++;
+              }
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><h3>Officer Resolution Leaderboard</h3></div>
+          <div class="card-body no-pad">
+            <table class="data-table">
+              <thead><tr><th>#</th><th>Officer</th><th>Resolved</th><th>Rating</th></tr></thead>
+              <tbody>
+                @{ int rank = 1; }
+                @foreach(var off in ViewBag.OfficerLeaderboard) {
+                    <tr>
+                        <td style="font-weight:700;color:@(rank == 1 ? "var(--saffron)" : "var(--text-mid)");">
+                            @(rank == 1 ? "🥇 " : rank == 2 ? "🥈 " : rank == 3 ? "🥉 " : "") @rank
+                        </td>
+                        <td>@off.OfficerName</td>
+                        <td>@off.ResolvedCount</td>
+                        <td>⭐ @off.AvgRating.ToString("F1")</td>
+                    </tr>
+                    rank++;
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="panel-sla" class="panel">
         <div class="page-hdr"><h2>⏱️ SLA Monitor</h2></div>
@@ -724,10 +913,15 @@
       <div class="ticket-meta-row"><span class="tm">Dept: <strong id="modDept"></strong></span></div>
     </div>
     <div class="modal-body">
-      <div style="display:flex;gap:10px;margin-bottom:16px;"><span class="pill pill-blue" id="modStatus"></span></div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;"><span class="pill pill-blue" id="modStatus"></span> <span class="pill pill-amber" id="modPriorityLbl"></span></div>
       <input type="hidden" id="modId">
-      <div class="form-group"><label>Update Status</label>
-        <select id="modStatusSelect"><option>Pending</option><option>Assigned</option><option>In Progress</option><option>Resolved</option><option>Closed</option></select>
+      <div class="form-row-2">
+          <div class="form-group"><label>Update Status</label>
+            <select id="modStatusSelect"><option>Pending</option><option>Assigned</option><option>In Progress</option><option>Resolved</option><option>Closed</option></select>
+          </div>
+          <div class="form-group"><label>Priority</label>
+            <select id="modPrioritySelect"><option>High</option><option>Medium</option><option>Low</option></select>
+          </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -816,14 +1010,28 @@
       </div>
       <div class="form-row-2">
         <div class="form-group">
-          <label>Department</label>
-          <select id="offDept">
+          <label>Department <span class="required">*</span></label>
+          <select id="offDept" onchange="loadDivisionsForOfficer()">
             <option value="">Select Dept</option>
             @if(masters != null && masters.Departments != null) {
                 @foreach(var d in masters.Departments) {
-                    <option value="@d.Code">@d.Name (@d.Code)</option>
+                    <option value="@d.Name">@d.Name</option>
                 }
             }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Division</label>
+          <select id="offDiv" onchange="loadSubDivisionsForOfficer()">
+            <option value="">Select Division</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Sub-Division</label>
+          <select id="offSubDiv">
+            <option value="">Select Sub-Division</option>
           </select>
         </div>
         <div class="form-group">
@@ -861,6 +1069,90 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="divisionModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-hdr"><h3 id="divModalTitle">Division Details</h3><button class="modal-close" onclick="closeModal('divisionModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="oldDivCode">
+      <div class="form-group">
+        <label>Division Name <span class="required">*</span></label>
+        <input type="text" id="divName" placeholder="e.g. North Division">
+      </div>
+      <div class="form-group">
+        <label>Division Code <span class="required">*</span></label>
+        <input type="text" id="divCode" placeholder="e.g. ND-1">
+      </div>
+      <div class="form-group">
+        <label>Department <span class="required">*</span></label>
+        <select id="divDept">
+            <option value="">Select Department</option>
+            @if(masters != null && masters.Departments != null) {
+                @foreach(var d in masters.Departments) {
+                    <option value="@d.Name">@d.Name</option>
+                }
+            }
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="divStatus">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('divisionModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDivision()">Save Division</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="subDivisionModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-hdr"><h3 id="subModalTitle">Sub-Division Details</h3><button class="modal-close" onclick="closeModal('subDivisionModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="oldSubCode">
+      <div class="form-group">
+        <label>Sub-Division Name <span class="required">*</span></label>
+        <input type="text" id="subName" placeholder="e.g. Sector 1 Sub-Div">
+      </div>
+      <div class="form-group">
+        <label>Sub-Division Code <span class="required">*</span></label>
+        <input type="text" id="subCode" placeholder="e.g. S1-SD">
+      </div>
+      <div class="form-group">
+        <label>Department <span class="required">*</span></label>
+        <select id="subDept" onchange="loadDivisionsForSub()">
+            <option value="">Select Department</option>
+            @if(masters != null && masters.Departments != null) {
+                @foreach(var d in masters.Departments) {
+                    <option value="@d.Name">@d.Name</option>
+                }
+            }
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Division <span class="required">*</span></label>
+        <select id="subDiv">
+            <option value="">Select Division</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="subStatus">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('subDivisionModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSubDivision()">Save Sub-Division</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -886,13 +1178,15 @@
     }
   }
 
-  function openTicketModal(id, ack, title, dept, status, officer) {
+  function openTicketModal(id, ack, title, dept, status, officer, priority) {
     $('#modId').val(id);
     $('#modAck').text(ack);
     $('#modTitle').text(title);
     $('#modDept').text(dept);
     $('#modStatus').text(status);
     $('#modStatusSelect').val(status);
+    $('#modPrioritySelect').val(priority || 'Medium');
+    $('#modPriorityLbl').text(priority || 'Medium');
     document.getElementById('ticketModal').classList.add('show');
   }
 
@@ -901,12 +1195,43 @@
   function saveComplaintUpdate() {
       const id = $('#modId').val();
       const status = $('#modStatusSelect').val();
+      const priority = $('#modPrioritySelect').val();
+
       $.post('/Admin/UpdateStatus', { complaintId: id, status: status })
       .done(function() {
-          Swal.fire('Updated', 'Complaint status has been changed.', 'success').then(() => location.reload());
+          // Now update priority
+          $.post('/Admin/UpdatePriority', { complaintId: id, priority: priority })
+          .done(function() {
+              Swal.fire('Updated', 'Complaint details have been updated.', 'success').then(() => location.reload());
+          });
       })
       .fail(function() {
           Swal.fire('Error', 'Failed to update complaint.', 'error');
+      });
+  }
+
+  function applyFilters() {
+      const search = $('#complaintSearch').val().toLowerCase().trim();
+      const status = $('#filterStatus').val();
+      const officer = $('#filterOfficer').val();
+      const priority = $('#filterPriority').val();
+
+      $('.complaint-row').each(function() {
+          const row = $(this);
+          const rowText = row.text().toLowerCase();
+          const rowStatus = row.data('status');
+          const rowOfficer = row.data('officer');
+          const rowPriority = row.data('priority');
+
+          let show = true;
+
+          if (search && !rowText.includes(search)) show = false;
+          if (status && rowStatus !== status) show = false;
+          if (officer && rowOfficer !== officer) show = false;
+          if (priority && rowPriority !== priority) show = false;
+
+          if (show) row.show();
+          else row.hide();
       });
   }
 
@@ -1012,31 +1337,88 @@
       });
   }
 
-  function openAddOfficerModal() {
-      $('#offId').val('');
-      $('#offName').val('');
-      $('#offMobile').val('');
-      $('#offEmail').val('');
-      $('#offLandline').val('');
-      $('#offDept').val('');
-      $('#offDesignation').val('');
-      $('#offAreaOfJurisdiction').val('');
-      $('#officerModal .modal-hdr h3').text('Add Officer');
-      document.getElementById('officerModal').classList.add('show');
-  }
+   function openAddOfficerModal() {
+       $('#offId').val('');
+       $('#offName').val('');
+       $('#offMobile').val('');
+       $('#offEmail').val('');
+       $('#offLandline').val('');
+       $('#offDept').val('');
+       $('#offDiv').html('<option value="">Select Division</option>');
+       $('#offSubDiv').html('<option value="">Select Sub-Division</option>');
+       $('#offDesignation').val('');
+       $('#offAreaOfJurisdiction').val('');
+       $('#officerModal .modal-hdr h3').text('Add Officer');
+       document.getElementById('officerModal').classList.add('show');
+   }
 
-  function openEditOfficerModal(id, name, mobile, email, dept, landline, designation, area) {
-      $('#offId').val(id);
-      $('#offName').val(name);
-      $('#offMobile').val(mobile);
-      $('#offEmail').val(email);
-      $('#offLandline').val(landline || '');
-      $('#offDept').val(dept);
-      $('#offDesignation').val(designation || '');
-      $('#offAreaOfJurisdiction').val(area || '');
-      $('#officerModal .modal-hdr h3').text('Edit Officer');
-      document.getElementById('officerModal').classList.add('show');
-  }
+   function openEditOfficerModal(id, name, mobile, email, dept, landline, designation, area, div, sub) {
+       $('#offId').val(id);
+       $('#offName').val(name);
+       $('#offMobile').val(mobile);
+       $('#offEmail').val(email);
+       $('#offLandline').val(landline || '');
+       $('#offDept').val(dept);
+       
+       loadDivisionsForOfficer(function() {
+           $('#offDiv').val(div);
+           loadSubDivisionsForOfficer(function() {
+               $('#offSubDiv').val(sub);
+           });
+       });
+
+       $('#offDesignation').val(designation || '');
+       $('#offAreaOfJurisdiction').val(area || '');
+       $('#officerModal .modal-hdr h3').text('Edit Officer');
+       document.getElementById('officerModal').classList.add('show');
+   }
+
+   function loadDivisionsForOfficer(callback) {
+       const dept = $('#offDept').val();
+       const divSelect = $('#offDiv');
+       divSelect.html('<option value="">Loading...</option>');
+       $('#offSubDiv').html('<option value="">Select Sub-Division</option>');
+
+       if (!dept) {
+           divSelect.html('<option value="">Select Dept first</option>');
+           return;
+       }
+
+       $.get('/api/MasterData/divisions-by-department', { department: dept })
+       .done(function(data) {
+           divSelect.html('<option value="">Select Division</option>');
+           data.forEach(d => {
+               divSelect.append(`<option value="${d.name}">${d.name}</option>`);
+           });
+           if (callback) callback();
+       })
+       .fail(function() {
+           divSelect.html('<option value="">Error</option>');
+       });
+   }
+
+   function loadSubDivisionsForOfficer(callback) {
+       const div = $('#offDiv').val();
+       const subSelect = $('#offSubDiv');
+       subSelect.html('<option value="">Loading...</option>');
+
+       if (!div) {
+           subSelect.html('<option value="">Select Division first</option>');
+           return;
+       }
+
+       $.get('/api/MasterData/sub-divisions-by-division', { division: div })
+       .done(function(data) {
+           subSelect.html('<option value="">Select Sub-Division</option>');
+           data.forEach(s => {
+               subSelect.append(`<option value="${s.name}">${s.name}</option>`);
+           });
+           if (callback) callback();
+       })
+       .fail(function() {
+           subSelect.html('<option value="">Error</option>');
+       });
+   }
 
   function saveOfficer() {
       const id = $('#offId').val();
@@ -1051,18 +1433,20 @@
 
       if(!name || !mobile) { Swal.fire('Error', 'Name and Mobile are required.', 'error'); return; }
 
-      const payload = {
-          FullName: name,
-          MobileNo: mobile,
-          Email: email,
-          Landline: landline,
-          Department: dept,
-          Designation: designation,
-          AreaOfJurisdiction: area,
-          Area: area,
-          Role: role,
-          Password: 'welcome123'
-      };
+       const payload = {
+           FullName: name,
+           MobileNo: mobile,
+           Email: email,
+           Landline: landline,
+           Department: dept,
+           Division: $('#offDiv').val(),
+           SubDivision: $('#offSubDiv').val(),
+           Designation: designation,
+           AreaOfJurisdiction: area,
+           Area: area,
+           Role: role,
+           Password: 'welcome123'
+       };
       
       if (id) {
           payload.Id = id;
@@ -1145,6 +1529,174 @@
               })
               .fail(function() {
                   Swal.fire('Error', 'Failed to remove officer.', 'error');
+              });
+          }
+      });
+  }
+
+  // Division Functions
+  function openDivisionModal() {
+      $('#divModalTitle').text('Add Division');
+      $('#oldDivCode').val('');
+      $('#divName').val('');
+      $('#divCode').val('');
+      $('#divDept').val('');
+      $('#divStatus').val('Active');
+      document.getElementById('divisionModal').classList.add('show');
+  }
+
+  function openEditDivisionModal(code, name, dept, status) {
+      $('#divModalTitle').text('Edit Division');
+      $('#oldDivCode').val(code);
+      $('#divCode').val(code);
+      $('#divName').val(name);
+      $('#divDept').val(dept);
+      $('#divStatus').val(status || 'Active');
+      document.getElementById('divisionModal').classList.add('show');
+  }
+
+  function saveDivision() {
+      const name = $('#divName').val().trim();
+      const code = $('#divCode').val().trim();
+      const dept = $('#divDept').val();
+      const oldCode = $('#oldDivCode').val();
+
+      if(!name || !code || !dept) { Swal.fire('Error', 'Please fill all required fields.', 'error'); return; }
+      
+      const payload = {
+          Name: name,
+          Code: code,
+          DepartmentName: dept,
+          Status: $('#divStatus').val()
+      };
+
+      const endpoint = oldCode ? '/Admin/EditDivision' : '/Admin/AddDivision';
+
+      $.post(endpoint, { oldCode: oldCode, div: payload })
+      .done(function() {
+          Swal.fire('Saved', 'Division updated successfully.', 'success').then(() => location.reload());
+      })
+      .fail(function() {
+          Swal.fire('Error', 'Failed to save division.', 'error');
+      });
+  }
+
+  function deleteDivision(code) {
+      Swal.fire({
+          title: 'Are you sure?',
+          text: "Delete this division?",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: 'var(--red)',
+          confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+          if (result.isConfirmed) {
+              $.post('/Admin/DeleteDivision', { code: code })
+              .done(function() {
+                  Swal.fire('Deleted', 'Division removed.', 'success').then(() => location.reload());
+              })
+              .fail(function() {
+                  Swal.fire('Error', 'Failed to delete division.', 'error');
+              });
+          }
+      });
+  }
+
+  // Sub-Division Functions
+  function openSubDivisionModal() {
+      $('#subModalTitle').text('Add Sub-Division');
+      $('#oldSubCode').val('');
+      $('#subName').val('');
+      $('#subCode').val('');
+      $('#subDept').val('');
+      $('#subDiv').html('<option value="">Select Division</option>');
+      $('#subStatus').val('Active');
+      document.getElementById('subDivisionModal').classList.add('show');
+  }
+
+  function openEditSubDivisionModal(code, name, dept, div, status) {
+      $('#subModalTitle').text('Edit Sub-Division');
+      $('#oldSubCode').val(code);
+      $('#subCode').val(code);
+      $('#subName').val(name);
+      $('#subDept').val(dept);
+      
+      // Load divisions and then set value
+      loadDivisionsForSub(function() {
+          $('#subDiv').val(div);
+      });
+
+      $('#subStatus').val(status || 'Active');
+      document.getElementById('subDivisionModal').classList.add('show');
+  }
+
+  function loadDivisionsForSub(callback) {
+      const dept = $('#subDept').val();
+      const divSelect = $('#subDiv');
+      divSelect.html('<option value="">Loading...</option>');
+
+      if (!dept) {
+          divSelect.html('<option value="">Select Department first</option>');
+          return;
+      }
+
+      $.get('/api/MasterData/divisions-by-department', { department: dept })
+      .done(function(data) {
+          divSelect.html('<option value="">Select Division</option>');
+          data.forEach(d => {
+              divSelect.append(`<option value="${d.name}">${d.name}</option>`);
+          });
+          if (callback) callback();
+      })
+      .fail(function() {
+          divSelect.html('<option value="">Error loading divisions</option>');
+      });
+  }
+
+  function saveSubDivision() {
+      const name = $('#subName').val().trim();
+      const code = $('#subCode').val().trim();
+      const dept = $('#subDept').val();
+      const div = $('#subDiv').val();
+      const oldCode = $('#oldSubCode').val();
+
+      if(!name || !code || !dept || !div) { Swal.fire('Error', 'Please fill all required fields.', 'error'); return; }
+      
+      const payload = {
+          Name: name,
+          Code: code,
+          DepartmentName: dept,
+          DivisionName: div,
+          Status: $('#subStatus').val()
+      };
+
+      const endpoint = oldCode ? '/Admin/EditSubDivision' : '/Admin/AddSubDivision';
+
+      $.post(endpoint, { oldCode: oldCode, sub: payload })
+      .done(function() {
+          Swal.fire('Saved', 'Sub-Division updated successfully.', 'success').then(() => location.reload());
+      })
+      .fail(function() {
+          Swal.fire('Error', 'Failed to save sub-division.', 'error');
+      });
+  }
+
+  function deleteSubDivision(code) {
+      Swal.fire({
+          title: 'Are you sure?',
+          text: "Delete this sub-division?",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: 'var(--red)',
+          confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+          if (result.isConfirmed) {
+              $.post('/Admin/DeleteSubDivision', { code: code })
+              .done(function() {
+                  Swal.fire('Deleted', 'Sub-Division removed.', 'success').then(() => location.reload());
+              })
+              .fail(function() {
+                  Swal.fire('Error', 'Failed to delete sub-division.', 'error');
               });
           }
       });

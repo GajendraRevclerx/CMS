@@ -67,6 +67,24 @@ namespace CMS.Controllers
             return Ok(master.Areas);
         }
 
+        [HttpGet("divisions-by-department")]
+        public async Task<IActionResult> GetDivisionsByDepartment(string department)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null) return NotFound();
+            var divisions = master.Divisions.Where(d => d.DepartmentName == department).ToList();
+            return Ok(divisions);
+        }
+
+        [HttpGet("sub-divisions-by-division")]
+        public async Task<IActionResult> GetSubDivisionsByDivision(string division)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null) return NotFound();
+            var subDivs = master.SubDivisions.Where(s => s.DivisionName == division).ToList();
+            return Ok(subDivs);
+        }
+
         [HttpGet("find-head")]
         public async Task<IActionResult> FindHead(string dept, string area)
         {

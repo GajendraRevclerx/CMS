@@ -30,7 +30,6 @@ namespace CMS.Controllers
             ViewBag.Total = complaints.Count;
             ViewBag.Pending = complaints.Count(c => c.Status == "Pending");
             ViewBag.InProgress = complaints.Count(c => c.Status == "In Progress" || c.Status == "Assigned");
-            // Unassigned specific to the new "Assignments" panel
             ViewBag.Unassigned = complaints.Count(c => string.IsNullOrEmpty(c.AssignedToId));
             ViewBag.Resolved = complaints.Count(c => c.Status == "Resolved");
             
@@ -38,6 +37,46 @@ namespace CMS.Controllers
             ViewBag.Escalated = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 5);
             ViewBag.Notifications = complaints.Count(c => (now - c.CreatedDate).TotalDays <= 1);
             ViewBag.SLA = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 3);
+
+            // Analytics Data
+            var resolvedComplaints = complaints.Where(c => c.Status == "Resolved").ToList();
+            
+            double avgTime = 0;
+            if (resolvedComplaints.Any(c => c.ResolutionDate != null))
+            {
+                avgTime = resolvedComplaints.Where(c => c.ResolutionDate != null)
+                            .Average(c => (c.ResolutionDate!.Value - c.CreatedDate).TotalDays);
+            }
+            ViewBag.AvgResolutionTime = avgTime.ToString("F1") + "d";
+
+            var ratedComplaints = complaints.Where(c => c.Rating > 0).ToList();
+            double avgRating = ratedComplaints.Any() ? ratedComplaints.Average(c => c.Rating) : 0;
+            ViewBag.AvgRating = avgRating.ToString("F1") + "/5";
+
+            // Category Breakdown
+            var categoryData = complaints.GroupBy(c => c.ComplaintTitle)
+                .Select(g => new {
+                    CategoryName = g.Key,
+                    Count = g.Count(),
+                    Percentage = complaints.Count > 0 ? (int)((double)g.Count() / complaints.Count * 100) : 0
+                })
+                .OrderByDescending(x => x.Count)
+                .Take(5)
+                .ToList();
+            ViewBag.CategoryBreakdown = categoryData;
+
+            // Officer Leaderboard
+            var leaderboard = resolvedComplaints
+                .Where(c => !string.IsNullOrEmpty(c.AssignedToName))
+                .GroupBy(c => new { c.AssignedToId, c.AssignedToName })
+                .Select(g => new {
+                    OfficerName = g.Key.AssignedToName,
+                    ResolvedCount = g.Count(),
+                    AvgRating = g.Where(x => x.Rating > 0).Any() ? g.Where(x => x.Rating > 0).Average(x => x.Rating) : 0
+                })
+                .OrderByDescending(x => x.ResolvedCount)
+                .ToList();
+            ViewBag.OfficerLeaderboard = leaderboard;
 
             // User Management Data
             ViewBag.Users = await _context.Users.Find(_ => true).ToListAsync();
@@ -63,6 +102,8 @@ namespace CMS.Controllers
                     .Set(u => u.Email, user.Email)
                     .Set(u => u.Role, user.Role)
                     .Set(u => u.Department, user.Department)
+                    .Set(u => u.Division, user.Division)
+                    .Set(u => u.SubDivision, user.SubDivision)
                     .Set(u => u.Area, user.Area)
                     .Set(u => u.AreaOfJurisdiction, user.AreaOfJurisdiction)
                     .Set(u => u.Landline, user.Landline)
@@ -153,6 +194,21 @@ namespace CMS.Controllers
         {
             var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
             var update = Builders<Complaint>.Update.Set(c => c.Status, status);
+            
+            if (status == "Resolved") {
+                update = update.Set(c => c.ResolutionDate, System.DateTime.UtcNow);
+            }
+
+            await _context.Complaints.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdatePriority(string complaintId, string priority)
+        {
+            var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var update = Builders<Complaint>.Update.Set(c => c.Priority, priority);
 
             await _context.Complaints.UpdateOneAsync(filter, update);
 
@@ -205,6 +261,121 @@ namespace CMS.Controllers
                     master.Departments.Remove(dept);
                     var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
                     var update = Builders<Master>.Update.Set(m => m.Departments, master.Departments);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddDivision(DivisionMaster div)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Push(m => m.Divisions, div);
+            await _context.Masters.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditDivision(string oldCode, DivisionMaster div)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var existing = master.Divisions.FirstOrDefault(d => d.Code == oldCode);
+                if (existing != null)
+                {
+                    existing.Name = div.Name;
+                    existing.Code = div.Code;
+                    existing.DepartmentName = div.DepartmentName;
+                    existing.Status = div.Status;
+
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.Divisions, master.Divisions);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteDivision(string code)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var div = master.Divisions.FirstOrDefault(d => d.Code == code);
+                if (div != null)
+                {
+                    master.Divisions.Remove(div);
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.Divisions, master.Divisions);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddSubDivision(SubDivisionMaster sub)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Push(m => m.SubDivisions, sub);
+            await _context.Masters.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditSubDivision(string oldCode, SubDivisionMaster sub)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var existing = master.SubDivisions.FirstOrDefault(d => d.Code == oldCode);
+                if (existing != null)
+                {
+                    existing.Name = sub.Name;
+                    existing.Code = sub.Code;
+                    existing.DepartmentName = sub.DepartmentName;
+                    existing.DivisionName = sub.DivisionName;
+                    existing.Status = sub.Status;
+
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.SubDivisions, master.SubDivisions);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteSubDivision(string code)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var sub = master.SubDivisions.FirstOrDefault(d => d.Code == code);
+                if (sub != null)
+                {
+                    master.SubDivisions.Remove(sub);
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.SubDivisions, master.SubDivisions);
                     await _context.Masters.UpdateOneAsync(filter, update);
                 }
             }

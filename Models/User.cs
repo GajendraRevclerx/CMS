@@ -21,12 +21,14 @@ namespace CMS.Models
 
         // Citizen, DeptHead, Admin
         public string Role { get; set; } = "Citizen";
-        
+
         // For DeptHead role
         public string? Department { get; set; }
+        public string? Division { get; set; }
+        public string? SubDivision { get; set; }
+        public string? Designation { get; set; }
         public string? Area { get; set; }
         public string? AreaOfJurisdiction { get; set; }
         public string? Landline { get; set; }
-        public string? Designation { get; set; }
     }
 }

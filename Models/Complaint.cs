@@ -41,6 +41,9 @@ namespace CMS.Models
         public string? AssignedToName { get; set; }
 
         public string? AttachmentPath { get; set; }
+        public DateTime? ResolutionDate { get; set; }
+        public double Rating { get; set; } = 0;
+        public string Priority { get; set; } = "Medium";
 
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     }
