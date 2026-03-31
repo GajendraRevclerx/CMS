@@ -406,8 +406,17 @@
             // Load Masters for Chandigarh
             const fixedCity = "Chandigarh";
             
-            // Auto-load Sectors for Chandigarh (Static list to avoid dummy DB data)
-            populateChdSectors('Area');
+            // Auto-load Sectors for Chandigarh
+            $.get('/api/MasterData/sectors-by-city?city=Chandigarh', function(data) {
+                var $area = $('#Area');
+                $area.empty().append(new Option('Select Sector / Ward', ''));
+                if (Array.isArray(data)) {
+                    data.forEach(function(a) { $area.append(new Option(a, a)); });
+                }
+            }).fail(function() {
+                // Fallback if API fails
+                if(typeof populateChdSectors === 'function') populateChdSectors('Area');
+            });
 
             // Pin Code validation
             $('#PinCode').on('input', function() {
