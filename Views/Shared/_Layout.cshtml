@@ -73,15 +73,15 @@
         <a href="/" style="display:flex; align-items:center; gap:15px; text-decoration:none;">
             <img src="~/img/logo.png" style="height: 100px; width: auto;margin-left:5%" alt="Logo">
             <div class="header-text">
-                <div class="title">Chandigarh CMS</div>
-                <div class="sub">Complaint Management System</div>
+                <div class="title"><h2>Chandigarh CMS</h2></div>
+                <div class=""><h6>Complaint Management System</h6></div>
             </div>
         </a>
 
         <div style="flex:1;"></div>
 
         <nav class="site-nav">
-            <a asp-controller="Home" asp-action="Index">Home</a>
+            @* <a asp-controller="Home" asp-action="Index">Home</a> *@
             @if (User.Identity != null && User.Identity.IsAuthenticated) {
                 if (User.IsInRole("Admin")) {
                     <a asp-controller="Admin" asp-action="Index">Admin Control Panel</a>
@@ -106,7 +106,7 @@
                 <a asp-controller="Account" asp-action="Logout" style="margin-left:10px; font-size:18px; color:var(--red);" title="Logout">🚪</a>
             </div>
         } else {
-            <a href="/#loginModal" class="btn-login-sm" onclick="$('#loginModal').modal('show')">Login to Portal</a>
+            <a href="/#loginModal" style="text-decoration:none;margin-bottom:-6%;" onclick="$('#loginModal').modal('show')">Login to Portal</a>
         }
         <img src="~/img/emblem.png" style="height: 100px; width: auto; margin-left:15px;margin-right:6%" alt="Emblem">
     </header>

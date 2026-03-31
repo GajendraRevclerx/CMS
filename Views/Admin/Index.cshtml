@@ -271,10 +271,10 @@
 
 <!-- TOP HEADER -->
 <header class="top-header">
-        <img src="~/img/logo.png" style="height: 100px; width: auto;margin-left:18%" alt="Logo">
+        <img src="~/img/logo.png" style="height: 100px; width: auto;margin-left:4%" alt="Logo">
   <div class="header-text">
-    <div class="title">Chandigarh CMS — Admin Control Panel</div>
-    <div class="sub">Department Head / XEN Portal &nbsp;·&nbsp; Electrical Department HQ</div>
+            <div class="title"><h2>Chandigarh CMS — Admin Control Panel</h2></div>
+            <div class=""><h4>Department Head / XEN Portal &nbsp;·&nbsp; Electrical Department HQ</h4></div>
   </div>
   <div class="header-notif" onclick="showPanel('notifications')">
     🔔 <span class="notif-dot"></span>
@@ -316,7 +316,7 @@
     <div class="nav-item" onclick="showPanel('departments')" id="nav-departments">
       <span class="icon">🏛️</span><span>Departments</span>
     </div>
-    <div class="nav-item" onclick="showPanel('locations')" id="nav-locations">
+    <div  style="display:none;" class="nav-item" onclick="showPanel('locations')" id="nav-locations">
       <span class="icon">📍</span><span>Location Master</span>
     </div>
     <div class="nav-item" onclick="showPanel('divisions')" id="nav-divisions">
@@ -338,16 +338,16 @@
     <div class="nav-item" onclick="showPanel('analytics')" id="nav-analytics">
       <span class="icon">📈</span><span>Analytics</span>
     </div>
-    <div class="nav-item" onclick="showPanel('sla')" id="nav-sla">
-      <span class="icon">⏱️</span><span>SLA Monitor</span>
-      <span class="nav-badge amber">@slas</span>
+    <div style="display:none;" class="nav-item" onclick="showPanel('sla')" id="nav-sla">
+        <span class="icon">⏱️</span><span>SLA Monitor</span>
+    <span class="nav-badge amber">@slas</span>
     </div>
-    <div class="nav-item" onclick="showPanel('audit')" id="nav-audit">
-      <span class="icon">📁</span><span>Audit Log</span>
+    <div style="display:none;" class="nav-item" onclick="showPanel('audit')" id="nav-audit">
+        <span class="icon">📁</span><span style="display:none;">Audit Log</span>
     </div>
 
-    <div class="sidebar-section-label">Settings</div>
-    <div class="nav-item" onclick="showPanel('settings')" id="nav-settings">
+            <div style="display:none;" class="sidebar-section-label" style="display:none;">Settings</div>
+    <div  style="display:none;" class="nav-item" onclick="showPanel('settings')" id="nav-settings">
       <span class="icon">⚙️</span><span>Portal Settings</span>
     </div>
 
