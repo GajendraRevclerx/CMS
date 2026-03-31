@@ -1,4 +1,4 @@
-﻿@model CMS.Models.DirectComplaintViewModel
+@model CMS.Models.DirectComplaintViewModel
 
 @{
     ViewData["Title"] = "Direct Complaint Registration";
@@ -327,40 +327,21 @@
 
     <!-- Main Card -->
     <div class="glass-main-card">
-        <!-- Progress -->
-        <div class="step-tracker">
-            <div class="step-item active" id="step-dot-1">
-                <div class="step-circle">01</div>
-                <div class="step-label">Account</div>
-            </div>
-            <div class="step-item" id="step-dot-2">
-                <div class="step-circle">02</div>
-                <div class="step-label">Issue</div>
-            </div>
-            <div class="step-item" id="step-dot-3">
-                <div class="step-circle">03</div>
-                <div class="step-label">Location</div>
-            </div>
-            <div class="step-item" id="step-dot-4">
-                <div class="step-circle">04</div>
-                <div class="step-label">Evidence</div>
-            </div>
-        </div>
-
+        <!-- Single Page Helpdesk Form -->
         <form id="premiumSubmitForm" enctype="multipart/form-data">
             <div class="form-content">
                 
-                <!-- STEP 1: Personal Info -->
-                <div class="form-section active" id="section-1">
+                <!-- SECTION 1: Personal Info -->
+                <div class="form-section active" style="display:block;">
                     <div class="section-header">
-                        <h4>Account Information</h4>
-                        <p>We need your contact details to keep you updated on the resolution progress.</p>
+                        <h4>Complainant Information</h4>
+                        <p>Basic contact details for the citizen filing the grievance.</p>
                     </div>
 
                     <div class="grid-2">
                         <div class="input-group-custom">
                             <label class="input-label">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" name="FullName" class="form-control-premium" placeholder="Enter your full name" required>
+                            <input type="text" name="FullName" class="form-control-premium" placeholder="Complainant's name" required>
                         </div>
                         <div class="input-group-custom">
                             <label class="input-label">Email Address <span class="text-danger">*</span></label>
@@ -373,18 +354,16 @@
                             <label class="input-label">Mobile Number <span class="text-danger">*</span></label>
                             <input type="text" name="MobileNo" class="form-control-premium" placeholder="10-digit primary contact" maxlength="10" required>
                         </div>
-                        <div class="input-group-custom">
-                            <label class="input-label">Create Password <span class="text-danger">*</span></label>
-                            <input type="password" name="Password" class="form-control-premium" placeholder="Used to track your complaint" required>
-                        </div>
                     </div>
                 </div>
 
-                <!-- STEP 2: Issue Details -->
-                <div class="form-section" id="section-2">
+                <hr style="margin: 40px 0; opacity: 0.1;">
+
+                <!-- SECTION 2: Issue Details -->
+                <div class="form-section active" style="display:block;">
                     <div class="section-header">
                         <h4>Complaint Details</h4>
-                        <p>Tell us about the issue you are facing so we can categorize it correctly.</p>
+                        <p>Subject and category of the issue.</p>
                     </div>
 
                     <div class="input-group-custom">
@@ -400,16 +379,19 @@
                             </select>
                         </div>
                         <div class="input-group-custom">
-                            <label class="input-label">Source</label>
-                            <select name="Source" class="form-control-premium">
-                                <option value="Web Portal" selected>Citizen Web Portal</option>
+                            <label class="input-label">Source <span class="text-danger">*</span></label>
+                            <select name="Source" class="form-control-premium" required>
+                                <option value="Mobile">Mobile</option>
+                                <option value="WhatsApp">WhatsApp</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 3: Location -->
-                <div class="form-section" id="section-3">
+                <hr style="margin: 40px 0; opacity: 0.1;">
+
+                <!-- SECTION 3: Location -->
+                <div class="form-section active" style="display:block;">
                     <div class="section-header">
                         <h4>Incident Location</h4>
                         <p>Provide the precise location where the issue occurred.</p>
@@ -418,19 +400,16 @@
                     <div class="grid-3">
                         <div class="input-group-custom">
                             <label class="input-label">State <span class="text-danger">*</span></label>
-                            <select id="State" name="State" class="form-control-premium" required>
-                                <option value="">Select State</option>
-                            </select>
+                            <input type="text" id="State" name="State" class="form-control-premium" value="Chandigarh" readonly>
                         </div>
                         <div class="input-group-custom">
                             <label class="input-label">City <span class="text-danger">*</span></label>
-                            <select id="City" name="City" class="form-control-premium" required>
-                                <option value="">Select City</option>
-                            </select>
+                            <input type="text" id="City" name="City" class="form-control-premium" value="Chandigarh" readonly>
                         </div>
                         <div class="input-group-custom">
                             <label class="input-label">PIN Code <span class="text-danger">*</span></label>
-                            <input type="text" name="PinCode" class="form-control-premium" placeholder="6-digit ZIP" maxlength="6" required>
+                            <input type="text" id="PinCode" name="PinCode" class="form-control-premium" placeholder="e.g. 160022" maxlength="6" required>
+                            <small id="pinValidation" style="color:var(--red); display:none; font-weight:700; font-size:10px;">Invalid Chandigarh Pin Code (Starts with 160)</small>
                         </div>
                     </div>
 
@@ -442,11 +421,13 @@
                     </div>
                 </div>
 
-                <!-- STEP 4: Evidence -->
-                <div class="form-section" id="section-4">
+                <hr style="margin: 40px 0; opacity: 0.1;">
+
+                <!-- SECTION 4: Evidence -->
+                <div class="form-section active" style="display:block;">
                     <div class="section-header">
                         <h4>Evidence & Description</h4>
-                        <p>Finally, provide a detailed explanation and upload any photos if available.</p>
+                        <p>Detailed explanation and photo upload.</p>
                     </div>
 
                     <div class="input-group-custom">
@@ -459,29 +440,24 @@
                         <label class="input-label">Files & Attachments</label>
                         <input type="file" id="Attachment" name="Attachment" style="display:none;">
                         <div class="dropzone-area" onclick="document.getElementById('Attachment').click()">
-                            <div class="dropzone-icon"></div>
+                            <div class="dropzone-icon">📁</div>
                             <div class="dropzone-text">
                                 <h5>Upload supporting documents</h5>
-                                <p>Drag and drop or click to browse files (Images/PDF Max 4MB)</p>
+                                <p>Click to browse files (Images/PDF Max 4MB)</p>
                             </div>
                             <div class="selected-file-badge" id="fileBadge">
-                                <span>ðŸ“„</span> <span id="fileName">No file selected</span>
+                                <span>📄</span> <span id="fileName">No file selected</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Navigation -->
-                <div class="form-actions">
-                    <button type="button" class="btn-premium btn-back" id="btnPrev" style="visibility:hidden;">
-                        <span>&larr;</span> Previous
+                <!-- Submission -->
+                <div class="form-actions" style="justify-content: center;">
+                    <button type="submit" class="btn-premium btn-submit" id="btnSubmitFinal" style="width: 100%; max-width: 400px; justify-content: center;">
+                        🚀 Register Complaint
                     </button>
-                    <button type="button" class="btn-premium btn-next" id="btnNext">
-                        Next Step <span>&rarr;</span>
-                    </button>
-                    <button type="submit" class="btn-premium btn-submit" id="btnSubmitFinal" style="display:none;">
-                        Submit Complaint
-                    </button>
+                    <a href="/Complaint/Dashboard" class="btn-premium btn-back" style="text-decoration:none;">Cancel</a>
                 </div>
 
             </div>
@@ -493,28 +469,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        let currentStep = 1;
-        const totalSteps = 4;
-
         $(document).ready(function() {
-            // Initial Data Fetch
             fetchNextAckNo();
             loadMasterData();
-
-            // Navigation Logic
-            $('#btnNext').on('click', function() {
-                if (validateCurrentStep()) {
-                    if (currentStep < totalSteps) {
-                        goToStep(currentStep + 1);
-                    }
-                }
-            });
-
-            $('#btnPrev').on('click', function() {
-                if (currentStep > 1) {
-                    goToStep(currentStep - 1);
-                }
-            });
 
             // File selection UI
             $('#Attachment').on('change', function() {
@@ -541,8 +498,24 @@
                     return;
                 }
 
+                // Check all required fields
+                let valid = true;
+                $(this).find('input[required], select[required], textarea[required]').each(function() {
+                    if (!$(this).val()) {
+                        valid = false;
+                        $(this).css('border-color', '#ef4444');
+                    } else {
+                        $(this).css('border-color', '#e2e8f0');
+                    }
+                });
+
+                if (!valid) {
+                    Swal.fire('Required Fields', 'Please fill all mandatory fields marked with *', 'error');
+                    return;
+                }
+
                 const formData = new FormData(this);
-                $('#btnSubmitFinal').prop('disabled', true).text('ðŸ“¤ Submitting...');
+                $('#btnSubmitFinal').prop('disabled', true).text('📤 Registering Case...');
 
                 $.ajax({
                     url: '/Complaint/DirectSubmit',
@@ -552,18 +525,18 @@
                     contentType: false,
                     success: function(res) {
                         Swal.fire({
-                            title: 'Submitted Successfully!',
-                            text: 'Your complaint ID is ' + res.complaintNo,
+                            title: 'Case Registered!',
+                            text: 'Complaint ID: ' + res.complaintNo,
                             icon: 'success',
                             confirmButtonColor: '#1e3a8a'
                         }).then(() => {
-                            window.location.href = '/';
+                            window.location.href = '/Complaint/Dashboard';
                         });
                     },
                     error: function(xhr) {
                         const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Submission failed';
                         Swal.fire('Error', msg, 'error');
-                        $('#btnSubmitFinal').prop('disabled', false).text('ðŸš€ Submit Grievance');
+                        $('#btnSubmitFinal').prop('disabled', false).text('🚀 Register Complaint');
                     }
                 });
             });
@@ -571,60 +544,12 @@
             // Auto-Suggest Dept
             $('#ComplaintTitle').on('blur', function() {
                 const t = $(this).val().toLowerCase();
-                const map = { 'ELE': ['wire', 'electricity', 'light', 'current', 'spark'], 'WAT': ['water', 'leak', 'drain', 'overflow'], 'SAN': ['garbage', 'waste', 'cleaning'], 'ROA': ['road', 'pothole', 'street'] };
+                const map = { 'ELE': ['wire', 'electricity', 'light', 'current', 'spark'], 'WAT': ['water', 'drain', 'leak', 'overflow', 'pipe'], 'SAN': ['garbage', 'waste', 'cleaning', 'sewer'], 'ROA': ['road', 'pothole', 'street', 'path'] };
                 for (let key in map) {
                     if (map[key].some(kw => t.includes(kw))) { $('#Department').val(key); break; }
                 }
             });
         });
-
-        function goToStep(step) {
-            // Update dots
-            $('.step-item').removeClass('active');
-            for(let i=1; i<=step; i++) {
-                $(`#step-dot-${i}`).addClass(i === step ? 'active' : 'completed');
-            }
-
-            // Update sections
-            $(`.form-section`).removeClass('active');
-            $(`#section-${step}`).addClass('active');
-
-            // Update btns
-            currentStep = step;
-            $('#btnPrev').css('visibility', currentStep === 1 ? 'hidden' : 'visible');
-            
-            if (currentStep === totalSteps) {
-                $('#btnNext').hide();
-                $('#btnSubmitFinal').show();
-            } else {
-                $('#btnNext').show();
-                $('#btnSubmitFinal').hide();
-            }
-        }
-
-        function validateCurrentStep() {
-            const currentSection = $(`#section-${currentStep}`);
-            let valid = true;
-            currentSection.find('input[required], select[required], textarea[required]').each(function() {
-                if (!$(this).val()) {
-                    valid = false;
-                    $(this).css('border-color', '#ef4444');
-                    setTimeout(() => $(this).css('border-color', ''), 2000);
-                }
-            });
-
-            if (!valid) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'error',
-                    title: 'Please fill required fields',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
-            }
-            return valid;
-        }
 
         function fetchNextAckNo() {
             $.get('/Complaint/GetNextId', function(res) {
@@ -633,36 +558,28 @@
         }
 
         function loadMasterData() {
-            // States
-            $.get('/api/MasterData/states', function(data) {
-                data.forEach(function(s) { $('#State').append(new Option(s, s)); });
-            });
-
-            // Cities
-            $('#State').on('change', function() {
-                const s = $(this).val();
-                $('#City').empty().append(new Option('Select City', ''));
-                if (s) {
-                    $.get('/api/MasterData/cities-by-state?state=' + s, function(data) {
-                        data.forEach(function(c) { $('#City').append(new Option(c, c)); });
-                    });
-                }
-            });
-
-            // Areas
-            $('#City').on('change', function() {
-                const c = $(this).val();
-                $('#Area').empty().append(new Option('Select Area', ''));
-                if (c) {
-                    $.get('/api/MasterData/sectors-by-city?city=' + c, function(data) {
-                        data.forEach(function(a) { $('#Area').append(new Option(a, a)); });
-                    });
-                }
+            // Pre-load sectors for Chandigarh
+            const city = "Chandigarh";
+            $.get('/api/MasterData/sectors-by-city?city=' + city, function(data) {
+                $('#Area').empty().append(new Option('Select Sector/Ward', ''));
+                data.forEach(function(a) { $('#Area').append(new Option(a, a)); });
             });
 
             // Departments
             $.get('/api/MasterData/departments', function(data) {
                 data.forEach(function(d) { $('#Department').append(new Option(d.name, d.code)); });
+            });
+
+            // Pin Code validation
+            $('#PinCode').on('input', function() {
+                const val = $(this).val();
+                if (val.length >= 3 && !val.startsWith('160')) {
+                    $('#pinValidation').show();
+                    $(this).css('border-color', '#ef4444');
+                } else {
+                    $('#pinValidation').hide();
+                    $(this).css('border-color', '#e2e8f0');
+                }
             });
         }
     </script>

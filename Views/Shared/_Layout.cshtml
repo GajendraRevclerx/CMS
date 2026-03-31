@@ -85,6 +85,10 @@
             @if (User.Identity != null && User.Identity.IsAuthenticated) {
                 if (User.IsInRole("Admin")) {
                     <a asp-controller="Admin" asp-action="Index">Admin Control Panel</a>
+                } else if (User.IsInRole("Helpdesk")) {
+                    <a asp-controller="Complaint" asp-action="Dashboard">Helpdesk Dashboard</a>
+                    <a asp-controller="Complaint" asp-action="DirectSubmit">Register Complaint</a>
+                    <a href="/Complaint/Dashboard#assignments">Assign Officer</a>
                 } else {
                     <a asp-controller="Complaint" asp-action="Dashboard">My History</a>
                     <a asp-controller="Complaint" asp-action="Submit">File New</a>
@@ -97,7 +101,7 @@
                 <div class="auth-avatar">@(User.Identity.Name?[0].ToString().ToUpper() ?? "U")</div>
                 <div class="auth-info">
                     <div class="name">@User.Identity.Name</div>
-                    <div class="role">@(User.IsInRole("Admin") ? "System Administrator" : "Verified Client")</div>
+                    <div class="role">@(User.IsInRole("Admin") ? "System Administrator" : User.IsInRole("Helpdesk") ? "Helpdesk Officer" : "Verified Client")</div>
                 </div>
                 <a asp-controller="Account" asp-action="Logout" style="margin-left:10px; font-size:18px; color:var(--red);" title="Logout">🚪</a>
             </div>

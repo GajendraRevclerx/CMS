@@ -295,16 +295,12 @@
                                  <input type="text" id="Locality" name="Locality" placeholder="e.g. Sector 22">
                              </div>
                              <div class="form-group">
-                                 <label asp-for="State">State <span class="required">*</span></label>
-                                 <select asp-for="State" id="State" required>
-                                     <option value="">Loading...</option>
-                                 </select>
+                                 <label>State <span class="required">*</span></label>
+                                 <input type="text" id="State" name="State" value="Chandigarh" readonly>
                              </div>
                              <div class="form-group">
-                                 <label asp-for="City">City <span class="required">*</span></label>
-                                 <select asp-for="City" id="City" required>
-                                     <option value="">Loading...</option>
-                                 </select>
+                                 <label>City <span class="required">*</span></label>
+                                 <input type="text" id="City" name="City" value="Chandigarh" readonly>
                              </div>
                              <div class="form-group">
                                  <label>Sector / Ward <span class="required">*</span></label>
@@ -315,6 +311,7 @@
                              <div class="form-group">
                                  <label>PIN Code <span class="required">*</span></label>
                                  <input type="text" id="PinCode" name="PinCode" placeholder="160022" maxlength="6" required>
+                                 <small id="pinValidation" style="color:var(--danger); display:none; font-weight:700; font-size:10px; margin-top:4px;">Invalid Chandigarh Pin Code (Starts with 160)</small>
                              </div>
                          </div>
 
@@ -338,11 +335,8 @@
                             <div class="form-group">
                                 <label>Source of Complaint <span class="required">*</span></label>
                                 <select id="Source" name="Source" required>
-                                    <option value="">— Select Source —</option>
-                                    <option value="Portal">Web Portal</option>
                                     <option value="Mobile">Mobile App</option>
                                     <option value="WhatsApp">WhatsApp</option>
-                                    <option value="Helpline">Helpline Call</option>
                                 </select>
                                 <div class="form-note">How was this issue reported?</div>
                             </div>
@@ -408,45 +402,26 @@
                 $('#ComplaintNo').val(compNo); // Put in hidden field so it gets submitted
             }
 
-            // Load Masters
-            // Load States
-            $.ajax({
-                url: '/api/MasterData/states',
-                type: 'GET',
-                success: function (data) {
-                    var $state = $('#State');
-                    $state.empty();
-                    $state.append('<option value="">Select State</option>');
-                    data.forEach(function (state) {
-                        $state.append($('<option></option>').val(state).text(state));
-                    });
-                }
-            });
-
-            // Dependent: Cities by State
-            $('#State').on('change', function() {
-                var state = $(this).val();
-                var $city = $('#City'); $city.empty();
-                $city.append('<option value="">Select City</option>');
-                $('#Area').empty().append('<option value="">Select Sector/Ward</option>');
-                
-                if (state) {
-                    $.get('/api/MasterData/cities-by-state?state=' + state, function(data) {
-                        data.forEach(x => $city.append($('<option>').val(x).text(x)));
-                    });
-                }
-            });
-
-            // Dependent: Sectors by City
-            $('#City').on('change', function() {
-                var city = $(this).val();
-                var $area = $('#Area'); $area.empty();
+            // Load Masters for Chandigarh
+            const fixedCity = "Chandigarh";
+            
+            // Auto-load Sectors for Chandigarh
+            $.get('/api/MasterData/sectors-by-city?city=' + fixedCity, function(data) {
+                var $area = $('#Area');
+                $area.empty();
                 $area.append('<option value="">Select Sector/Ward</option>');
-                
-                if (city) {
-                    $.get('/api/MasterData/sectors-by-city?city=' + city, function(data) {
-                        data.forEach(x => $area.append($('<option>').val(x).text(x)));
-                    });
+                data.forEach(x => $area.append($('<option>').val(x).text(x)));
+            });
+
+            // Pin Code validation
+            $('#PinCode').on('input', function() {
+                const val = $(this).val();
+                if (val.length >= 3 && !val.startsWith('160')) {
+                    $('#pinValidation').show();
+                    $(this).css('border-color', 'var(--danger)');
+                } else {
+                    $('#pinValidation').hide();
+                    $(this).css('border-color', 'var(--border-color)');
                 }
             });
 

@@ -92,5 +92,11 @@ namespace CMS.Controllers
             if (head == null) return NotFound(new { message = "No head assigned yet" });
             return Ok(new { id = head.Id, name = head.FullName });
         }
+        [HttpGet("officers")]
+        public async Task<IActionResult> GetOfficers()
+        {
+            var officers = await _context.Users.Find(u => u.Role == "DeptHead").ToListAsync();
+            return Ok(officers.Select(o => new { id = o.Id, fullName = o.FullName, department = o.Department }));
+        }
     }
 }

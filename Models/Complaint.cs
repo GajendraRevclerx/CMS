@@ -15,6 +15,7 @@ namespace CMS.Models
         public string ComplaintNo { get; set; } = string.Empty;
 
         public string UserId { get; set; } = string.Empty; // MobileNo of the user
+        public string? RegisteredById { get; set; } // Staff member who registered it
 
         // Form Fields
         public string ComplaintTitle { get; set; } = string.Empty;

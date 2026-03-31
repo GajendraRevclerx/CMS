@@ -164,6 +164,90 @@
         .feature-cards { flex-direction: column; align-items: center; }
         .card-item { width: 100%; max-width: 350px; }
     }
+
+    /* Horizontal Tracker Styles */
+    .track-step-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 40px 10px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .track-step-container::before {
+        content: '';
+        position: absolute;
+        top: 58px;
+        left: 50px;
+        right: 50px;
+        height: 3px;
+        background: #e2e8f0;
+        z-index: 1;
+    }
+    
+    .track-step-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        z-index: 2;
+        position: relative;
+    }
+    
+    .track-step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        color: #94a3b8;
+        transition: all 0.4s ease;
+        box-shadow: 0 0 0 5px white;
+    }
+    
+    .track-step-item.active .track-step-circle {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        background: white;
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2), 0 0 0 5px white;
+    }
+    
+    .track-step-item.completed .track-step-circle {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+    }
+    
+    .track-step-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+    }
+    
+    .track-step-item.active .track-step-label {
+        color: #1e293b;
+    }
+    
+    .track-progress-line {
+        position: absolute;
+        top: 58px;
+        left: 50px;
+        height: 3px;
+        background: #10b981;
+        z-index: 1;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 </style>
 
 <div class="hero-section">
@@ -173,10 +257,10 @@
 
         <div class="feature-cards">
             <!-- Box 1: Track -->
-            <div class="card-item" onclick="$('#loginModal').modal('show')">
+            <div class="card-item" onclick="$('#trackModal').modal('show')">
                 <span class="icon">🔍</span>
                 <h3>Track Your Complaint</h3>
-                <p>Check the real-time status of your existing service request.</p>
+                <p>Check the real-time status using your complaint number.</p>
                 <div class="card-btn btn-track">Track Complaint</div>
             </div>
 
@@ -222,6 +306,32 @@
     </div>
 </div>
 
+<!-- Track Complaint Modal -->
+<div class="modal fade" id="trackModal" tabindex="-1" aria-labelledby="trackModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-gradient); color: white; border: none;">
+                <h5 class="modal-title" id="trackModalLabel">Track Complaint</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="trackContentArea">
+                    <div id="trackResult"></div>
+                    <form id="trackForm">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Complaint/Acknowledgement No.</label>
+                            <input type="text" id="trackId" class="form-control form-control-custom" placeholder="e.g. 2026/0001" required autocomplete="off">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary rounded-pill py-3 fw-bold" style="background: var(--primary-gradient); border: none;">Search Status</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         $(document).ready(function() {
@@ -244,6 +354,98 @@
                         $('#loginAlert').html('<div class="alert alert-danger p-2 small">' + msg + '</div>');
                     }
                 });
+            });
+            
+            // Public Tracking
+            $('#trackForm').on('submit', function(e) {
+                e.preventDefault();
+                var id = $('#trackId').val().trim();
+                var $result = $('#trackResult');
+                
+                $result.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
+                
+                $.ajax({
+                    url: '/Complaint/Track',
+                    type: 'GET',
+                    data: { id: id },
+                    success: function(res) {
+                        if(res.success) {
+                            let step = 1;
+                            if (res.status === 'Assigned') step = 2;
+                            if (res.status === 'In Progress') step = 3;
+                            if (res.status === 'Resolved' || res.status === 'Closed') step = 4;
+                            
+                            var progressWidth = ((step - 1) / 3) * 100;
+                            if (step === 1) progressWidth = 0;
+
+                            $result.html(`
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="fw-bold mb-0">${res.complaintNo}</h6>
+                                        <span class="badge ${step === 4 ? 'bg-success' : 'bg-primary'} rounded-pill">${res.status}</span>
+                                    </div>
+                                    <p class="text-muted small">${res.title} · Filed on ${res.createdDate}</p>
+                                    
+                                    <div class="position-relative">
+                                        <div class="track-step-container">
+                                            <div class="track-progress-line" style="width: 0%;" id="actualProgressLine"></div>
+                                            <div class="track-step-item ${step >= 1 ? (step > 1 ? 'completed' : 'active') : ''}">
+                                                <div class="track-step-circle">${step > 1 ? '✓' : '01'}</div>
+                                                <div class="track-step-label">Registered</div>
+                                            </div>
+                                            <div class="track-step-item ${step >= 2 ? (step > 2 ? 'completed' : 'active') : ''}">
+                                                <div class="track-step-circle">${step > 2 ? '✓' : '02'}</div>
+                                                <div class="track-step-label">Assigned</div>
+                                            </div>
+                                            <div class="track-step-item ${step >= 3 ? (step > 3 ? 'completed' : 'active') : ''}">
+                                                <div class="track-step-circle">${step > 3 ? '✓' : '03'}</div>
+                                                <div class="track-step-label">Working</div>
+                                            </div>
+                                            <div class="track-step-item ${step >= 4 ? 'active' : ''}">
+                                                <div class="track-step-circle">04</div>
+                                                <div class="track-step-label">Resolved</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card bg-light border-0 rounded-4 p-3 mt-2">
+                                        <div class="row text-center">
+                                            <div class="col-6 border-end">
+                                                <label class="text-muted small d-block mb-1">Category</label>
+                                                <span class="fw-bold text-dark">${res.category}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="text-muted small d-block mb-1">Assigned To</label>
+                                                <span class="fw-bold text-dark">${res.assignedTo}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-4">
+                                        <button class="btn btn-outline-secondary btn-sm rounded-pill px-4" onclick="location.reload()">Track Another</button>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            // Animate progress line
+                            setTimeout(() => {
+                                $('#actualProgressLine').css('width', `calc(${progressWidth}% - 0px)`);
+                            }, 100);
+                            
+                            $('#trackForm').hide();
+                        }
+                    },
+                    error: function(xhr) {
+                        var msg = xhr.responseJSON ? xhr.responseJSON.message : "Complaint not found or system error.";
+                        $result.html('<div class="alert alert-danger p-3 rounded-4 mb-4">' + msg + '</div>');
+                    }
+                });
+            });
+
+            // Clear modal on close
+            $('#trackModal').on('hidden.bs.modal', function () {
+                $('#trackId').val('');
+                $('#trackResult').html('');
+                $('#trackForm').show();
             });
         });
     </script>

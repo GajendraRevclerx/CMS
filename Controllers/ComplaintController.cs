@@ -25,43 +25,32 @@ namespace CMS.Controllers
             _environment = environment;
         }
 
-        [AllowAnonymous]
+        [Authorize(Roles = "Helpdesk")]
         [HttpGet]
         public IActionResult DirectSubmit()
         {
             return View();
         }
 
-        [AllowAnonymous]
+        [Authorize(Roles = "Helpdesk")]
         [HttpPost]
         public async Task<IActionResult> DirectSubmit([FromForm] DirectComplaintViewModel model)
         {
             if (ModelState.IsValid)
             {
-                // 1. Check if user exists
-                var user = await _context.Users.Find(u => u.MobileNo == model.MobileNo).FirstOrDefaultAsync();
+                // Chandigarh-specific server-side validation
+                if (model.State != "Chandigarh" || model.City != "Chandigarh")
+                    return BadRequest(new { success = false, message = "Only Chandigarh is supported for registration." });
                 
-                if (user == null)
-                {
-                    // Create new user
-                    user = new User
-                    {
-                        FullName = model.FullName,
-                        MobileNo = model.MobileNo,
-                        Email = model.Email,
-                        Password = model.Password ?? model.MobileNo // Use mobile as default if not provided
-                    };
-                    await _context.Users.InsertOneAsync(user);
-                }
-                else
-                {
-                    // Existing user - update password if provided
-                    if (!string.IsNullOrEmpty(model.Password))
-                    {
-                        var update = Builders<User>.Update.Set(u => u.Password, model.Password);
-                        await _context.Users.UpdateOneAsync(u => u.MobileNo == model.MobileNo, update);
-                    }
-                }
+                if (string.IsNullOrEmpty(model.PinCode) || !model.PinCode.StartsWith("160"))
+                    return BadRequest(new { success = false, message = "Invalid Chandigarh Pin Code. Area must be within 160xxx series." });
+
+                var allowedSources = new[] { "Mobile", "WhatsApp" };
+                if (string.IsNullOrEmpty(model.Source) || !allowedSources.Contains(model.Source))
+                    return BadRequest(new { success = false, message = "Invalid registration source." });
+
+                // Note: Stop Automatic User Creation as requested.
+                // We just use the provided contact info for the complaint.
 
                 // 2. Handle File Attachment
                 string? attachmentPath = null;
@@ -80,11 +69,13 @@ namespace CMS.Controllers
                     attachmentPath = "/uploads/" + uniqueFileName;
                 }
 
+                var staffMobile = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 // 3. Create Complaint
                 var complaint = new Complaint
                 {
                     ComplaintNo = model.ComplaintNo ?? $"CHD/{DateTime.Now.Year}/{Guid.NewGuid().ToString().Substring(0, 5).ToUpper()}",
-                    UserId = user.MobileNo,
+                    UserId = model.MobileNo,
+                    RegisteredById = staffMobile,
                     ComplaintTitle = model.ComplaintTitle,
                     Description = model.Description,
                     State = model.State,
@@ -124,6 +115,17 @@ namespace CMS.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Chandigarh-specific server-side validation
+                if (model.State != "Chandigarh" || model.City != "Chandigarh")
+                    return BadRequest(new { success = false, message = "Only Chandigarh is supported for registration." });
+                
+                if (string.IsNullOrEmpty(model.PinCode) || !model.PinCode.StartsWith("160"))
+                    return BadRequest(new { success = false, message = "Invalid Chandigarh Pin Code. Area must be within 160xxx series." });
+
+                var allowedSources = new[] { "Mobile", "WhatsApp" };
+                if (string.IsNullOrEmpty(model.Source) || !allowedSources.Contains(model.Source))
+                    return BadRequest(new { success = false, message = "Invalid registration source." });
+
                 var userMobile = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 model.UserId = userMobile ?? "";
 
@@ -141,21 +143,86 @@ namespace CMS.Controllers
             return Ok(new { nextId });
         }
 
+        [Authorize(Roles = "Helpdesk,Citizen")]
         [HttpGet]
         public async Task<IActionResult> Dashboard()
         {
             var userMobile = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
             var complaints = await _context.Complaints
-                .Find(c => c.UserId == userMobile)
+                .Find(c => userRole == "Helpdesk" ? c.RegisteredById == userMobile : c.UserId == userMobile) // Helpdesk sees self-registered
                 .SortByDescending(c => c.CreatedDate)
                 .ToListAsync();
+
+            if (userRole == "Helpdesk")
+            {
+                var allPending = await _context.Complaints
+                    .Find(c => string.IsNullOrEmpty(c.AssignedToId))
+                    .SortByDescending(c => c.CreatedDate)
+                    .ToListAsync();
+                ViewBag.AllPending = allPending;
+                ViewBag.UnassignedCount = allPending.Count;
+            }
 
             ViewBag.Total = complaints.Count;
             ViewBag.Pending = complaints.Count(c => c.Status == "Pending");
             ViewBag.InProgress = complaints.Count(c => c.Status == "In Progress" || c.Status == "Assigned");
             ViewBag.Resolved = complaints.Count(c => c.Status == "Resolved");
 
+            if (userRole == "Helpdesk")
+            {
+                ViewBag.Heads = await _context.Users.Find(u => u.Role == "DeptHead").ToListAsync();
+                return View("HelpdeskDashboard", complaints);
+            }
+
             return View(complaints);
+        }
+
+        [Authorize(Roles = "Helpdesk,Admin")]
+        [HttpPost]
+        public async Task<IActionResult> Reassign(string complaintId, string headId, string headName)
+        {
+            var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var update = Builders<Complaint>.Update
+                .Set(c => c.AssignedToId, headId)
+                .Set(c => c.AssignedToName, headName)
+                .Set(c => c.Status, "Assigned");
+
+            await _context.Complaints.UpdateOneAsync(filter, update);
+            return Json(new { success = true });
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> Track(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return BadRequest(new { success = false, message = "Complaint number is required." });
+
+            var complaint = await _context.Complaints
+                .Find(c => c.ComplaintNo == id)
+                .FirstOrDefaultAsync();
+
+            if (complaint == null) return NotFound(new { success = false, message = "No complaint found with this number." });
+
+            return Ok(new {
+                success = true,
+                complaintNo = complaint.ComplaintNo,
+                status = complaint.Status,
+                category = complaint.Department,
+                createdDate = complaint.CreatedDate.ToString("dd MMM yyyy"),
+                title = complaint.ComplaintTitle,
+                assignedTo = complaint.AssignedToName ?? "Processing"
+            });
+        }
+
+        [Authorize(Roles = "Helpdesk,Admin")]
+        [HttpGet]
+        public async Task<IActionResult> GetComplaintByNo(string complaintNo)
+        {
+            var complaint = await _context.Complaints.Find(c => c.ComplaintNo == complaintNo).FirstOrDefaultAsync();
+            if (complaint == null) return NotFound(new { success = false, message = "Complaint not found." });
+            return Ok(new { success = true, complaint });
         }
     }
 }

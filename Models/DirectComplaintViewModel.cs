@@ -18,8 +18,6 @@ namespace CMS.Models
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = string.Empty;
 
-        // Password is required for New Users, optional for Returning Users
-        public string? Password { get; set; }
 
         // Complaint Details
         [Required(ErrorMessage = "Complaint Title is required.")]
