@@ -162,7 +162,6 @@ namespace CMS.Controllers
                     existing.Name = dept.Name;
                     existing.Code = dept.Code;
                     existing.HeadName = dept.HeadName;
-                    existing.DivisionZone = dept.DivisionZone;
                     existing.SLADays = dept.SLADays;
                     existing.Icon = dept.Icon;
                     existing.Email = dept.Email;

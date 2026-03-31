@@ -27,18 +27,19 @@ namespace CMS.Models
         public string SectorName { get; set; } = string.Empty;
     }
 
+    [BsonIgnoreExtraElements]
     public class DepartmentMaster
     {
         public string Name { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
         public string? HeadName { get; set; }
-        public string? DivisionZone { get; set; }
         public int SLADays { get; set; } = 7;
         public string Icon { get; set; } = "💡";
         public string? Email { get; set; }
         public string Status { get; set; } = "Active";
     }
 
+    [BsonIgnoreExtraElements]
     public class DivisionMaster
     {
         public string Name { get; set; } = string.Empty;
@@ -47,6 +48,7 @@ namespace CMS.Models
         public string Status { get; set; } = "Active";
     }
 
+    [BsonIgnoreExtraElements]
     public class SubDivisionMaster
     {
         public string Name { get; set; } = string.Empty;

@@ -271,7 +271,7 @@
 
 <!-- TOP HEADER -->
 <header class="top-header">
-  <img src="~/img/logo.png" style="height: 50px; width: auto;" alt="Logo">
+  <img src="~/img/logo.png" style="height: 100px; width: auto;" alt="Logo">
   <div class="header-text">
     <div class="title">Chandigarh CMS — Admin Control Panel</div>
     <div class="sub">Department Head / XEN Portal &nbsp;·&nbsp; Electrical Department HQ</div>
@@ -286,7 +286,7 @@
       <div class="role">System Administrator</div>
     </div>
   </div>
-  <img src="~/img/emblem.png" style="height: 50px; width: auto; margin-left:15px;" alt="Emblem">
+  <img src="~/img/emblem.png" style="height: 100px; width: auto; margin-left:15px;" alt="Emblem">
 </header>
 
 <div class="app-body">
@@ -572,7 +572,7 @@
               <div class="dept-top">
                   <div class="dept-icon">🏢</div>
                   <div style="display:flex;gap:5px;">
-                      <button class="btn btn-outline btn-sm" onclick="openEditDeptModal('@dept.Code', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.Name))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.HeadName ?? ""))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.DivisionZone ?? ""))', @dept.SLADays, '@dept.Icon', '@dept.Email', '@dept.Status')">Edit</button>
+                      <button class="btn btn-outline btn-sm" onclick="openEditDeptModal('@dept.Code', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.Name))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(dept.HeadName ?? ""))', @dept.SLADays, '@dept.Icon', '@dept.Email', '@dept.Status')">Edit</button>
                       <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);" onclick="deleteDept('@dept.Code')">Delete</button>
                   </div>
               </div>
@@ -941,10 +941,6 @@
         <label>Head Name</label>
         <input type="text" id="deptHeadName" placeholder="Officer in charge">
       </div>
-      <div class="form-group">
-        <label>Division / Zone</label>
-        <input type="text" id="deptDivision" placeholder="e.g. North Zone">
-      </div>
       <div class="form-row-2">
           <div class="form-group">
             <label>SLA (Days)</label>
@@ -1277,7 +1273,6 @@
       $('#deptName').val('');
       $('#deptCode').val('');
       $('#deptHeadName').val('');
-      $('#deptDivision').val('');
       $('#deptSLA').val(7);
       $('#deptIcon').val('💡');
       $('#deptEmail').val('');
@@ -1285,13 +1280,12 @@
       document.getElementById('deptModal').classList.add('show');
   }
 
-  function openEditDeptModal(code, name, head, division, sla, icon, email, status) {
+  function openEditDeptModal(code, name, head, sla, icon, email, status) {
       $('#deptModalTitle').text('Edit Department');
       $('#oldDeptCode').val(code);
       $('#deptCode').val(code);
       $('#deptName').val(name);
       $('#deptHeadName').val(head || '');
-      $('#deptDivision').val(division || '');
       $('#deptSLA').val(sla || 7);
       $('#deptIcon').val(icon || '💡');
       $('#deptEmail').val(email || '');
@@ -1310,7 +1304,6 @@
           Name: name,
           Code: code,
           HeadName: $('#deptHeadName').val(),
-          DivisionZone: $('#deptDivision').val(),
           SLADays: parseInt($('#deptSLA').val()),
           Icon: $('#deptIcon').val(),
           Email: $('#deptEmail').val(),
