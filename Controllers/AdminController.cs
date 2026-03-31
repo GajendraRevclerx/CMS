@@ -248,6 +248,42 @@ namespace CMS.Controllers
             }
             return Json(new { success = true });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetSectors()
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            // Define Chandigarh sectors 1-61 (excluding 13, including 38 West)
+            var chd_sectors = new List<string>();
+            for (int i = 1; i <= 61; i++) {
+                if (i == 13) continue;
+                chd_sectors.Add("Sector " + i);
+            }
+            chd_sectors.Add("Sector 38 West");
+            chd_sectors.Add("Manimajra");
+            chd_sectors.Add("Industrial Area Phase 1");
+            chd_sectors.Add("Industrial Area Phase 2");
+            chd_sectors.Sort();
+
+            var newSectors = chd_sectors.Select(s => new SectorMapping { 
+                State = "Chandigarh", 
+                City = "Chandigarh", 
+                SectorName = s 
+            }).ToList();
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Set(m => m.Sectors, newSectors);
+            await _context.Masters.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true, message = "Sectors reset to Chandigarh official list." });
+        }
+
         [HttpPost]
         public async Task<IActionResult> DeleteDepartment(string code)
         {

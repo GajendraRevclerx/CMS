@@ -383,6 +383,7 @@
 </div>
 
 @section Scripts {
+    <script src="/js/location-data.js"></script>
     <script>
         $(document).ready(function () {
             
@@ -405,13 +406,8 @@
             // Load Masters for Chandigarh
             const fixedCity = "Chandigarh";
             
-            // Auto-load Sectors for Chandigarh
-            $.get('/api/MasterData/sectors-by-city?city=' + fixedCity, function(data) {
-                var $area = $('#Area');
-                $area.empty();
-                $area.append('<option value="">Select Sector/Ward</option>');
-                data.forEach(x => $area.append($('<option>').val(x).text(x)));
-            });
+            // Auto-load Sectors for Chandigarh (Static list to avoid dummy DB data)
+            populateChdSectors('Area');
 
             // Pin Code validation
             $('#PinCode').on('input', function() {

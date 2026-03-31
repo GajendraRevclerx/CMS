@@ -7,6 +7,7 @@ using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace CMS.Controllers
 {
@@ -47,7 +48,11 @@ namespace CMS.Controllers
 
                     await HttpContext.SignInAsync(
                         CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(claimsIdentity));
+                        new ClaimsPrincipal(claimsIdentity),
+                        new AuthenticationProperties { IsPersistent = false });
+
+                    // SET SESSION MARKER (to detect browser close/reopen)
+                    HttpContext.Session.SetString("AuthActive", "true");
 
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
