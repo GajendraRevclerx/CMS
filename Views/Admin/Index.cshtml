@@ -274,7 +274,7 @@
         <img src="~/img/logo.png" style="height: 100px; width: auto;margin-left:4%" alt="Logo">
   <div class="header-text">
             <div class="title"><h2>Chandigarh CMS — Admin Control Panel</h2></div>
-            <div class=""><h4>Department Head / XEN Portal &nbsp;·&nbsp; Electrical Department HQ</h4></div>
+            <div class=""><h4>Department Head</h4></div>
   </div>
   <div class="header-notif" onclick="showPanel('notifications')">
     🔔 <span class="notif-dot"></span>
@@ -371,6 +371,7 @@
           <p>Global Summary for @DateTime.Now.ToString("MMMM yyyy")</p>
         </div>
         <div class="page-hdr-actions">
+          <button class="btn btn-outline btn-sm" onclick="testEmailEmailReport()">📧 Test Daily Report Email</button>
           <button class="btn btn-outline btn-sm" onclick="showPanel('analytics')">View Full Report</button>
           <button class="btn btn-saffron btn-sm" onclick="showPanel('assignments')">Assign Pending →</button>
         </div>
@@ -1683,6 +1684,27 @@
                   Swal.fire('Error', 'Failed to delete sub-division.', 'error');
               });
           }
+      });
+  }
+
+  function testEmailEmailReport() {
+      Swal.fire({
+          title: 'Sending Test Report...',
+          text: 'Please wait while we verify your SMTP credentials.',
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
+      });
+
+      $.post('/Admin/TestEmailReport')
+      .done(function(res) {
+          if(res.success) {
+              Swal.fire('Success!', res.message, 'success');
+          } else {
+              Swal.fire('SMTP Error', res.message, 'error');
+          }
+      })
+      .fail(function() {
+          Swal.fire('Error', 'Could not reach the server.', 'error');
       });
   }
 

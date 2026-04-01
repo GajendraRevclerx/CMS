@@ -16,6 +16,11 @@ builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("Mo
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddSingleton<ComplaintService>();
 
+// Email & Reports Configuration
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddHostedService<DailyReportWorker>();
+
 // Session State Configuration
 builder.Services.AddSession(options =>
 {

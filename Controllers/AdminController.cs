@@ -13,10 +13,16 @@ namespace CMS.Controllers
     public class AdminController : Controller
     {
         private readonly MongoDbContext _context;
+        private readonly IEmailService _emailService;
+        private readonly EmailSettings _emailSettings;
+        private readonly Microsoft.Extensions.Options.IOptions<EmailSettings> _options;
 
-        public AdminController(MongoDbContext context)
+        public AdminController(MongoDbContext context, IEmailService emailService, Microsoft.Extensions.Options.IOptions<EmailSettings> options)
         {
             _context = context;
+            _emailService = emailService;
+            _options = options;
+            _emailSettings = options.Value;
         }
 
         [HttpGet]
@@ -423,6 +429,57 @@ namespace CMS.Controllers
             var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
             await _context.Users.DeleteOneAsync(filter);
             return Json(new { success = true });
+        }
+        [HttpPost]
+        public async Task<IActionResult> TestEmailReport()
+        {
+            try
+            {
+                var totalComplaints = await _context.Complaints.CountDocumentsAsync(_ => true);
+                var resolvedComplaints = await _context.Complaints.CountDocumentsAsync(c => c.Status == "Resolved");
+                var pendingComplaints = totalComplaints - resolvedComplaints;
+
+                var body = $@"
+                     <html>
+                     <body style='font-family: Arial; font-size:14px;'>                    
+                     <p>Dear Sir/Madam,</p>
+                     <p>Daily Complaint Status Summary.</p>
+                     <p><b>Report Date:</b> {System.DateTime.Now:dd/MM/yyyy}</p>
+                     <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse;'>
+                     <tr style='background-color:#f2f2f2;'>
+                     <th>Complaint Metric</th>
+                     <th>Count</th>
+                     </tr>
+                     <tr>
+                     <td>Total Complaints Registered (Till Date)</td>
+                     <td>{totalComplaints}</td>
+                     </tr>
+                     <tr>
+                     <td>Total Complaints Resolved (Till Date)</td>
+                     <td>{resolvedComplaints}</td>
+                     </tr>
+                     <tr>
+                     <td>Total Complaints Pending (Till Date)</td>
+                     <td>{pendingComplaints}</td>
+                     </tr>
+                     </table>
+                     <br/>
+                     <p>Notification from the <b>Citizen Complaint Management System (CCMS)</b>.</p>
+                     <p><b>Government of {_emailSettings.DepartmentName}</b></p>
+                     </body>
+                     </html>";
+
+                await _emailService.SendEmailAsync(_emailSettings.AdminEmail, "CCMS Daily Status Report", body);
+                return Json(new { success = true, message = "Test email sent successfully to " + _emailSettings.AdminEmail });
+            }
+            catch (System.Exception ex)
+            {
+                var fullError = ex.Message;
+                if (ex.InnerException != null) {
+                    fullError += " (Inner: " + ex.InnerException.Message + ")";
+                }
+                return Json(new { success = false, message = "Failed to send email: " + fullError });
+            }
         }
     }
 }

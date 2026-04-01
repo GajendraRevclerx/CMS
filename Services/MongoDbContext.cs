@@ -82,39 +82,7 @@ namespace CMS.Services
             var usersCollection = Users;
             
             // Check by MobileNo to ensure exact accounts exist
-            if (usersCollection.CountDocuments(u => u.MobileNo == "admin") == 0)
-            {
-                usersCollection.InsertOne(new User { 
-                    MobileNo = "admin", 
-                    Password = "admin", 
-                    FullName = "Super Administrator", 
-                    Role = "Admin" 
-                });
-            }
-
-            if (usersCollection.CountDocuments(u => u.MobileNo == "head_ele") == 0)
-            {
-                usersCollection.InsertOne(new User { 
-                    MobileNo = "head_ele", 
-                    Password = "password", 
-                    FullName = "Electrical Head (North)", 
-                    Role = "DeptHead", 
-                    Department = "ELE", 
-                    Area = "North Zone" 
-                });
-            }
-
-            if (usersCollection.CountDocuments(u => u.MobileNo == "head_wat") == 0)
-            {
-                usersCollection.InsertOne(new User { 
-                    MobileNo = "head_wat", 
-                    Password = "password", 
-                    FullName = "Water Head (South)", 
-                    Role = "DeptHead", 
-                    Department = "WAT", 
-                    Area = "South Zone" 
-                });
-            }
+           
         }
     }
 }
