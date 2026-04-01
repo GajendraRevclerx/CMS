@@ -76,6 +76,8 @@ namespace CMS.Controllers
                     ComplaintNo = model.ComplaintNo ?? $"CHD/{DateTime.Now.Year}/{Guid.NewGuid().ToString().Substring(0, 5).ToUpper()}",
                     UserId = model.MobileNo,
                     RegisteredById = staffMobile,
+                    FullName = model.FullName,
+                    Email = model.Email,
                     ComplaintTitle = model.ComplaintTitle,
                     Description = model.Description,
                     State = model.State,

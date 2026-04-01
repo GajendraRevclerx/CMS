@@ -17,6 +17,10 @@ namespace CMS.Models
         public string UserId { get; set; } = string.Empty; // MobileNo of the user
         public string? RegisteredById { get; set; } // Staff member who registered it
 
+        // Citizen Contact Info
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+
         // Form Fields
         public string ComplaintTitle { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;

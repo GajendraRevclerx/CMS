@@ -1,5 +1,4 @@
 @model CMS.Models.Complaint
-
 @{
     ViewData["Title"] = "Submit Complaint";
 }
@@ -8,414 +7,373 @@
   :root {
     --primary: #0f172a;
     --primary-hover: #1e293b;
-    --accent: #4f46e5;
-    --accent-hover: #4338ca;
-    --bg-color: #f1f5f9;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --text-main: #0f172a;
+    --accent: #1657a8;
+    --accent-hover: #124483;
+    --saffron: #f59e0b;
+    --saffron-hover: #d97706;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
     --text-muted: #64748b;
     --border-color: #e2e8f0;
     --danger: #ef4444;
   }
 
+  body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-main); }
+
   .reg-page {
-    max-width: 950px;
-    margin: 60px auto;
-    padding: 45px;
+    max-width: 1000px;
+    margin: 40px auto;
     background: var(--card-bg);
-    backdrop-filter: blur(24px);
-    border: 1px solid rgba(255,255,255,0.6);
-    border-radius: 28px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15), 0px 4px 6px -2px rgba(0,0,0,0.05);
-    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+    padding: 40px;
   }
 
-  @@keyframes slideUp {
-      to { transform: translateY(0); opacity: 1; }
+  .breadcrumb {
+    max-width: 1000px;
+    margin: 20px auto 0;
+    font-size: 13px;
+    color: var(--text-muted);
   }
+  .breadcrumb a { color: var(--accent); text-decoration: none; cursor: pointer; }
+  .breadcrumb .sep { margin: 0 8px; color: #cbd5e1; }
 
   .page-header-block {
     display: flex;
     align-items: center;
-    gap: 24px;
-    margin-bottom: 35px;
-    padding-bottom: 30px;
-    border-bottom: 2px solid #f1f5f9;
+    gap: 20px;
+    margin-bottom: 30px;
   }
 
   .page-header-block .icon {
-    font-size: 48px;
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-    color: white;
-    width: 80px;
-    height: 80px;
+    font-size: 40px;
+    background: #eef2ff;
+    width: 70px;
+    height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+    border-radius: 16px;
   }
 
   .page-header-block h2 {
-    margin: 0 0 8px 0;
+    margin: 0 0 5px 0;
     color: var(--primary);
-    font-size: 32px;
+    font-size: 26px;
     font-weight: 800;
-    letter-spacing: -0.5px;
   }
 
   .page-header-block p {
     margin: 0;
     color: var(--text-muted);
-    font-size: 15px;
-    line-height: 1.6;
-    max-width: 600px;
+    font-size: 14px;
   }
 
-  .dynamic-complaint-no {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-left: 6px solid var(--accent);
-    padding: 20px 24px;
+  .checklist-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
     border-radius: 12px;
+    padding: 20px;
     margin-bottom: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3);
-    color: white;
   }
-
-  .dynamic-complaint-no h5 {
-    margin: 0;
-    font-size: 18px;
-    color: #f8fafc;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 600;
-  }
-
-  .dynamic-complaint-no .badge-status {
-    background: rgba(255,255,255,0.15);
-    color: white;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    backdrop-filter: blur(10px);
-  }
+  .checklist-box h5 { margin: 0 0 10px 0; font-weight: 700; color: #92400e; font-size: 14px; }
+  .checklist-box ul { margin: 0; padding-left: 20px; color: #b45309; font-size: 13.5px; }
 
   .form-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    padding: 30px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .form-card:hover {
-    box-shadow: 0 12px 24px rgba(0,0,0,0.06);
-    border-color: #cbd5e1;
-    transform: translateY(-2px);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   }
 
   .form-card-title {
-    font-size: 19px;
+    font-size: 16px;
     font-weight: 700;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     color: var(--primary);
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
   }
 
   .form-card-title .badge {
-    background: var(--accent);
+    background: var(--primary);
     color: white;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    font-size: 15px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 800;
-    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
   }
 
-  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-  .form-group { display: flex; flex-direction: column; gap: 10px; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
   .form-group.span-2 { grid-column: span 2; }
 
   .form-group label {
-    font-weight: 700;
-    font-size: 13.5px;
-    color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-main);
   }
 
-  .required { color: var(--accent); font-weight: 900; }
+  .required { color: var(--danger); font-weight: 900; }
 
-  .reg-page input[type="text"],
-  .reg-page input[type="date"],
-  .reg-page select,
-  .reg-page textarea {
+  input[type="text"], input[type="tel"], input[type="email"], input[type="date"], select, textarea {
     width: 100%;
-    padding: 14px 18px;
-    border: 2px solid #f1f5f9;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 500;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    background: #f8fafc;
+    padding: 12px 16px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
     color: var(--primary);
+    transition: all 0.2s ease;
   }
 
-  .reg-page input:focus, .reg-page select:focus, .reg-page textarea:focus {
+  input[readonly] { background: #f4f7fc; color: var(--text-muted); cursor: not-allowed; }
+
+  input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--accent);
-    background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 0 0 3px rgba(22, 87, 168, 0.1);
   }
 
-  .form-note { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: -2px; }
+  .form-note { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
 
   .upload-area {
     border: 2px dashed #cbd5e1;
-    border-radius: 16px;
-    padding: 35px;
+    border-radius: 12px;
+    padding: 24px;
     text-align: center;
     cursor: pointer;
     background: #f8fafc;
     transition: all 0.3s ease;
   }
+  .upload-area:hover { border-color: var(--accent); background: #f0f4f8; }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-area p { margin: 0 0 4px 0; font-weight: 600; color: var(--primary); font-size: 14px; }
+  .upload-area small { color: var(--text-muted); font-size: 12px; }
 
-  .upload-area:hover {
-    border-color: var(--accent);
-    background: #eef2ff;
-  }
-
-  .upload-icon { font-size: 32px; margin-bottom: 12px; color: var(--accent); }
-  .upload-area p { margin: 0 0 6px 0; font-weight: 700; color: var(--primary); }
-  .upload-area small { color: var(--text-muted); font-weight: 500; }
-
-  .form-actions {
-    display: flex;
-    gap: 16px;
-    justify-content: flex-end;
-    padding-top: 30px;
-    border-top: 1px solid #e2e8f0;
-  }
-
-  .btn-primary-custom {
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  .btn-primary {
+    background: var(--accent);
     color: white;
     border: none;
-    padding: 16px 40px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
-    letter-spacing: 0.5px;
   }
-
-  .btn-primary-custom:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 20px rgba(79, 70, 229, 0.4);
-  }
+  .btn-primary:hover { background: var(--accent-hover); }
   
-  .btn-secondary-custom {
+  .btn-secondary {
     background: white;
-    color: var(--primary);
-    border: 2px solid #cbd5e1;
-    padding: 16px 32px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 700;
+    color: var(--text-main);
+    border: 1px solid #cbd5e1;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
   }
-
-  .btn-secondary-custom:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
-  }
-
-  @@media (max-width: 768px) {
-    .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
-    .form-group.span-2 { grid-column: span 1; }
-    .reg-page { padding: 25px; margin: 20px;}
-  }
+  .btn-secondary:hover { background: #f1f5f9; }
 </style>
 
-<div class="container mt-4 mb-5">
-    <div class="row">
-        <div class="col-12">
+<div class="breadcrumb">
+  <a href="/">Home</a> <span class="sep">&rsaquo;</span>
+  <a href="/Dashboard">Citizen Portal</a> <span class="sep">&rsaquo;</span>
+  Register a Complaint
+</div>
 
-            
-            <div class="reg-page">
-                <form id="complaintForm" method="post">
-                    <div class="page-header-block">
-                        <div class="icon">📋</div>
-                        <div>
-                        <h2>Register New Complaint</h2>
-                        <p>Submit your service request below. Your personal details are fetched securely from your account. Fields marked <span class="required">*</span> are mandatory.</p>
-                        </div>
-                    </div>
-
-                    <div class="dynamic-complaint-no">
-                        <h5>
-                        📌 Complaint No: 
-                        <span id="generatedComplaintNo" style="font-family: Consolas, monospace; letter-spacing: 1px; color: var(--primary); font-weight: 800; margin-left:8px;">Generating...</span>
-                        <input type="hidden" id="ComplaintNo" name="ComplaintNo" />
-                        </h5>    
-                        <span class="badge-status">New Draft</span>
-                    </div>
-
-                    <!-- SECTION 1: Address Details -->
-                    <div class="form-card">
-                        <div class="form-card-title"><span class="badge">1</span> Location Details</div>
-                        <div class="form-grid-2">
-                             <div class="form-group span-2">
-                                 <label>House No. / Street <span class="required">*</span></label>
-                                 <input type="text" id="Street" name="Street" placeholder="e.g. H. No. 1024, Sector 22-B">
-                             </div>
-                             <div class="form-group span-2">
-                                 <label>Ward / Locality <span class="required">*</span></label>
-                                 <input type="text" id="Locality" name="Locality" placeholder="e.g. Sector 22">
-                             </div>
-                             <div class="form-group">
-                                 <label>State <span class="required">*</span></label>
-                                 <input type="text" id="State" name="State" value="Chandigarh" readonly>
-                             </div>
-                             <div class="form-group">
-                                 <label>City <span class="required">*</span></label>
-                                 <input type="text" id="City" name="City" value="Chandigarh" readonly>
-                             </div>
-                             <div class="form-group">
-                                 <label>Sector / Ward <span class="required">*</span></label>
-                                 <select id="Area" name="Area" required>
-                                     <option value="">Loading...</option>
-                                 </select>
-                             </div>
-                             <div class="form-group">
-                                 <label>PIN Code <span class="required">*</span></label>
-                                 <input type="text" id="PinCode" name="PinCode" placeholder="160022" maxlength="6" required>
-                                 <small id="pinValidation" style="color:var(--danger); display:none; font-weight:700; font-size:10px; margin-top:4px;">Invalid Chandigarh Pin Code (Starts with 160)</small>
-                             </div>
-                         </div>
-
-                    <!-- SECTION 2: Complaint Details -->
-                    <div class="form-card">
-                        <div class="form-card-title"><span class="badge">2</span> Complaint Information</div>
-                        <div class="form-grid-2">
-                            <div class="form-group">
-                                <label asp-for="ComplaintTitle">Complaint Title <span class="required">*</span></label>
-                                <input asp-for="ComplaintTitle" id="ComplaintTitle" placeholder="Brief title of the issue" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label asp-for="Department">Department Category <span class="required">*</span></label>
-                                <select asp-for="Department" id="Department" required>
-                                    <option value="">Select Department</option>
-                                </select>
-                                <div class="form-note">Select the relevant department for quicker resolution</div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Source of Complaint <span class="required">*</span></label>
-                                <select id="Source" name="Source" required>
-                                    <option value="Mobile">Mobile App</option>
-                                    <option value="WhatsApp">WhatsApp</option>
-                                </select>
-                                <div class="form-note">How was this issue reported?</div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Date of Incident <span class="required">*</span></label>
-                                <input type="date" id="incidentDate" name="IncidentDate" required>
-                            </div>
-
-                            <div class="form-group span-2">
-                                <label>Complaint Site (Exact Location) <span class="required">*</span></label>
-                                <input type="text" id="Site" name="Site" placeholder="e.g. Sector 22-B, near Pole No. 34, Opposite park" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-grid-2" style="margin-top: 20px;">
-                            <div class="form-group span-2">
-                                <label asp-for="Description">Detailed Description <span class="required">*</span></label>
-                                <textarea asp-for="Description" id="Description" rows="5" minlength="200" placeholder="Describe the issue in detail (minimum 200 characters). Include the exact location, the nature of the problem, and any previous action taken..." required></textarea>
-                                <div class="form-note d-flex justify-content-between">
-                                    <span>Minimum 200 characters required. Avoid special characters (#$@@^*~|!).</span>
-                                    <span id="descCount" style="color:red; font-weight:bold;">0 / 200 (Min)</span>
-                                </div>
-                            </div>
-                            <div class="form-group span-2">
-                                <label>Upload Evidence (Optional)</label>
-                                <div class="upload-area">
-                                    <div class="upload-icon">📎</div>
-                                    <p>Click to upload or drag & drop files here</p>
-                                    <small>Supported formats: JPG, PNG, MP4 (Max 10 MB per file)</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary-custom" onclick="window.history.back()">Cancel</button>
-                        <button type="submit" class="btn-primary-custom" id="btnSubmit">Submit Complaint &rarr;</button>
-                    </div>
-                </form>
-            </div>
+<div class="reg-page">
+    <form id="complaintForm" method="post">
+        <input type="hidden" name="ComplaintNo" id="ComplaintNo" />
+    
+        <div class="page-header-block">
+          <div class="icon">📋</div>
+          <div>
+            <h2>Citizen Registration &amp; Complaint Form</h2>
+            <p>Fill in your details below to register and file your complaint. Fields marked <span class="required">*</span> are mandatory.</p>
+          </div>
         </div>
-    </div>
+
+        <div class="checklist-box">
+          <h5>📌 Please keep ready before filing</h5>
+          <ul>
+            <li>Valid mobile number linked to Aadhaar</li>
+            <li>Ward / Sector / Locality of the complaint site</li>
+            <li>Detailed description (min. 200 characters)</li>
+            <li>Photo/video evidence (optional, max 10 MB)</li>
+          </ul>
+        </div>
+
+        <!-- SECTION 1: Personal Details -->
+        <div class="form-card">
+          <div class="form-card-title"><span class="badge">1</span> Personal Details</div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label>First Name <span class="required">*</span></label>
+              <input type="text" placeholder="e.g. Rahul" value="@(User.Identity?.Name?.Split(" ").FirstOrDefault())" readonly>
+            </div>
+            <div class="form-group">
+              <label>Middle Name</label>
+              <input type="text" placeholder="Optional" readonly>
+            </div>
+            <div class="form-group">
+              <label>Last Name <span class="required">*</span></label>
+              <input type="text" placeholder="e.g. Sharma" value="@(User.Identity?.Name?.Contains(" ") == true ? string.Join(" ", User.Identity.Name.Split(" ").Skip(1)) : "")" readonly>
+            </div>
+            <div class="form-group">
+              <label>Mobile Number <span class="required">*</span></label>
+              <input type="tel" value="@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" readonly>
+            </div>
+            <div class="form-group">
+              <label>Aadhaar Number <span class="required">*</span></label>
+              <input type="text" placeholder="XXXX XXXX XXXX" value="Auto-Linked" readonly>
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" placeholder="you@email.com" value="@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value" readonly>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Address -->
+        <div class="form-card">
+          <div class="form-card-title"><span class="badge">2</span> Address Details</div>
+          <div class="form-grid-3">
+            <div class="form-group span-2">
+              <label>House No. / Street <span class="required">*</span></label>
+              <input type="text" name="Street" id="Street" placeholder="e.g. H. No. 1024, Sector 22-B" required>
+            </div>
+            <div class="form-group">
+              <label>Ward / Locality <span class="required">*</span></label>
+              <input type="text" name="Locality" id="Locality" placeholder="e.g. Sector 22" required>
+            </div>
+            <div class="form-group">
+              <label>State <span class="required">*</span></label>
+              <input type="text" name="State" id="State" value="Chandigarh" readonly style="background:#f4f7fc;">
+            </div>
+            <div class="form-group">
+              <label>City <span class="required">*</span></label>
+              <input type="text" name="City" id="City" value="Chandigarh" readonly style="background:#f4f7fc;">
+            </div>
+            <div class="form-group">
+              <label>PIN Code <span class="required">*</span></label>
+              <input type="text" name="PinCode" id="PinCode" placeholder="160022" maxlength="6" required>
+              <small id="pinValidation" style="color:var(--danger); display:none; font-weight:700; font-size:10px; margin-top:2px;">Invalid Chandigarh Pin Code (Starts with 160)</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Complaint Details -->
+        <div class="form-card">
+          <div class="form-card-title"><span class="badge">3</span> Complaint Details</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label>Complaint Title <span class="required">*</span></label>
+              <input type="text" name="ComplaintTitle" id="ComplaintTitle" placeholder="Brief title of the issue" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Department Category <span class="required">*</span></label>
+              <select name="Department" id="Department" required>
+                <option value="">— Select Department —</option>
+              </select>
+              <div class="form-note">🤖 AI will auto-map based on your description</div>
+            </div>
+
+            <div class="form-group">
+               <label>Complaint Site (Ward/Sector) <span class="required">*</span></label>
+               <select name="Area" id="Area" required>
+                   <option value="">Select Area</option>
+               </select>
+            </div>
+
+            <div class="form-group">
+              <label>Exact Location / Site <span class="required">*</span></label>
+              <input type="text" name="Site" id="Site" placeholder="e.g. Sector 22-B, near Pole No. 34" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Source of Complaint <span class="required">*</span></label>
+              <select name="Source" id="Source" required>
+                <option value="Mobile">Mobile Portal</option>
+                <option value="WhatsApp">WhatsApp</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Date of Incident <span class="required">*</span></label>
+              <input type="date" name="IncidentDate" id="incidentDate" required>
+            </div>
+
+            <div class="form-group span-2">
+              <label>Detailed Description <span class="required">*</span></label>
+              <textarea name="Description" id="Description" rows="5" minlength="200" placeholder="Describe the issue in detail (minimum 200 characters). Include exact location, nature of problem, and any previous action taken..." required></textarea>
+              <div style="display:flex; justify-content:space-between;">
+                  <div class="form-note">Minimum 200 characters required. No special characters (#$@@^*~|!).</div>
+                  <div id="descCount" style="font-size:12px; font-weight:700; color:var(--danger);">0 / 200</div>
+              </div>
+            </div>
+            
+            <div class="form-group span-2">
+              <label>Upload Evidence (Optional)</label>
+              <div class="upload-area">
+                <div class="upload-icon">📎</div>
+                <p>Click to upload or drag &amp; drop</p>
+                <small>JPG, PNG, MP4 — Max 10 MB per file</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:14px; justify-content:flex-end; padding-top:8px;">
+          <button type="button" class="btn-secondary" onclick="window.history.back()">← Back</button>
+          <button type="submit" class="btn-primary" id="btnSubmit" style="background:var(--saffron);font-size:17px;padding:12px 36px; border:none; color:white;">Submit Complaint &rarr;</button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
-    <script src="/js/location-data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function () {
-            
-            // 1. Set today's date for the Date of Incident field
+            // Set incident date to today
             const dateInput = document.getElementById('incidentDate');
-            if(dateInput) {
-              dateInput.valueAsDate = new Date();
-            }
+            if(dateInput) dateInput.valueAsDate = new Date();
 
-            // 2. Generate and Display the Complaint No immediately on form load
-            const year = new Date().getFullYear();
-            const randomSeq = Math.floor(10000 + Math.random() * 90000); 
-            const compNo = `CHD/ELE/${year}/${randomSeq}`;
-            const compDisplay = document.getElementById('generatedComplaintNo');
-            if(compDisplay) {
-                compDisplay.innerText = compNo;
-                $('#ComplaintNo').val(compNo); // Put in hidden field so it gets submitted
-            }
-
-            // Load Masters for Chandigarh
-            const fixedCity = "Chandigarh";
-            
-            // Auto-load Sectors for Chandigarh
+            // Load Chandigarh Sectors via backend explicitly 
             $.get('/api/MasterData/sectors-by-city?city=Chandigarh', function(data) {
                 var $area = $('#Area');
                 $area.empty().append(new Option('Select Sector / Ward', ''));
                 if (Array.isArray(data)) {
                     data.forEach(function(a) { $area.append(new Option(a, a)); });
                 }
-            }).fail(function() {
-                // Fallback if API fails
-                if(typeof populateChdSectors === 'function') populateChdSectors('Area');
+            });
+
+            // Load Departments
+            $.ajax({
+                url: '/api/MasterData/departments',
+                type: 'GET',
+                success: function (data) {
+                    var $dept = $('#Department');
+                    $dept.empty().append('<option value="">— Select Department —</option>');
+                    data.forEach(function (dept) {
+                        $dept.append($('<option></option>').val(dept.code).text(dept.name));
+                    });
+                }
             });
 
             // Pin Code validation
@@ -426,86 +384,43 @@
                     $(this).css('border-color', 'var(--danger)');
                 } else {
                     $('#pinValidation').hide();
-                    $(this).css('border-color', 'var(--border-color)');
+                    $(this).css('border-color', '#cbd5e1');
                 }
             });
 
-            // Load Departments
-            $.ajax({
-                url: '/api/MasterData/departments',
-                type: 'GET',
-                success: function (data) {
-                    var $dept = $('#Department');
-                    $dept.empty();
-                    $dept.append('<option value="">Select Department</option>');
-                    data.forEach(function (dept) {
-                        $dept.append($('<option></option>').val(dept.code).text(dept.name));
-                    });
-                }
-            });
-
-            // Description character count
+            // Description length logic
             $('#Description').on('input', function () {
                 var len = $(this).val().length;
-                $('#descCount').text(len + ' / 200 (Min)');
-                if(len < 200) {
-                    $('#descCount').css('color', 'red');
-                } else {
-                    $('#descCount').css('color', 'green');
-                }
+                var $counter = $('#descCount');
+                $counter.text(len + ' / 200');
+                if (len >= 200) { $counter.css('color', '#10b981'); }
+                else { $counter.css('color', 'var(--danger)'); }
             });
 
-            // Smart Auto-Selection logic
-            $('#ComplaintTitle').on('keyup', function () {
-                var title = $(this).val().toLowerCase();
-                
-                // Define keywords
-                var electricalKw = ["wire", "electricity", "spark", "power", "pole", "light"];
-                var waterKw = ["water", "leak", "pipe", "plumbing", "drain", "sewage"];
-                var sanitationKw = ["garbage", "trash", "clean", "sweep", "waste"];
-                var roadKw = ["road", "pothole", "street", "footpath", "highway"];
-                
-                if (electricalKw.some(kw => title.includes(kw))) {
-                    $("#Department").val("ELE");
-                } else if (waterKw.some(kw => title.includes(kw))) {
-                    $("#Department").val("WAT");
-                } else if (sanitationKw.some(kw => title.includes(kw))) {
-                    $("#Department").val("SAN");
-                } else if (roadKw.some(kw => title.includes(kw))) {
-                    $("#Department").val("ROA");
-                }
-            });
-
-            // AJAX Form Submit
+            // Handle Submit Request
             $('#complaintForm').on('submit', function (e) {
                 e.preventDefault();
-
-                var description = $('#Description').val();
-                if(description.length < 200) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Description Too Short',
-                        text: 'Description must be at least 200 characters long.',
-                        confirmButtonColor: '#2563eb'
-                    });
+                
+                if ($('#Description').val().length < 200) {
+                    Swal.fire('Description Too Short', 'Please provide a detailed description (minimum 200 characters).', 'warning');
                     return;
                 }
 
-                var formData = {
-                    ComplaintNo: $('#ComplaintNo').val(), 
-                    ComplaintTitle: $('#ComplaintTitle').val(),
-                    State: $('#State').val(),
-                    City: $('#City').val(),
-                    Area: $('#Area').val(),
-                    Department: $('#Department').val(),
-                    Description: description,
-                    Source: $('#Source').val(),
-                    Street: $('#Street').val(),
-                    Locality: $('#Locality').val(),
-                    PinCode: $('#PinCode').val(),
-                    IncidentDate: $('#incidentDate').val(),
-                    Site: $('#Site').val()
-                };
+                if ($('#PinCode').val() && !$('#PinCode').val().startsWith('160')) {
+                    Swal.fire('Invalid Area Code', 'Please provide a valid Chandigarh Pin Code.', 'error');
+                    return;
+                }
+
+                var formData = {};
+                $(this).serializeArray().forEach(function(item) {
+                    formData[item.name] = item.value;
+                });
+
+                // Generate ID natively
+                const randomSeq = Math.floor(10000 + Math.random() * 90000); 
+                formData["ComplaintNo"] = `CHD/${formData["Department"] || "MISC"}/${new Date().getFullYear()}/${randomSeq}`;
+
+                $('#btnSubmit').text('Submitting...').prop('disabled', true);
 
                 $.ajax({
                     url: '/Complaint/Submit',
@@ -513,32 +428,31 @@
                     contentType: 'application/json',
                     data: JSON.stringify(formData),
                     success: function (response) {
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Success!',
-                                text: 'Complaint Submitted Successfully! Complaint No: ' + response.complaintNo,
-                                confirmButtonColor: '#2563eb'
-                            }).then(() => {
-                                $('#complaintForm')[0].reset();
-                                $('#descCount').text('0 / 200 (Min)').css('color', 'red');
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: response.message,
-                                confirmButtonColor: '#2563eb'
-                            });
-                        }
-                    },
-                    error: function () {
                         Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'An error occurred while submitting the form.',
-                            confirmButtonColor: '#2563eb'
+                            title: 'Complaint Registered!',
+                            html: `Your complaint has been successfully submitted and auto-mapped.<br><br>
+                                   <div style="background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:10px;padding:16px;margin:20px 0;">
+                                     <div style="font-size:12px;color:#64748b;margin-bottom:4px;">ACKNOWLEDGEMENT NUMBER</div>
+                                     <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:#166534;letter-spacing:1px;">${response.complaintNo}</div>
+                                   </div>
+                                   <p style="font-size:13px;color:#64748b;margin-bottom:0;">An SMS with this Ack. No. has been sent to your registered mobile.</p>`,
+                            icon: 'success',
+                            confirmButtonText: 'Track Complaint',
+                            showCancelButton: true,
+                            cancelButtonText: 'Go to Dashboard'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '/Dashboard#track';
+                            } else {
+                                window.location.href = '/Dashboard';
+                            }
                         });
+                    },
+                    error: function (xhr) {
+                        let errMsg = "An error occurred while submitting your complaint. Please try again.";
+                        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.message) { errMsg = xhr.responseJSON.message; }
+                        Swal.fire('Error!', errMsg, 'error');
+                        $('#btnSubmit').text('Submit Complaint \u2192').prop('disabled', false);
                     }
                 });
             });

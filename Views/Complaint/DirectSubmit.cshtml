@@ -193,52 +193,94 @@
           <div class="glass-main-card">
               <form id="premiumSubmitForm" enctype="multipart/form-data">
                   <div class="form-content">
-                      <!-- SECTION 1: Personal Info -->
-                      <div class="form-section active" style="display:block;">
-                          <div class="section-header">
-                              <h4>Complainant Information</h4>
-                              <p>Basic contact details for the citizen filing the grievance.</p>
-                          </div>
 
-                          <div class="grid-2">
+                      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:18px;margin-bottom:30px;">
+                          <h5 style="margin:0 0 8px 0;font-weight:700;color:#92400e;font-size:14px;">📌 Please keep ready before filing</h5>
+                          <ul style="margin:0;padding-left:20px;color:#b45309;font-size:13px;">
+                              <li>Valid mobile number linked to Aadhaar</li>
+                              <li>Ward / Sector / Locality of the complaint site</li>
+                              <li>Detailed description (min. 200 characters)</li>
+                              <li>Photo/video evidence (optional, max 10 MB)</li>
+                          </ul>
+                      </div>
+
+                      <!-- SECTION 1: Personal Details -->
+                      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;">
+                          <div style="font-size:16px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:12px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:12px;">
+                              <span style="background:#0f172a;color:#fff;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;font-weight:800;">1</span> Personal Details
+                          </div>
+                          <div class="grid-3">
                               <div class="input-group-custom">
                                   <label class="input-label">Full Name <span class="text-danger">*</span></label>
-                                  <input type="text" name="FullName" class="form-control-premium" placeholder="Complainant's name" required>
+                                  <input type="text" name="FullName" class="form-control-premium" placeholder="e.g. Rahul Sharma" required>
+                              </div>
+                              <div class="input-group-custom">
+                                  <label class="input-label">Mobile Number <span class="text-danger">*</span></label>
+                                  <input type="text" name="MobileNo" class="form-control-premium" placeholder="10-digit mobile" maxlength="10" required>
                               </div>
                               <div class="input-group-custom">
                                   <label class="input-label">Email Address <span class="text-danger">*</span></label>
                                   <input type="email" name="Email" class="form-control-premium" placeholder="name@example.com" required>
                               </div>
                           </div>
+                      </div>
 
-                          <div class="grid-2">
+                      <!-- SECTION 2: Address Details -->
+                      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;">
+                          <div style="font-size:16px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:12px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:12px;">
+                              <span style="background:#0f172a;color:#fff;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;font-weight:800;">2</span> Address Details
+                          </div>
+                          <div class="grid-3">
+                              <div class="input-group-custom" style="grid-column:span 2;">
+                                  <label class="input-label">House No. / Street <span class="text-danger">*</span></label>
+                                  <input type="text" name="Street" class="form-control-premium" placeholder="e.g. H. No. 1024, Sector 22-B" required>
+                              </div>
                               <div class="input-group-custom">
-                                  <label class="input-label">Mobile Number <span class="text-danger">*</span></label>
-                                  <input type="text" name="MobileNo" class="form-control-premium" placeholder="10-digit primary contact" maxlength="10" required>
+                                  <label class="input-label">Ward / Locality <span class="text-danger">*</span></label>
+                                  <input type="text" name="Locality" class="form-control-premium" placeholder="e.g. Sector 22" required>
+                              </div>
+                              <div class="input-group-custom">
+                                  <label class="input-label">State <span class="text-danger">*</span></label>
+                                  <input type="text" id="State" name="State" class="form-control-premium" value="Chandigarh" readonly style="background:#f4f7fc;">
+                              </div>
+                              <div class="input-group-custom">
+                                  <label class="input-label">City <span class="text-danger">*</span></label>
+                                  <input type="text" id="City" name="City" class="form-control-premium" value="Chandigarh" readonly style="background:#f4f7fc;">
+                              </div>
+                              <div class="input-group-custom">
+                                  <label class="input-label">PIN Code <span class="text-danger">*</span></label>
+                                  <input type="text" id="PinCode" name="PinCode" class="form-control-premium" placeholder="160022" maxlength="6" required>
+                                  <small id="pinValidation" style="color:var(--red); display:none; font-weight:700; font-size:10px;">Invalid Chandigarh Pin Code (Starts with 160)</small>
                               </div>
                           </div>
                       </div>
 
-                      <hr style="margin: 40px 0; opacity: 0.1;">
-
-                      <!-- SECTION 2: Issue Details -->
-                      <div class="form-section active" style="display:block;">
-                          <div class="section-header">
-                              <h4>Complaint Details</h4>
-                              <p>Subject and category of the issue.</p>
+                      <!-- SECTION 3: Complaint Details -->
+                      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;">
+                          <div style="font-size:16px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:12px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:12px;">
+                              <span style="background:#0f172a;color:#fff;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;font-weight:800;">3</span> Complaint Details
                           </div>
-
-                          <div class="input-group-custom">
-                              <label class="input-label">Subject / Title <span class="text-danger">*</span></label>
-                              <input type="text" id="ComplaintTitle" name="ComplaintTitle" class="form-control-premium" placeholder="e.g. Street light not working in Sector 22" required>
-                          </div>
-
                           <div class="grid-2">
+                              <div class="input-group-custom">
+                                  <label class="input-label">Subject / Title <span class="text-danger">*</span></label>
+                                  <input type="text" id="ComplaintTitle" name="ComplaintTitle" class="form-control-premium" placeholder="Brief title of the issue" required>
+                              </div>
                               <div class="input-group-custom">
                                   <label class="input-label">Department <span class="text-danger">*</span></label>
                                   <select id="Department" name="Department" class="form-control-premium" required>
-                                      <option value="">Select Category</option>
+                                      <option value="">— Select Department —</option>
                                   </select>
+                                  <small style="color:#64748b;font-size:11px;">🤖 AI will auto-map based on your description</small>
+                              </div>
+                              <div class="input-group-custom">
+                                  <label class="input-label">Complaint Site (Ward/Sector) <span class="text-danger">*</span></label>
+                                  <select id="Area" name="Area" class="form-control-premium" required>
+                                      <option value="">Select Area</option>
+                                  </select>
+                              </div>
+                              <div class="input-group-custom">
+                                  <label class="input-label">Exact Location / Site</label>
+                                  <input type="text" name="Site" class="form-control-premium" placeholder="e.g. Near Pole No. 34, Opposite park">
                               </div>
                               <div class="input-group-custom">
                                   <label class="input-label">Source <span class="text-danger">*</span></label>
@@ -247,65 +289,26 @@
                                       <option value="WhatsApp">WhatsApp</option>
                                   </select>
                               </div>
-                          </div>
-                      </div>
-
-                      <hr style="margin: 40px 0; opacity: 0.1;">
-
-                      <!-- SECTION 3: Location -->
-                      <div class="form-section active" style="display:block;">
-                          <div class="section-header">
-                              <h4>Incident Location</h4>
-                              <p>Provide the precise location where the issue occurred.</p>
-                          </div>
-
-                          <div class="grid-3">
                               <div class="input-group-custom">
-                                  <label class="input-label">State <span class="text-danger">*</span></label>
-                                  <input type="text" id="State" name="State" class="form-control-premium" value="Chandigarh" readonly>
-                              </div>
-                              <div class="input-group-custom">
-                                  <label class="input-label">City <span class="text-danger">*</span></label>
-                                  <input type="text" id="City" name="City" class="form-control-premium" value="Chandigarh" readonly>
-                              </div>
-                              <div class="input-group-custom">
-                                  <label class="input-label">PIN Code <span class="text-danger">*</span></label>
-                                  <input type="text" id="PinCode" name="PinCode" class="form-control-premium" placeholder="e.g. 160022" maxlength="6" required>
-                                  <small id="pinValidation" style="color:var(--red); display:none; font-weight:700; font-size:10px;">Invalid Chandigarh Pin Code (Starts with 160)</small>
+                                  <label class="input-label">Date of Incident</label>
+                                  <input type="date" name="IncidentDate" id="incidentDate" class="form-control-premium">
                               </div>
                           </div>
 
-                          <div class="input-group-custom">
-                              <label class="input-label">Sector / ward <span class="text-danger">*</span></label>
-                              <select id="Area" name="Area" class="form-control-premium" required>
-                                  <option value="">Select Area</option>
-                              </select>
-                          </div>
-                      </div>
-
-                      <hr style="margin: 40px 0; opacity: 0.1;">
-
-                      <!-- SECTION 4: Evidence -->
-                      <div class="form-section active" style="display:block;">
-                          <div class="section-header">
-                              <h4>Evidence & Description</h4>
-                              <p>Detailed explanation and photo upload.</p>
-                          </div>
-
-                          <div class="input-group-custom">
+                          <div class="input-group-custom" style="margin-top:10px;">
                               <label class="input-label">Detailed Description <span class="text-danger">*</span></label>
                               <textarea id="Description" name="Description" rows="5" class="form-control-premium" placeholder="Explain the issue in detail (Min 200 characters)..." required></textarea>
                               <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 200</span></div>
                           </div>
 
                           <div class="input-group-custom">
-                              <label class="input-label">Files & Attachments</label>
+                              <label class="input-label">Upload Evidence (Optional)</label>
                               <input type="file" id="Attachment" name="Attachment" style="display:none;">
                               <div class="dropzone-area" onclick="document.getElementById('Attachment').click()">
-                                  <div class="dropzone-icon">📁</div>
+                                  <div class="dropzone-icon">📎</div>
                                   <div class="dropzone-text">
-                                      <h5>Upload supporting documents</h5>
-                                      <p>Click to browse files (Images/PDF Max 4MB)</p>
+                                      <h5>Click to upload or drag & drop</h5>
+                                      <p>JPG, PNG, MP4 — Max 10 MB per file</p>
                                   </div>
                                   <div class="selected-file-badge" id="fileBadge">
                                       <span>📄</span> <span id="fileName">No file selected</span>
@@ -315,11 +318,11 @@
                       </div>
 
                       <!-- Submission -->
-                      <div class="form-actions">
-                          <button type="submit" class="btn-premium btn-submit" id="btnSubmitFinal">
-                              🚀 Register Complaint
+                      <div style="display:flex;gap:14px;justify-content:flex-end;padding-top:8px;">
+                          <a href="/Complaint/Dashboard" class="btn-premium btn-back">← Back</a>
+                          <button type="submit" class="btn-premium btn-submit" id="btnSubmitFinal" style="background:var(--saffron);font-size:17px;padding:12px 36px;">
+                              Submit Complaint →
                           </button>
-                          <a href="/Complaint/Dashboard" class="btn-premium btn-back">Cancel</a>
                       </div>
 
                   </div>
@@ -345,11 +348,15 @@
             }
         });
 
+        // Set incident date to today
+        const dateInput = document.getElementById('incidentDate');
+        if(dateInput) dateInput.valueAsDate = new Date();
+
         // Char counter
         $('#Description').on('input', function() {
             const len = $(this).val().length;
-            $('#premiumCharCount').text(len + ' / 100');
-            $('#premiumCharCount').css('color', len >= 100 ? '#10b981' : '#ef4444');
+            $('#premiumCharCount').text(len + ' / 200');
+            $('#premiumCharCount').css('color', len >= 200 ? '#10b981' : '#ef4444');
         });
 
         // Form Submit
