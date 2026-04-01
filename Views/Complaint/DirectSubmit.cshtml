@@ -133,7 +133,7 @@
         <img src="/img/logo.png" style="height: 100px; width: auto;margin-right:5%;" alt="Logo">
   <div class="header-text">
             <div class="title"><h2>Chandigarh CMS — Helpdesk Portal</h2></div>
-            <div class=""><h4>Global Complaint Management & Registry</h4></div>
+            <div class=""><h4>Complaint Management System</h4></div>
   </div>
   <div class="admin-badge" style="background:#eef2ff; border-color: var(--blue-light);">
     <div class="admin-avatar" style="background:var(--blue-light);">@(User.Identity?.Name?[0].ToString().ToUpper() ?? "H")</div>
@@ -294,8 +294,8 @@
 
                           <div class="input-group-custom">
                               <label class="input-label">Detailed Description <span class="text-danger">*</span></label>
-                              <textarea id="Description" name="Description" rows="5" class="form-control-premium" placeholder="Explain the issue in detail (Min 100 characters)..." required></textarea>
-                              <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 100</span></div>
+                              <textarea id="Description" name="Description" rows="5" class="form-control-premium" placeholder="Explain the issue in detail (Min 200 characters)..." required></textarea>
+                              <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 200</span></div>
                           </div>
 
                           <div class="input-group-custom">
@@ -356,8 +356,8 @@
         $('#premiumSubmitForm').on('submit', function(e) {
             e.preventDefault();
             
-            if ($('#Description').val().length < 100) {
-                Swal.fire('Description Required', 'Please provide at least 100 characters in the description.', 'warning');
+            if ($('#Description').val().length < 200) {
+                Swal.fire('Description Required', 'Please provide at least 200 characters in the description.', 'warning');
                 return;
             }
 
