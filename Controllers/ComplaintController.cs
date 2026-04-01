@@ -175,8 +175,10 @@ namespace CMS.Controllers
             if (userRole == "Helpdesk")
             {
                 ViewBag.Heads = await _context.Users.Find(u => u.Role == "DeptHead").ToListAsync();
+                ViewBag.Masters = await _context.Masters.Find(_ => true).FirstOrDefaultAsync() ?? new Master();
                 return View("HelpdeskDashboard", complaints);
             }
+
 
             return View(complaints);
         }

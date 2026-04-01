@@ -22,6 +22,7 @@
   <meta charset="UTF-8">
   <title>Enterprise Support Portal — Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
   <style>
     :root {
       --navy: #0f172a;
@@ -483,7 +484,7 @@
       <!-- FILTER BAR -->
       <div class="card" style="margin-bottom:18px;">
         <div class="card-body" style="padding:14px 18px;">
-          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:12px;align-items:end;">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 80px;gap:12px;align-items:end;">
             <div class="form-group" style="margin-bottom:0;">
               <label>Search</label>
               <div class="search-bar"><span class="icon">🔍</span><input type="text" id="complaintSearch" placeholder="complaint No., name, issue..."></div>
@@ -513,7 +514,14 @@
                   <option>Low</option>
               </select>
             </div>
-            <button class="btn btn-primary" onclick="applyFilters()" style="margin-top:17px;">Filter</button>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Date Range</label>
+                <div class="search-bar">
+                    <span class="icon">📅</span>
+                    <input type="text" id="filterDateRange" placeholder="Select Range" readonly style="cursor:pointer; background:#fff;">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="applyFilters()" style="margin-top:17px; height:38px;">Filter</button>
           </div>
         </div>
       </div>
@@ -526,7 +534,8 @@
                     <tr class="complaint-row" 
                         data-status="@item.Status" 
                         data-officer="@(item.AssignedToName ?? "")" 
-                        data-priority="@(item.Priority ?? "Medium")">
+                        data-priority="@(item.Priority ?? "Medium")"
+                        data-date="@item.CreatedDate.ToString("yyyy-MM-dd")">
                       <td><span class="mono">@item.ComplaintNo</span></td>
                       <td>@item.UserId</td>
                       <td>@item.ComplaintTitle</td>
@@ -628,22 +637,25 @@
                           <td>@item.Department</td>
                           <td>@((DateTime.UtcNow - item.CreatedDate).Days) days</td>
                           <td>
-                              <select class="assign-select" data-id="@item.Id" style="padding:6px;border-radius:4px;border:1px solid #ddd;">
-                                  <option value="">Select Officer</option>
-                                  @foreach(var off in allOfficers) {
-                                      var isMatch = off.Department == item.Department || 
-                                                  (masters.Departments != null && masters.Departments.Any(d => d.Code == item.Department && d.Name == off.Department));
-                                      if (isMatch) {
-                                          <option value="@off.Id" data-name="@off.FullName" selected style="font-weight:700;">
-                                              @off.FullName (@(off.Department ?? "N/A")) ★
-                                          </option>
-                                      } else {
-                                          <option value="@off.Id" data-name="@off.FullName">
-                                              @off.FullName (@(off.Department ?? "N/A"))
-                                          </option>
+                              <div class="assign-flow" data-id="@item.Id" style="display:flex; flex-direction:column; gap:5px; min-width:200px;">
+                                  <select class="assign-dept" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px;" onchange="cascadeDiv(this)">
+                                      <option value="">Select Dept</option>
+                                      @if(masters != null && masters.Departments != null) {
+                                          @foreach(var d in masters.Departments) {
+                                              <option value="@d.Name" selected="@(d.Name == item.Department)">@d.Name</option>
+                                          }
                                       }
-                                  }
-                              </select>
+                                  </select>
+                                  <select class="assign-div" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeSub(this)">
+                                      <option value="">Select Division</option>
+                                  </select>
+                                  <select class="assign-sub" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeOff(this)">
+                                      <option value="">Select Sub-Division</option>
+                                  </select>
+                                  <select class="assign-off" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none; border: 1.5px solid var(--blue-light); font-weight:600;">
+                                      <option value="">Select Officer</option>
+                                  </select>
+                              </div>
                           </td>
                           <td><button class="btn btn-green btn-sm" onclick="performManualAssign(this)">Confirm</button></td>
                         </tr>
@@ -1142,7 +1154,71 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+  const masters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(masters));
+  const officers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allOfficers));
+
+  function cascadeDiv(el) {
+      const row = $(el).closest('.assign-flow');
+      const dept = $(el).val();
+      const divSel = row.find('.assign-div');
+      const subSel = row.find('.assign-sub');
+      const offSel = row.find('.assign-off');
+
+      divSel.html('<option value="">Select Division</option>').hide();
+      subSel.html('<option value="">Select Sub-Div</option>').hide();
+      offSel.html('<option value="">Select Officer</option>').hide();
+
+      if (!dept) return;
+
+      const filtered = (masters.Divisions || []).filter(d => d.DepartmentName === dept);
+      if (filtered.length > 0) {
+          filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
+          divSel.show();
+      }
+  }
+
+  function cascadeSub(el) {
+      const row = $(el).closest('.assign-flow');
+      const dept = row.find('.assign-dept').val();
+      const div = $(el).val();
+      const subSel = row.find('.assign-sub');
+      const offSel = row.find('.assign-off');
+
+      subSel.html('<option value="">Select Sub-Div</option>').hide();
+      offSel.html('<option value="">Select Officer</option>').hide();
+
+      if (!div) return;
+
+      const filtered = (masters.SubDivisions || []).filter(s => s.DepartmentName === dept && s.DivisionName === div);
+      if (filtered.length > 0) {
+          filtered.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
+          subSel.show();
+      }
+  }
+
+  function cascadeOff(el) {
+      const row = $(el).closest('.assign-flow');
+      const dept = row.find('.assign-dept').val();
+      const div = row.find('.assign-div').val();
+      const sub = $(el).val();
+      const offSel = row.find('.assign-off');
+
+      offSel.html('<option value="">Select Officer</option>').hide();
+
+      if (!sub) return;
+
+      const filtered = officers.filter(o => o.Department === dept && o.Division === div && o.SubDivision === sub);
+      if (filtered.length > 0) {
+          filtered.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+          offSel.show();
+      } else {
+          offSel.append('<option value="">No officers found</option>').show();
+      }
+  }
   function showPanel(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1202,6 +1278,10 @@
       const status = $('#filterStatus').val();
       const officer = $('#filterOfficer').val();
       const priority = $('#filterPriority').val();
+      
+      const drp = $('#filterDateRange').data('daterangepicker');
+      const start = drp ? drp.startDate.startOf('day') : null;
+      const end = drp ? drp.endDate.endOf('day') : null;
 
       $('.complaint-row').each(function() {
           const row = $(this);
@@ -1209,6 +1289,8 @@
           const rowStatus = row.data('status');
           const rowOfficer = row.data('officer');
           const rowPriority = row.data('priority');
+          const rowDateStr = row.data('date');
+          const rowDate = moment(rowDateStr, 'YYYY-MM-DD');
 
           let show = true;
 
@@ -1216,6 +1298,10 @@
           if (status && rowStatus !== status) show = false;
           if (officer && rowOfficer !== officer) show = false;
           if (priority && rowPriority !== priority) show = false;
+          
+          if (start && end && rowDate.isValid()) {
+              if (rowDate.isBefore(start) || rowDate.isAfter(end)) show = false;
+          }
 
           if (show) row.show();
           else row.hide();
@@ -1224,12 +1310,19 @@
 
   function performManualAssign(btn) {
       const row = $(btn).closest('tr');
-      const select = row.find('.assign-select');
-      const complaintId = select.data('id');
-      const officerId = select.val();
-      const officerName = select.find(':selected').data('name');
+      const flow = row.find('.assign-flow');
+      const complaintId = flow.data('id');
+      const officerId = flow.find('.assign-off').val();
+      const officerName = flow.find('.assign-off :selected').data('name');
 
-      if(!officerId) { Swal.fire('Error', 'Please select an officer.', 'error'); return; }
+      if(!officerId) { 
+          Swal.fire({
+              icon: 'warning',
+              title: 'Mandatory Selection',
+              text: 'Please complete the Department → Division → Sub-Division flow and select an Officer.'
+          }); 
+          return; 
+      }
 
       $.post('/Admin/Reassign', { complaintId: complaintId, headId: officerId, headName: officerName })
       .done(function() {
@@ -1717,6 +1810,34 @@
   }
 
   $(document).ready(function() {
+      // Initialize Date Range Picker
+      $('#filterDateRange').daterangepicker({
+          opens: 'left',
+          autoUpdateInput: false,
+          locale: {
+              cancelLabel: 'Clear',
+              format: 'DD/MM/YYYY'
+          },
+          ranges: {
+             'Today': [moment(), moment()],
+             'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+             'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+             'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+             'This Month': [moment().startOf('month'), moment().endOf('month')],
+             'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+          }
+      });
+
+      $('#filterDateRange').on('apply.daterangepicker', function(ev, picker) {
+          $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+          applyFilters();
+      });
+
+      $('#filterDateRange').on('cancel.daterangepicker', function(ev, picker) {
+          $(this).val('');
+          applyFilters();
+      });
+
       let hash = window.location.hash.replace('#', '');
       if (hash) {
           showPanel(hash);

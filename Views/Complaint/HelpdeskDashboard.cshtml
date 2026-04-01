@@ -6,7 +6,8 @@
     var pending = ViewBag.Pending ?? 0;
     var inProgress = ViewBag.InProgress ?? 0;
     var resolved = ViewBag.Resolved ?? 0;
-    var officers = ViewBag.Heads as IEnumerable<CMS.Models.User> ?? new List<CMS.Models.User>();
+  var officers = ViewBag.Heads as IEnumerable<CMS.Models.User> ?? new List<CMS.Models.User>();
+  var masters = ViewBag.Masters as Master ?? new Master();
     var recentComplaints = Model.Take(10);
 }
 
@@ -16,6 +17,7 @@
   <meta charset="UTF-8">
   <title>Helpdesk — Complaint Registration</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
   <script src="/lib/jquery/dist/jquery.min.js"></script>
   <script src="/js/site.js"></script>
   <style>
@@ -313,12 +315,25 @@
                               <td>@item.Department</td>
                               <td>@((DateTime.UtcNow - item.CreatedDate).Days) days</td>
                               <td>
-                                  <select class="assign-select officer-select" data-id="@item.Id" style="width:180px;">
-                                      <option value="">Select Officer</option>
-                                      @foreach(var off in officers) {
-                                          <option value="@off.Id" data-name="@off.FullName">@off.FullName (@off.Department)</option>
-                                      }
-                                  </select>
+                                  <div class="assign-flow" data-id="@item.Id" style="display:flex; flex-direction:column; gap:5px; min-width:200px;">
+                                      <select class="assign-dept" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none;" onchange="cascadeDiv(this)">
+                                          <option value="">Select Dept</option>
+                                          @if(masters != null && masters.Departments != null) {
+                                              @foreach(var d in masters.Departments) {
+                                                  <option value="@d.Name" selected="@(d.Name == item.Department)">@d.Name</option>
+                                              }
+                                          }
+                                      </select>
+                                      <select class="assign-div" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none;" onchange="cascadeSub(this)">
+                                          <option value="">Select Division</option>
+                                      </select>
+                                      <select class="assign-sub" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none;" onchange="cascadeOff(this)">
+                                          <option value="">Select Sub-Division</option>
+                                      </select>
+                                      <select class="assign-off" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none; border: 1.5px solid var(--blue-light); font-weight:600;">
+                                          <option value="">Select Officer</option>
+                                      </select>
+                                  </div>
                               </td>
                               <td><button class="btn btn-green btn-sm" onclick="performManualAssign(this)">Confirm</button></td>
                             </tr>
@@ -338,6 +353,51 @@
         <div class="page-hdr-left"><h2>📋 All Complaints</h2><p>Registry of grievances filed by Helpdesk</p></div>
         <div class="page-hdr-actions"><a href="/Complaint/DirectSubmit" class="btn btn-primary btn-sm">+ Register New</a></div>
       </div>
+
+      <!-- FILTER BAR -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-body" style="padding:14px 18px;">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 80px;gap:12px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Search</label>
+              <div style="position:relative;"><input type="text" id="helpdeskSearch" placeholder="No., issue, mobile..." style="width:100%; padding:8px 12px 8px 30px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; outline:none;"><span style="position:absolute; left:10px; top:8px; opacity:0.5;">🔍</span></div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Status</label>
+              <select id="hideStatus" style="width:100%; padding:8px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; outline:none;">
+                  <option value="">All Statuses</option>
+                  <option>Pending</option>
+                  <option>Assigned</option>
+                  <option>In Progress</option>
+                  <option>Resolved</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Officer</label>
+              <select id="hideOfficer" style="width:100%; padding:8px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; outline:none;">
+                  <option value="">All Officers</option>
+                  @foreach(var off in officers) {
+                      <option value="@off.FullName">@off.FullName</option>
+                  }
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Priority</label>
+              <select id="hidePriority" style="width:100%; padding:8px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; outline:none;">
+                  <option value="">All</option>
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Date Range</label>
+                <div style="position:relative;">
+                    <input type="text" id="hideDateRange" placeholder="Select Range" readonly style="width:100%; padding:8px 12px 8px 30px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; outline:none; cursor:pointer; background:#fff;">
+                    <span style="position:absolute; left:10px; top:8px; opacity:0.5;">📅</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="applyHelpdeskFilters()" style="margin-top:0; height:36px; width:100%;">Filter</button>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
@@ -354,7 +414,11 @@
             </thead>
             <tbody>
                 @foreach(var item in Model) {
-                    <tr>
+                    <tr class="complaint-row" 
+                        data-status="@item.Status" 
+                        data-officer="@(item.AssignedToName ?? "")" 
+                        data-priority="@(item.Priority ?? "Medium")"
+                        data-date="@item.CreatedDate.ToString("yyyy-MM-dd")">
                       <td><span class="mono">@item.ComplaintNo</span></td>
                       <td>@item.ComplaintTitle</td>
                       <td style="font-weight:600; color:var(--blue-light);">@item.UserId</td>
@@ -423,6 +487,8 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <script>
   function doTrack() {
       const val = $('#trackInput').val().trim();
@@ -503,15 +569,116 @@
     }
   }
 
+  function applyHelpdeskFilters() {
+      const search = $('#helpdeskSearch').val().toLowerCase().trim();
+      const status = $('#hideStatus').val();
+      const officer = $('#hideOfficer').val();
+      const priority = $('#hidePriority').val();
+      
+      const drp = $('#hideDateRange').data('daterangepicker');
+      const start = drp ? drp.startDate.startOf('day') : null;
+      const end = drp ? drp.endDate.endOf('day') : null;
+
+      $('.complaint-row').each(function() {
+          const row = $(this);
+          const rowText = row.text().toLowerCase();
+          const rowStatus = row.data('status');
+          const rowOfficer = row.data('officer');
+          const rowPriority = row.data('priority');
+          const rowDateStr = row.data('date');
+          const rowDate = moment(rowDateStr, 'YYYY-MM-DD');
+
+          let show = true;
+
+          if (search && !rowText.includes(search)) show = false;
+          if (status && rowStatus !== status) show = false;
+          if (officer && rowOfficer !== officer) show = false;
+          if (priority && rowPriority !== priority) show = false;
+          
+          if (start && end && rowDate.isValid()) {
+              if (rowDate.isBefore(start) || rowDate.isAfter(end)) show = false;
+          }
+
+          if (show) row.show();
+          else row.hide();
+      });
+  }
+
+  const mastersData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(masters));
+  const officersList = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(officers));
+
+  function cascadeDiv(el) {
+      const row = $(el).closest('.assign-flow');
+      const dept = $(el).val();
+      const divSel = row.find('.assign-div');
+      const subSel = row.find('.assign-sub');
+      const offSel = row.find('.assign-off');
+
+      divSel.html('<option value="">Select Division</option>').hide();
+      subSel.html('<option value="">Select Sub-Div</option>').hide();
+      offSel.html('<option value="">Select Officer</option>').hide();
+
+      if (!dept) return;
+
+      const filtered = (mastersData.Divisions || []).filter(d => d.DepartmentName === dept);
+      if (filtered.length > 0) {
+          filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
+          divSel.show();
+      }
+  }
+
+  function cascadeSub(el) {
+      const row = $(el).closest('.assign-flow');
+      const dept = row.find('.assign-dept').val();
+      const div = $(el).val();
+      const subSel = row.find('.assign-sub');
+      const offSel = row.find('.assign-off');
+
+      subSel.html('<option value="">Select Sub-Div</option>').hide();
+      offSel.html('<option value="">Select Officer</option>').hide();
+
+      if (!div) return;
+
+      const filtered = (mastersData.SubDivisions || []).filter(s => s.DepartmentName === dept && s.DivisionName === div);
+      if (filtered.length > 0) {
+          filtered.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
+          subSel.show();
+      }
+  }
+
+  function cascadeOff(el) {
+      const row = $(el).closest('.assign-flow');
+      const dept = row.find('.assign-dept').val();
+      const div = row.find('.assign-div').val();
+      const sub = $(el).val();
+      const offSel = row.find('.assign-off');
+
+      offSel.html('<option value="">Select Officer</option>').hide();
+
+      if (!sub) return;
+
+      const filtered = officersList.filter(o => o.Department === dept && o.Division === div && o.SubDivision === sub);
+      if (filtered.length > 0) {
+          filtered.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+          offSel.show();
+      } else {
+          offSel.append('<option value="">No officers found</option>').show();
+      }
+  }
+
   function performManualAssign(btn) {
       const row = $(btn).closest('tr');
-      const select = row.find('.assign-select');
-      const complaintId = select.data('id');
-      const officerId = select.val();
-      const officerName = select.find(':selected').data('name');
+      const flow = row.find('.assign-flow');
+      const complaintId = flow.data('id');
+      const officerId = flow.find('.assign-off').val();
+      const officerName = flow.find('.assign-off :selected').data('name');
 
       if(!officerId) { 
-          Swal.fire('Requirement', 'Please select an officer from the list.', 'warning'); 
+          Swal.fire({
+              icon: 'warning',
+              title: 'Mandatory Selection',
+              text: 'Please complete the Department → Division → Sub-Division flow and select an Officer.'
+          }); 
           return; 
       }
 
@@ -534,6 +701,34 @@
 
 
   $(document).ready(function() {
+      // Initialize Date Range Picker
+      $('#hideDateRange').daterangepicker({
+          opens: 'left',
+          autoUpdateInput: false,
+          locale: {
+              cancelLabel: 'Clear',
+              format: 'DD/MM/YYYY'
+          },
+          ranges: {
+             'Today': [moment(), moment()],
+             'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+             'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+             'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+             'This Month': [moment().startOf('month'), moment().endOf('month')],
+             'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+          }
+      });
+
+      $('#hideDateRange').on('apply.daterangepicker', function(ev, picker) {
+          $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+          applyHelpdeskFilters();
+      });
+
+      $('#hideDateRange').on('cancel.daterangepicker', function(ev, picker) {
+          $(this).val('');
+          applyHelpdeskFilters();
+      });
+
       // Render Charts
       const pending = @pending;
       const inProgress = @inProgress;
