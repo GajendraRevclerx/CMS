@@ -224,5 +224,31 @@ namespace CMS.Controllers
             if (complaint == null) return NotFound(new { success = false, message = "Complaint not found." });
             return Ok(new { success = true, complaint });
         }
+
+        [Authorize(Roles = "Helpdesk,Admin")]
+        [HttpPost]
+        public async Task<IActionResult> UpdateStatus(string complaintId, string status)
+        {
+            var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var update = Builders<Complaint>.Update.Set(c => c.Status, status);
+            
+            if (status == "Resolved") {
+                update = update.Set(c => c.ResolutionDate, System.DateTime.UtcNow);
+            }
+
+            await _context.Complaints.UpdateOneAsync(filter, update);
+            return Json(new { success = true });
+        }
+
+        [Authorize(Roles = "Helpdesk,Admin")]
+        [HttpPost]
+        public async Task<IActionResult> UpdatePriority(string complaintId, string priority)
+        {
+            var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var update = Builders<Complaint>.Update.Set(c => c.Priority, priority);
+
+            await _context.Complaints.UpdateOneAsync(filter, update);
+            return Json(new { success = true });
+        }
     }
 }
