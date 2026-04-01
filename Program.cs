@@ -19,7 +19,9 @@ builder.Services.AddSingleton<ComplaintService>();
 // Email & Reports Configuration
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddSingleton<IReportingService, ReportingService>();
 builder.Services.AddHostedService<DailyReportWorker>();
+
 
 // Session State Configuration
 builder.Services.AddSession(options =>

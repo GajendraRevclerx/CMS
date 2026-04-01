@@ -211,7 +211,6 @@
         <div class="checklist-box">
           <h5>📌 Please keep ready before filing</h5>
           <ul>
-            <li>Valid mobile number linked to Aadhaar</li>
             <li>Ward / Sector / Locality of the complaint site</li>
             <li>Detailed description (min. 200 characters)</li>
             <li>Photo/video evidence (optional, max 10 MB)</li>
@@ -291,7 +290,7 @@
               <select name="Department" id="Department" required>
                 <option value="">— Select Department —</option>
               </select>
-              <div class="form-note">🤖 AI will auto-map based on your description</div>
+              <div class="form-note"></div>
             </div>
 
             <div class="form-group">
@@ -432,10 +431,10 @@
                             title: 'Complaint Registered!',
                             html: `Your complaint has been successfully submitted and auto-mapped.<br><br>
                                    <div style="background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:10px;padding:16px;margin:20px 0;">
-                                     <div style="font-size:12px;color:#64748b;margin-bottom:4px;">ACKNOWLEDGEMENT NUMBER</div>
+                                     <div style="font-size:12px;color:#64748b;margin-bottom:4px;">COMPLAINT NUMBER</div>
                                      <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:#166534;letter-spacing:1px;">${response.complaintNo}</div>
                                    </div>
-                                   <p style="font-size:13px;color:#64748b;margin-bottom:0;">An SMS with this Ack. No. has been sent to your registered mobile.</p>`,
+                                   <p style="font-size:13px;color:#64748b;margin-bottom:0;">An SMS with this Complaint No. has been sent to your registered mobile.</p>`,
                             icon: 'success',
                             confirmButtonText: 'Track Complaint',
                             showCancelButton: true,

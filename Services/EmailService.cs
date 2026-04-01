@@ -9,6 +9,7 @@ namespace CMS.Services
     public interface IEmailService
     {
         Task SendEmailAsync(string to, string subject, string body);
+        Task SendEmailWithAttachmentAsync(string to, string subject, string body, byte[] attachment, string fileName);
     }
 
     public class EmailService : IEmailService
@@ -22,9 +23,18 @@ namespace CMS.Services
 
         public async Task SendEmailAsync(string to, string subject, string body)
         {
+            await SendEmailInternalAsync(to, subject, body, null, null);
+        }
+
+        public async Task SendEmailWithAttachmentAsync(string to, string subject, string body, byte[] attachment, string fileName)
+        {
+            await SendEmailInternalAsync(to, subject, body, attachment, fileName);
+        }
+
+        private async Task SendEmailInternalAsync(string to, string subject, string body, byte[]? attachmentData, string? fileName)
+        {
             using (var client = new SmtpClient(_settings.SmtpHost, _settings.SmtpPort))
             {
-                
                 client.EnableSsl = false;
                 client.UseDefaultCredentials = false;
                 client.Credentials = new NetworkCredential(_settings.SmtpUser, _settings.SmtpPass);
@@ -38,8 +48,20 @@ namespace CMS.Services
                 };
                 mailMessage.To.Add(to);
 
+                if (attachmentData != null && !string.IsNullOrEmpty(fileName))
+                {
+                    var ms = new System.IO.MemoryStream(attachmentData);
+                    var attachment = new Attachment(ms, fileName, "text/csv");
+                    mailMessage.Attachments.Add(attachment);
+                }
+
                 await client.SendMailAsync(mailMessage);
+                
+                // Note: MailMessage should be disposed, but client.SendMailAsync uses it asynchronously.
+                // In SmtpClient, after SendMailAsync completes, you can dispose the message.
+                // However, modern SmtpClient usage often avoids disposing if it causes issues.
             }
         }
     }
 }
+

@@ -6,6 +6,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -71,32 +74,22 @@ namespace CMS.Services
 
             using (var scope = _serviceProvider.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
                 var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                var reportingService = scope.ServiceProvider.GetRequiredService<IReportingService>();
 
-                var totalComplaints = await dbContext.Complaints.CountDocumentsAsync(_ => true);
-                var resolvedComplaints = await dbContext.Complaints.CountDocumentsAsync(c => c.Status == "Resolved");
-                var pendingComplaints = totalComplaints - resolvedComplaints;
-
-                var body = $@"Citizen Complaint Management System (CCMS)
-
-Dear Sir/Madam,
-
-Please find below the AI-Generated Daily Complaint Status Summary for administrative review and monitoring.
-
-Report Date: {DateTime.Now:dd/MM/yyyy}
-
-Complaint Metric	Count
-Total Complaints Registered (Till Date)	{totalComplaints}
-Total Complaints Resolved (Till Date)	{resolvedComplaints}
-Total Complaints Pending (Till Date)	{pendingComplaints}
-
-This is an AI-Generated Daily Report from the Citizen Complaint Management System (CCMS).
-Government of {_emailSettings.DepartmentName}";
-
-                await emailService.SendEmailAsync(_emailSettings.AdminEmail, "CCMS Daily Status Report", body);
-                _logger.LogInformation("Daily report email sent successfully to {email}.", _emailSettings.AdminEmail);
+                try 
+                {
+                    var (body, csvData, fileName) = await reportingService.GenerateDailyReportAsync();
+                    await emailService.SendEmailWithAttachmentAsync(_emailSettings.AdminEmail, $"CCMS Daily Status Report - {DateTime.Now:dd/MM/yyyy}", body, csvData, fileName);
+                    _logger.LogInformation("Daily report with attachment sent successfully to {email}.", _emailSettings.AdminEmail);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to generate or send daily report.");
+                }
             }
         }
     }
 }
+
+

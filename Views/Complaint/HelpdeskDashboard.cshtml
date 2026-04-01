@@ -14,7 +14,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Helpdesk — Global Registry</title>
+  <title>Helpdesk — Complaint Registration</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
   <script src="/lib/jquery/dist/jquery.min.js"></script>
   <script src="/js/site.js"></script>
@@ -160,7 +160,7 @@
 
 <!-- GOV RIBBON -->
 <div class="gov-ribbon">
-  <strong>HELPDESK CONTROL CENTER</strong> &nbsp;·&nbsp; <strong>GLOBAL REGISTRY</strong>
+  <strong>HELPDESK CONTROL CENTER</strong>
   <div class="ml">
     <span class="ribbon-badge">👤 Helpdesk Session</span>
     <span style="opacity:.5;">|</span>
@@ -170,8 +170,8 @@
 
 <!-- TOP HEADER -->
 <header class="top-header">
-  <img src="~/img/logo.png" style="height: 100px; width: auto;margin-left:5%" alt="Logo">
-  <div class="header-text">
+  <img src="~/img/logo.png" style="height: 100px; width: auto;margin-left:2%" alt="Logo">
+  <div class="header-text" style="margin-left: 3%!important" >
             <div class="title"><h2>Chandigarh CMS — Helpdesk Portal</h2></div>
             <div class=""><h4>Complaint Management System</h4></div>
   </div>
@@ -232,7 +232,7 @@
         </div>
         <div class="page-hdr-actions">
           <a href="#assignments" class="btn btn-saffron btn-sm" onclick="showPanel('assignments')">Assign Pending →</a>
-          <a href="/Complaint/DirectSubmit" class="btn btn-green btn-sm">+ Register Case</a>
+          <a href="/Complaint/DirectSubmit" class="btn btn-green btn-sm">+ Register Complaint</a>
         </div>
       </div>
 
@@ -241,22 +241,22 @@
         <div class="stat-card blue">
           <div class="stat-top"><div class="stat-icon blue">📝</div></div>
           <div class="stat-val">@total</div>
-          <div class="stat-lbl">Global Total</div>
+          <div class="stat-lbl">Total Complaints</div>
         </div>
         <div class="stat-card saffron" onclick="showPanel('assignments')" style="cursor:pointer;">
           <div class="stat-top"><div class="stat-icon saffron">⌛</div><span class="pill pill-amber" style="font-size:9px;">@ViewBag.UnassignedCount New</span></div>
           <div class="stat-val">@ViewBag.UnassignedCount</div>
-          <div class="stat-lbl">Global Unassigned</div>
+          <div class="stat-lbl">Unassigned Complaints</div>
         </div>
         <div class="stat-card amber">
           <div class="stat-top"><div class="stat-icon amber">🛠️</div></div>
           <div class="stat-val">@inProgress</div>
-          <div class="stat-lbl">My Assigned Cases</div>
+          <div class="stat-lbl">My Assigned Complaints</div>
         </div>
         <div class="stat-card green">
           <div class="stat-top"><div class="stat-icon green">✅</div></div>
           <div class="stat-val">@resolved</div>
-          <div class="stat-lbl">My Resolved Cases</div>
+          <div class="stat-lbl">My Resolved Complaints</div>
         </div>
       </div>
 
@@ -271,12 +271,12 @@
         </div>
         <div class="card">
           <div class="card-hdr">
-            <h3>Recent Registrations</h3>
+            <h3>Recent Complaints</h3>
             <div class="card-actions"><button class="btn btn-outline btn-sm" onclick="showPanel('complaints')">View All →</button></div>
           </div>
           <div class="card-body no-pad">
             <table class="data-table">
-              <thead><tr><th>Ack. No.</th><th>Issue</th><th>Status</th><th>Assignment</th></tr></thead>
+              <thead><tr><th>Complaint. No.</th><th>Issue</th><th>Status</th><th>Assignment</th></tr></thead>
               <tbody>
                 @foreach(var item in recentComplaints) {
                     <tr>
@@ -303,7 +303,7 @@
         <div class="card">
           <div class="card-body no-pad">
             <table class="data-table" id="dispatchTable">
-                <thead><tr><th>Ack. No.</th><th>Issue</th><th>Dept.</th><th>Waiting Since</th><th>Assign To</th><th>Action</th></tr></thead>
+                <thead><tr><th>Complaint No.</th><th>Issue</th><th>Dept.</th><th>Waiting Since</th><th>Assign To</th><th>Action</th></tr></thead>
                 <tbody>
                     @if (ViewBag.AllPending != null) {
                         @foreach(var item in (IEnumerable<CMS.Models.Complaint>)ViewBag.AllPending) {
@@ -343,7 +343,7 @@
           <table class="data-table">
             <thead>
                 <tr>
-                    <th>Ack. No.</th>
+                    <th>Complaint No.</th>
                     <th>Issue</th>
                     <th>Citizen Mobile</th>
                     <th>Assigned To</th>
@@ -377,8 +377,8 @@
         <div class="card" style="margin-bottom:20px;">
           <div class="card-body">
             <div class="form-group" style="margin-bottom:0;">
-              <label style="display:block; font-size:12px; font-weight:700; color:var(--text-mid); margin-bottom:6px;">Acknowledgement Number</label>
-              <div style="display:flex;gap:10px;"><input type="text" id="trackInput" placeholder="e.g. CHD/2026/..." style="flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; outline:none;"><button class="btn btn-primary" onclick="doTrack()">Search</button></div>
+              <label style="display:block; font-size:12px; font-weight:700; color:var(--text-mid); margin-bottom:6px;">Complaint Number</label>
+              <div style="display:flex;gap:10px;"><input type="text" id="trackInput" placeholder="e.g. 2026/..." style="flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; outline:none;"><button class="btn btn-primary" onclick="doTrack()">Search</button></div>
             </div>
           </div>
         </div>
@@ -406,7 +406,7 @@
       <input type="hidden" id="modId">
       <div class="form-row-2">
           <div class="form-group"><label>Update Status</label>
-            <select id="modStatusSelect"><option>Pending</option><option>Assigned</option><option>In Progress</option><option>Resolved</option><option>Closed</option></select>
+            <select id="modStatusSelect"><option>Pending</option><option>Assigned</option><option>In Progress</option><option>Resolved</option></select>
           </div>
           <div class="form-group"><label>Priority</label>
             <select id="modPrioritySelect"><option>High</option><option>Medium</option><option>Low</option></select>

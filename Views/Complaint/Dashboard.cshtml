@@ -259,7 +259,7 @@
           </div>
           <div class="card-body no-pad">
             <table class="data-table">
-              <thead><tr><th>Ack. No.</th><th>Issue</th><th>Status</th><th>Action</th></tr></thead>
+              <thead><tr><th>Complaint No.</th><th>Issue</th><th>Status</th><th>Action</th></tr></thead>
               <tbody>
                 @foreach(var item in recentComplaints) {
                     <tr>
@@ -292,7 +292,7 @@
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
-            <thead><tr><th>Ack. No.</th><th>Issue</th><th>Dept.</th><th>Assigned To</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+            <thead><tr><th>Complaint No.</th><th>Issue</th><th>Dept.</th><th>Assigned To</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
             <tbody>
                 @foreach(var item in Model) {
                     <tr>
@@ -321,7 +321,7 @@
         <div class="card" style="margin-bottom:20px;">
           <div class="card-body">
             <div class="form-group" style="margin-bottom:15px;">
-              <label style="display:block; font-size:12px; font-weight:700; color:var(--text-mid); margin-bottom:6px;">Acknowledgement Number</label>
+              <label style="display:block; font-size:12px; font-weight:700; color:var(--text-mid); margin-bottom:6px;">Complaint Number</label>
               <div style="display:flex;gap:10px;">
                   <input type="text" id="trackInput" placeholder="e.g. CHD/2026/..." style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);">
                   <button class="btn btn-primary" onclick="doTrack()">Search</button>
