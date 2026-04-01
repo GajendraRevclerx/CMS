@@ -536,8 +536,8 @@
             $('#premiumSubmitForm').on('submit', function(e) {
                 e.preventDefault();
                 
-                if ($('#Description').val().length < 200) {
-                    Swal.fire('Description Required', 'Please provide at least 100 characters in the description.', 'warning');
+                if ($('#Description').val().length < 10) {
+                    Swal.fire('Description Required', 'Please provide at least 200 characters in the description.', 'warning');
                     return;
                 }
 
