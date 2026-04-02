@@ -440,7 +440,7 @@ namespace CMS.Controllers
             {
                 var (body, csvData, fileName) = await _reportingService.GenerateDailyReportAsync();
                 
-                await _emailService.SendEmailWithAttachmentAsync(_emailSettings.AdminEmail, "CCMS Daily Status Report (Test Mode)", body, csvData, fileName);
+                await _emailService.SendEmailWithAttachmentAsync(_emailSettings.AdminEmail, "CCMS Daily Status Report", body, csvData, fileName);
                 
                 return Json(new { success = true, message = "Test email with CSV attachment successfully sent to " + _emailSettings.AdminEmail });
             }

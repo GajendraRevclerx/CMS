@@ -24,12 +24,22 @@ namespace CMS.Services
 
         public async Task<(string body, byte[] csvData, string fileName)> GenerateDailyReportAsync()
         {
-            // 1. Fetch all complaints
+            // 1. Fetch complaints and master data for naming
             var allComplaints = await _context.Complaints.Find(_ => true).ToListAsync();
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            
+            // Create a lookup for Full Department Names
+            var deptMap = master?.Departments?.ToDictionary(d => d.Code, d => d.Name) ?? new Dictionary<string, string>();
 
-            // 2. Group by Department for summary
+            // Helper to get full name
+            string GetDeptName(string? code) {
+                if (string.IsNullOrEmpty(code)) return "System Uploads";
+                return deptMap.ContainsKey(code) ? deptMap[code] : code;
+            }
+
+            // 2. Group by Full Department Name for summary
             var deptSummary = allComplaints
-                .GroupBy(c => c.Department ?? "System Uploads")
+                .GroupBy(c => GetDeptName(c.Department))
                 .Select(g => new {
                     Dept = g.Key,
                     Total = g.Count(),
@@ -70,7 +80,7 @@ namespace CMS.Services
         <div style='flex:1;background:#fff5f5;padding:10px;border-radius:5px;'><strong>Pending:</strong> {pendingCount}</div>
     </div>
 
-    <p style='margin-top:20px;color:#666;'><em>A detailed CSV report with complete citizen details (Mobile & Name) is attached to this email.</em></p>
+    <p style='margin-top:20px;color:#666;'><em>A detailed CSV report with complete citizen details is attached to this email.</em></p>
     <hr/>
     <p style='font-size:12px;color:#888;'>This is an automated report from the CCMS Government Portal. Please do not reply to this email.</p>
 </div>";
@@ -94,13 +104,14 @@ namespace CMS.Services
             csv.AppendLine("Complaint No,Date,Citizen Name,Mobile No,Department,Issue,Status,Priority");
 
             var sortedDetails = allComplaints
-                .OrderBy(c => c.Department)
+                .OrderBy(c => GetDeptName(c.Department))
                 .ThenByDescending(c => c.CreatedDate)
                 .ToList();
 
             foreach (var c in sortedDetails)
             {
-                csv.AppendLine($"{Escape(c.ComplaintNo)},{c.CreatedDate:yyyy-MM-dd HH:mm},\"{Escape(c.FullName)}\",\"{Escape(c.UserId)}\",\"{Escape(c.Department)}\",\"{Escape(c.ComplaintTitle)}\",\"{Escape(c.Status)}\",\"{Escape(c.Priority)}\"");
+                var fullDeptName = GetDeptName(c.Department);
+                csv.AppendLine($"{Escape(c.ComplaintNo)},{c.CreatedDate:yyyy-MM-dd HH:mm},\"{Escape(c.FullName)}\",\"{Escape(c.UserId)}\",\"{Escape(fullDeptName)}\",\"{Escape(c.ComplaintTitle)}\",\"{Escape(c.Status)}\",\"{Escape(c.Priority)}\"");
             }
 
             var csvData = Encoding.UTF8.GetBytes(csv.ToString());

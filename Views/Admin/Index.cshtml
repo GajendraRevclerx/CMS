@@ -23,6 +23,7 @@
   <title>Enterprise Support Portal — Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <style>
     :root {
       --navy: #0f172a;
@@ -255,6 +256,16 @@
     .sla-pct { width: 40px; text-align: right; font-size: 12px; font-weight: 800; }
 
     .logout-label { color: #fecaca; }
+    
+    /* Select2 Custom Styles */
+    .select2-container--default .select2-selection--single { height: 38px; border: 1.5px solid var(--border); border-radius: 10px; outline: none; transition: border-color 0.2s; background: #fff; }
+    .select2-container--default .select2-selection--single:focus { border-color: var(--blue-light); }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 36px; padding-left: 12px; font-size: 13px; color: var(--navy); }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+    .select2-dropdown { border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .select2-results__option { font-size: 13px; padding: 8px 12px; }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: var(--blue-light); }
+    .select2-container { margin-top: 1px; }
   </style>
 </head>
 <body>
@@ -502,7 +513,7 @@
               <select id="filterOfficer">
                   <option value="">All Officers</option>
                   @foreach(var off in allOfficers) {
-                      <option value="@off.FullName">@off.FullName</option>
+                      <option value="@off.Id">@off.FullName (@off.Department)</option>
                   }
               </select>
             </div>
@@ -533,7 +544,7 @@
                 @foreach(var item in Model) {
                     <tr class="complaint-row" 
                         data-status="@item.Status" 
-                        data-officer="@(item.AssignedToName ?? "")" 
+                        data-officer="@(item.AssignedToId ?? "")" 
                         data-priority="@(item.Priority ?? "Medium")"
                         data-date="@item.CreatedDate.ToString("yyyy-MM-dd")">
                       <td><span class="mono">@item.ComplaintNo</span></td>
@@ -598,13 +609,47 @@
     <!-- OFFICERS PANEL -->
     <div id="panel-officers" class="panel">
       <div class="page-hdr"><div class="page-hdr-left"><h2>👮 Officer Roster</h2><p>Manage JEs, SEs and Dept Heads</p></div><button class="btn btn-primary" onclick="openAddOfficerModal()">+ Add Officer</button></div>
+      
+      <!-- ROSTER FILTERS -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-body" style="padding:14px 18px;">
+          <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 100px;gap:12px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Search Name</label>
+              <select id="rosterFilterName" style="width:100%;">
+                  <option value="">All Officers</option>
+                  @foreach(var off in allOfficers) {
+                      <option value="@off.FullName">@off.FullName</option>
+                  }
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Mobile Number</label>
+              <div class="search-bar"><span class="icon">📱</span><input type="text" id="rosterSearchMobile" placeholder="e.g. 98765..."></div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Department</label>
+              <select id="rosterFilterDept">
+                  <option value="">All Departments</option>
+                  @if(masters != null && masters.Departments != null) {
+                      @foreach(var dept in masters.Departments) {
+                          <option>@dept.Name</option>
+                      }
+                  }
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="applyRosterFilters()" style="margin-top:0; height:38px;">Filter</button>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
             <thead><tr><th>Officer</th><th>Mobile</th><th>Department</th><th>Jurisdiction</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
                 @foreach(var off in allOfficers) {
-                    <tr>
+                    <tr class="roster-row" data-name="@off.FullName" data-mobile="@off.MobileNo" data-dept="@off.Department">
                       <td><div style="display:flex;align-items:center;gap:10px;"><div class="officer-avatar" style="background:var(--blue-light);width:32px;height:32px;font-size:12px;">@(off.FullName.Substring(0,1))</div><div><div style="font-weight:600;">@off.FullName</div></div></div></td>
                       <td>@off.MobileNo</td>
                       <td><span class="role-tag role-je">JE</span> @off.Department</td>
@@ -1154,6 +1199,7 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1274,14 +1320,15 @@
   }
 
   function applyFilters() {
-      const search = $('#complaintSearch').val().toLowerCase().trim();
+      const search = $('#complaintSearch').val()?.toLowerCase().trim() || "";
       const status = $('#filterStatus').val();
-      const officer = $('#filterOfficer').val();
+      const selOfficer = $('#filterOfficer').val();
       const priority = $('#filterPriority').val();
       
+      const dateVal = $('#filterDateRange').val();
       const drp = $('#filterDateRange').data('daterangepicker');
-      const start = drp ? drp.startDate.startOf('day') : null;
-      const end = drp ? drp.endDate.endOf('day') : null;
+      const start = (dateVal && drp) ? drp.startDate.startOf('day') : null;
+      const end = (dateVal && drp) ? drp.endDate.endOf('day') : null;
 
       $('.complaint-row').each(function() {
           const row = $(this);
@@ -1296,12 +1343,37 @@
 
           if (search && !rowText.includes(search)) show = false;
           if (status && rowStatus !== status) show = false;
-          if (officer && rowOfficer !== officer) show = false;
+          
+          if (selOfficer && selOfficer !== "" && selOfficer !== "null") {
+              if (rowOfficer != selOfficer) show = false;
+          }
+          
           if (priority && rowPriority !== priority) show = false;
           
           if (start && end && rowDate.isValid()) {
               if (rowDate.isBefore(start) || rowDate.isAfter(end)) show = false;
           }
+
+          if (show) row.show();
+          else row.hide();
+      });
+  }
+
+  function applyRosterFilters() {
+      const name = $('#rosterFilterName').val();
+      const mobile = $('#rosterSearchMobile').val()?.toLowerCase().trim() || "";
+      const dept = $('#rosterFilterDept').val();
+
+      $('.roster-row').each(function() {
+          const row = $(this);
+          const rowName = row.data('name');
+          const rowMobile = row.data('mobile').toString();
+          const rowDept = row.data('dept');
+
+          let show = true;
+          if (name && rowName !== name) show = false;
+          if (mobile && !rowMobile.includes(mobile)) show = false;
+          if (dept && rowDept !== dept) show = false;
 
           if (show) row.show();
           else row.hide();
@@ -1836,6 +1908,32 @@
       $('#filterDateRange').on('cancel.daterangepicker', function(ev, picker) {
           $(this).val('');
           applyFilters();
+      });
+
+      // Initialize Select2 for Officer Dropdown
+      $('#filterOfficer').select2({
+          placeholder: "Select Officer",
+          allowClear: true,
+          width: '100%'
+      }).on('change', function() {
+          applyFilters();
+      });
+
+      // Initialize Select2 for Roster Name Filter
+      $('#rosterFilterName').select2({
+          placeholder: "Search Officer",
+          allowClear: true,
+          width: '100%'
+      }).on('change', function() {
+          applyRosterFilters();
+      });
+
+      $('#rosterSearchMobile').on('input', function() {
+          applyRosterFilters();
+      });
+
+      $('#rosterFilterDept').on('change', function() {
+          applyRosterFilters();
       });
 
       let hash = window.location.hash.replace('#', '');
