@@ -28,15 +28,14 @@ namespace CMS.Controllers
                 .ToListAsync();
 
             ViewBag.Total = complaints.Count;
-            ViewBag.Pending = complaints.Count(c => c.Status == "Assigned"); // DH sees "Assigned" as their pending
-            ViewBag.InProgress = complaints.Count(c => c.Status == "In Progress");
+            ViewBag.Assigned = complaints.Count(c => c.Status == "Assigned");
             ViewBag.Resolved = complaints.Count(c => c.Status == "Resolved");
 
             return View(complaints);
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateStatus(string id, string status)
+        public async Task<IActionResult> UpdateStatus(string id, string status, string? remark)
         {
             var userId = User.FindFirstValue("UserId");
             var filter = Builders<Complaint>.Filter.And(
@@ -45,6 +44,11 @@ namespace CMS.Controllers
             );
             var update = Builders<Complaint>.Update.Set(c => c.Status, status);
             
+            if (status == "Resolved") {
+                update = update.Set(c => c.ResolutionDate, System.DateTime.UtcNow)
+                               .Set(c => c.ResolutionRemark, remark);
+            }
+
             var result = await _context.Complaints.UpdateOneAsync(filter, update);
 
             if (result.ModifiedCount > 0)

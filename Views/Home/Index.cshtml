@@ -372,17 +372,16 @@
                         if(res.success) {
                             let step = 1;
                             if (res.status === 'Assigned') step = 2;
-                            if (res.status === 'In Progress') step = 3;
-                            if (res.status === 'Resolved' || res.status === 'Closed') step = 4;
+                            if (res.status === 'Resolved' || res.status === 'Closed') step = 3;
                             
-                            var progressWidth = ((step - 1) / 3) * 100;
+                            var progressWidth = ((step - 1) / 2) * 100;
                             if (step === 1) progressWidth = 0;
 
                             $result.html(`
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <h6 class="fw-bold mb-0">${res.complaintNo}</h6>
-                                        <span class="badge ${step === 4 ? 'bg-success' : 'bg-primary'} rounded-pill">${res.status}</span>
+                                        <span class="badge ${step === 3 ? 'bg-success' : 'bg-primary'} rounded-pill">${res.status}</span>
                                     </div>
                                     <p class="text-muted small">${res.title} · Filed on ${res.createdDate}</p>
                                     
@@ -397,12 +396,8 @@
                                                 <div class="track-step-circle">${step > 2 ? '✓' : '02'}</div>
                                                 <div class="track-step-label">Assigned</div>
                                             </div>
-                                            <div class="track-step-item ${step >= 3 ? (step > 3 ? 'completed' : 'active') : ''}">
-                                                <div class="track-step-circle">${step > 3 ? '✓' : '03'}</div>
-                                                <div class="track-step-label">Working</div>
-                                            </div>
-                                            <div class="track-step-item ${step >= 4 ? 'active' : ''}">
-                                                <div class="track-step-circle">04</div>
+                                            <div class="track-step-item ${step >= 3 ? 'active' : ''}">
+                                                <div class="track-step-circle">${step === 3 ? '✓' : '03'}</div>
                                                 <div class="track-step-label">Resolved</div>
                                             </div>
                                         </div>

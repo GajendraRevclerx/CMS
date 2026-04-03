@@ -4,7 +4,7 @@
     Layout = null;
     var total = ViewBag.Total ?? 0;
     var pending = ViewBag.Pending ?? 0;
-    var inProgress = ViewBag.InProgress ?? 0;
+    var assigned = ViewBag.Assigned ?? 0;
     var resolved = ViewBag.Resolved ?? 0;
   var officers = ViewBag.Heads as IEnumerable<CMS.Models.User> ?? new List<CMS.Models.User>();
   var masters = ViewBag.Masters as Master ?? new Master();
@@ -250,7 +250,7 @@
       </div>
 
       <!-- Stats Row -->
-      <div class="stats-grid">
+      <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
         <div class="stat-card blue">
           <div class="stat-top"><div class="stat-icon blue">📝</div></div>
           <div class="stat-val">@total</div>
@@ -263,8 +263,8 @@
         </div>
         <div class="stat-card amber">
           <div class="stat-top"><div class="stat-icon amber">🛠️</div></div>
-          <div class="stat-val">@inProgress</div>
-          <div class="stat-lbl">My Assigned Complaints</div>
+          <div class="stat-val">@assigned</div>
+          <div class="stat-lbl">Assigned Complaints</div>
         </div>
         <div class="stat-card green">
           <div class="stat-top"><div class="stat-icon green">✅</div></div>
@@ -338,8 +338,11 @@
                                       <select class="assign-div" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none;" onchange="cascadeSub(this)">
                                           <option value="">Select Division</option>
                                       </select>
-                                      <select class="assign-sub" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none;" onchange="cascadeOff(this)">
+                                      <select class="assign-sub" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none;" onchange="cascadeDesig(this)">
                                           <option value="">Select Sub-Division</option>
+                                      </select>
+                                      <select class="assign-desig" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none;" onchange="cascadeOff(this)">
+                                          <option value="">Select Designation</option>
                                       </select>
                                       <select class="assign-off" style="padding:5px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; outline:none; display:none; border: 1.5px solid var(--blue-light); font-weight:600;">
                                           <option value="">Select Officer</option>
@@ -378,7 +381,6 @@
                   <option value="">All Statuses</option>
                   <option>Pending</option>
                   <option>Assigned</option>
-                  <option>In Progress</option>
                   <option>Resolved</option>
               </select>
             </div>
@@ -481,11 +483,15 @@
       <input type="hidden" id="modId">
       <div class="form-row-2">
           <div class="form-group"><label>Update Status</label>
-            <select id="modStatusSelect"><option>Pending</option><option>Assigned</option><option>In Progress</option><option>Resolved</option></select>
+            <select id="modStatusSelect" onchange="toggleRemarkField()"><option>Pending</option><option>Assigned</option><option>Resolved</option></select>
           </div>
           <div class="form-group"><label>Priority</label>
             <select id="modPrioritySelect"><option>High</option><option>Medium</option><option>Low</option></select>
           </div>
+      </div>
+      <div class="form-group" id="modRemarkGroup" style="display:none;margin-top:10px;">
+          <label>Resolution Remark <span class="text-muted small">(Optional)</span></label>
+          <textarea id="modRemark" rows="3" placeholder="Explain the resolution for this complaint..." style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);"></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -515,14 +521,12 @@
               
               let step = 1;
               if (res.status === "Assigned") step = 2;
-              if (res.status === "In Progress") step = 3;
-              if (res.status === "Resolved" || res.status === "Closed") step = 4;
+              if (res.status === "Resolved" || res.status === "Closed") step = 3;
               
               let timelineHtml = `
                   <div class="tl-item" style="position:relative; margin-bottom:24px;"><div class="tl-dot-wrap" style="position:absolute; left:-32px; top:0; bottom:-24px; width:24px; display:flex; flex-direction:column; align-items:center;"><div class="tl-dot" style="width:12px; height:12px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px var(--border); z-index:1; background:${step >= 1 ? 'var(--green)' : 'var(--border)'}"></div><div class="tl-line" style="flex:1; width:2px; background:var(--border);"></div></div><div class="tl-content" style="padding-top:0;"><div class="tl-title" style="font-size:13.5px; font-weight:700; color:var(--navy);">Complaint Registered</div><div class="tl-sub" style="font-size:12px; color:var(--text-light); margin:2px 0;">${res.createdDate}</div></div></div>
-                  <div class="tl-item" style="position:relative; margin-bottom:24px;"><div class="tl-dot-wrap" style="position:absolute; left:-32px; top:0; bottom:-24px; width:24px; display:flex; flex-direction:column; align-items:center;"><div class="tl-dot" style="width:12px; height:12px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px var(--border); z-index:1; background:${step >= 2 ? 'var(--green)' : 'var(--border)'}"></div><div class="tl-line" style="flex:1; width:2px; background:var(--border);"></div></div><div class="tl-content" style="padding-top:0;"><div class="tl-title" style="font-size:13.5px; font-weight:700; color:var(--navy);">Assigned</div><div class="tl-sub" style="font-size:12px; color:var(--text-light); margin:2px 0;">Assigned to: ${res.assignedTo}</div></div></div>
-                  <div class="tl-item" style="position:relative; margin-bottom:24px;"><div class="tl-dot-wrap" style="position:absolute; left:-32px; top:0; bottom:-24px; width:24px; display:flex; flex-direction:column; align-items:center;"><div class="tl-dot" style="width:12px; height:12px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px var(--border); z-index:1; background:${step >= 3 ? 'var(--green)' : 'var(--border)'}"></div><div class="tl-line" style="flex:1; width:2px; background:var(--border);"></div></div><div class="tl-content" style="padding-top:0;"><div class="tl-title" style="font-size:13.5px; font-weight:700; color:var(--navy);">In Progress</div><div class="tl-sub" style="font-size:12px; color:var(--text-light); margin:2px 0;">Investigation initiated</div></div></div>
-                  <div class="tl-item" style="position:relative; margin-bottom:24px;"><div class="tl-dot-wrap" style="position:absolute; left:-32px; top:0; bottom:-24px; width:24px; display:flex; flex-direction:column; align-items:center;"><div class="tl-dot" style="width:12px; height:12px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px var(--border); z-index:1; background:${step >= 4 ? 'var(--green)' : 'var(--border)'}"></div></div><div class="tl-content" style="padding-top:0;"><div class="tl-title" style="font-size:13.5px; font-weight:700; color:var(--navy);">Resolved</div></div></div>
+                  <div class="tl-item" style="position:relative; margin-bottom:24px;"><div class="tl-dot-wrap" style="position:absolute; left:-32px; top:0; bottom:-24px; width:24px; display:flex; flex-direction:column; align-items:center;"><div class="tl-dot" style="width:12px; height:12px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px var(--border); z-index:1; background:${step >= 2 ? 'var(--green)' : 'var(--border)'}\"></div><div class="tl-line" style="flex:1; width:2px; background:var(--border);"></div></div><div class="tl-content" style="padding-top:0;"><div class="tl-title" style="font-size:13.5px; font-weight:700; color:var(--navy);">Assigned</div><div class="tl-sub" style="font-size:12px; color:var(--text-light); margin:2px 0;">Assigned to: ${res.assignedTo}</div></div></div>
+                  <div class="tl-item" style="position:relative; margin-bottom:24px;"><div class="tl-dot-wrap" style="position:absolute; left:-32px; top:0; bottom:-24px; width:24px; display:flex; flex-direction:column; align-items:center;"><div class="tl-dot" style="width:12px; height:12px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px var(--border); z-index:1; background:${step >= 3 ? 'var(--green)' : 'var(--border)'}\"></div></div><div class="tl-content" style="padding-top:0;"><div class="tl-title" style="font-size:13.5px; font-weight:700; color:var(--navy);">Resolved</div></div></div>
               `;
               $('#trackTimeline').html(timelineHtml);
               $('#trackResult').fadeIn();
@@ -544,7 +548,17 @@
     $('#modStatusSelect').val(status);
     $('#modPrioritySelect').val(priority || 'Medium');
     $('#modPriorityLbl').text(priority || 'Medium');
+    $('#modRemark').val('');
+    toggleRemarkField();
     document.getElementById('ticketModal').classList.add('show');
+  }
+
+  function toggleRemarkField() {
+      if ($('#modStatusSelect').val() === 'Resolved') {
+          $('#modRemarkGroup').fadeIn();
+      } else {
+          $('#modRemarkGroup').hide();
+      }
   }
 
   function closeModal(id) { document.getElementById(id).classList.remove('show'); }
@@ -553,8 +567,9 @@
       const id = $('#modId').val();
       const status = $('#modStatusSelect').val();
       const priority = $('#modPrioritySelect').val();
+      const remark = $('#modRemark').val();
 
-      $.post('/Complaint/UpdateStatus', { complaintId: id, status: status })
+      $.post('/Complaint/UpdateStatus', { complaintId: id, status: status, remark: remark })
       .done(function() {
           // Now update priority
           $.post('/Complaint/UpdatePriority', { complaintId: id, priority: priority })
@@ -629,18 +644,30 @@
       const dept = $(el).val();
       const divSel = row.find('.assign-div');
       const subSel = row.find('.assign-sub');
+      const desigSel = row.find('.assign-desig');
       const offSel = row.find('.assign-off');
 
       divSel.html('<option value="">Select Division</option>').hide();
       subSel.html('<option value="">Select Sub-Div</option>').hide();
+      desigSel.html('<option value="">Select Designation</option>').hide();
       offSel.html('<option value="">Select Officer</option>').hide();
 
       if (!dept) return;
 
+      // 1. Check for Divisions
       const filtered = (mastersData.Divisions || []).filter(d => d.DepartmentName === dept);
       if (filtered.length > 0) {
           filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
           divSel.show();
+          offSel.hide(); // Hide officer list because we have deeper levels to go
+      } else {
+          // If no Divisions, show officers for this Department directly
+          const matches = officersList.filter(o => o.Department === dept);
+          if (matches.length > 0) {
+              offSel.html('<option value="">Select Officer</option>');
+              matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+              offSel.show();
+          }
       }
   }
 
@@ -649,17 +676,60 @@
       const dept = row.find('.assign-dept').val();
       const div = $(el).val();
       const subSel = row.find('.assign-sub');
+      const desigSel = row.find('.assign-desig');
       const offSel = row.find('.assign-off');
 
       subSel.html('<option value="">Select Sub-Div</option>').hide();
+      desigSel.html('<option value="">Select Designation</option>').hide();
       offSel.html('<option value="">Select Officer</option>').hide();
 
       if (!div) return;
 
-      const filtered = (mastersData.SubDivisions || []).filter(s => s.DepartmentName === dept && s.DivisionName === div);
-      if (filtered.length > 0) {
-          filtered.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
+      // 1. Check for Sub-Divisions
+      const filteredSubs = (mastersData.SubDivisions || []).filter(s => s.DepartmentName === dept && s.DivisionName === div);
+      if (filteredSubs.length > 0) {
+          filteredSubs.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
           subSel.show();
+          offSel.hide(); // Hide officer list because we have deeper levels to go
+      } else {
+          // If no Sub-Divisions, show officers for this Division directly
+          const matches = officersList.filter(o => o.Department === dept && o.Division === div);
+          if (matches.length > 0) {
+              offSel.html('<option value="">Select Officer</option>');
+              matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+              offSel.show();
+          }
+      }
+  }
+
+  function cascadeDesig(el) {
+      const row = $(el).closest('.assign-flow');
+      const dept = row.find('.assign-dept').val();
+      const div = row.find('.assign-div').val();
+      const sub = $(el).val();
+      const desigSel = row.find('.assign-desig');
+      const offSel = row.find('.assign-off');
+
+      desigSel.html('<option value="">Select Designation</option>').hide();
+      offSel.html('<option value="">Select Officer</option>').hide();
+
+      if (!sub) return;
+
+      // 1. Check for Designations
+      const matchingOfficers = officersList.filter(o => o.Department === dept && o.Division === div && o.SubDivision === sub);
+      const uniqueDesigs = [...new Set(matchingOfficers.filter(o => o.Designation).map(o => o.Designation))];
+
+      if (uniqueDesigs.length > 0) {
+          uniqueDesigs.forEach(d => desigSel.append(`<option value="${d}">${d}</option>`));
+          desigSel.show();
+          offSel.hide(); // Hide officer list because we have deeper levels to go
+      } else {
+          // If no Designations, show officers for this Sub-Division directly
+          if (matchingOfficers.length > 0) {
+              offSel.html('<option value="">Select Officer</option>');
+              matchingOfficers.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+              offSel.show();
+          }
       }
   }
 
@@ -667,14 +737,15 @@
       const row = $(el).closest('.assign-flow');
       const dept = row.find('.assign-dept').val();
       const div = row.find('.assign-div').val();
-      const sub = $(el).val();
+      const sub = row.find('.assign-sub').val();
+      const desig = $(el).val();
       const offSel = row.find('.assign-off');
 
       offSel.html('<option value="">Select Officer</option>').hide();
 
-      if (!sub) return;
+      if (!desig) return;
 
-      const filtered = officersList.filter(o => o.Department === dept && o.Division === div && o.SubDivision === sub);
+      const filtered = officersList.filter(o => o.Department === dept && o.Division === div && o.SubDivision === sub && (o.Designation === desig || (!o.Designation && desig === "Officer")));
       if (filtered.length > 0) {
           filtered.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
           offSel.show();
@@ -693,8 +764,8 @@
       if(!officerId) { 
           Swal.fire({
               icon: 'warning',
-              title: 'Mandatory Selection',
-              text: 'Please complete the Department → Division → Sub-Division flow and select an Officer.'
+              title: 'Officer Required',
+              text: 'Please select an officer from the list to assign this complaint.'
           }); 
           return; 
       }
@@ -757,16 +828,16 @@
 
       // Render Charts
       const pending = @pending;
-      const inProgress = @inProgress;
+      const assigned = @assigned;
       const resolved = @resolved;
       
-      if(pending > 0 || inProgress > 0 || resolved > 0) {
+      if(pending > 0 || assigned > 0 || resolved > 0) {
           new Chart(document.getElementById('hubStatusChart').getContext('2d'), {
               type: 'doughnut',
               data: {
                   labels: ['Pending', 'Assigned', 'Resolved'],
                   datasets: [{
-                      data: [pending, inProgress, resolved],
+                      data: [pending, assigned, resolved],
                       backgroundColor: ['#f97316', '#6366f1', '#10b981'],
                       hoverOffset: 10
                   }]

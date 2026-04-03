@@ -35,8 +35,10 @@ namespace CMS.Models
         public string? Source { get; set; }
         public DateTime? IncidentDate { get; set; }
 
-        // Pending, Assigned, In Progress, Resolved
+        // Pending, Assigned, Resolved
         public string Status { get; set; } = "Pending";
+
+        public string? ResolutionRemark { get; set; }
 
         public string? Area { get; set; }
         public string? AreaOfJurisdiction { get; set; }

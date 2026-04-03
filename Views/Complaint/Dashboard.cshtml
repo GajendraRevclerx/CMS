@@ -4,7 +4,7 @@
     Layout = null;
     var total = ViewBag.Total ?? 0;
     var pending = ViewBag.Pending ?? 0;
-    var inProgress = ViewBag.InProgress ?? 0;
+    var assigned = ViewBag.Assigned ?? 0;
     var resolved = ViewBag.Resolved ?? 0;
     var recentComplaints = Model.Take(10);
 }
@@ -220,7 +220,7 @@
       </div>
 
       <!-- Stats Row -->
-      <div class="stats-grid">
+      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card blue">
           <div class="stat-top"><div class="stat-icon blue">📝</div></div>
           <div class="stat-val">@total</div>
@@ -230,11 +230,6 @@
           <div class="stat-top"><div class="stat-icon saffron">⌛</div></div>
           <div class="stat-val">@pending</div>
           <div class="stat-lbl">Pending Review</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-top"><div class="stat-icon amber">🛠️</div></div>
-          <div class="stat-val">@inProgress</div>
-          <div class="stat-lbl">In Progress</div>
         </div>
         <div class="stat-card green">
           <div class="stat-top"><div class="stat-icon green">✅</div></div>
@@ -375,8 +370,7 @@
   function launchJourney(id, status) {
       let step = 1;
       if (status == "Assigned") step = 2;
-      if (status == "In Progress") step = 3;
-      if (status == "Resolved") step = 4;
+      if (status == "Resolved" || status == "Closed") step = 3;
 
       const html = `
           <div style="text-align: left; padding: 10px;">
@@ -391,14 +385,9 @@
                       <strong style="color: ${step >= 2 ? '#0f172a' : '#94a3b8'}">Officer Assigned</strong>
                       <p style="margin:0; font-size: 0.8rem; color: #64748b;">Assigned to unit supervisor.</p>
                   </div>
-                  <div style="margin-bottom: 25px; position: relative;">
-                      <div style="position: absolute; left: -27px; background: ${step >= 3 ? '#10b981' : '#f1f5f9'}; width: 14px; height: 14px; border-radius: 50%;"></div>
-                      <strong style="color: ${step >= 3 ? '#0f172a' : '#94a3b8'}">Investigation</strong>
-                      <p style="margin:0; font-size: 0.8rem; color: #64748b;">Root cause being addressed.</p>
-                  </div>
                   <div style="position: relative;">
-                      <div style="position: absolute; left: -27px; background: ${step >= 4 ? '#10b981' : '#f1f5f9'}; width: 14px; height: 14px; border-radius: 50%;"></div>
-                      <strong style="color: ${step >= 4 ? '#0f172a' : '#94a3b8'}">Resolved</strong>
+                      <div style="position: absolute; left: -27px; background: ${step >= 3 ? '#10b981' : '#f1f5f9'}; width: 14px; height: 14px; border-radius: 50%;"></div>
+                      <strong style="color: ${step >= 3 ? '#0f172a' : '#94a3b8'}">Resolved</strong>
                       <p style="margin:0; font-size: 0.8rem; color: #64748b;">Final closure issued.</p>
                   </div>
               </div>
@@ -427,14 +416,12 @@
           
           let step = 1;
           if (match.Status === "Assigned") step = 2;
-          if (match.Status === "In Progress") step = 3;
-          if (match.Status === "Resolved") step = 4;
+          if (match.Status === "Resolved" || match.Status === "Closed") step = 3;
           
           let timelineHtml = `
               <div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 1 ? 'var(--green)' : 'var(--border)'}"></div><div class="tl-line"></div></div><div class="tl-content"><div class="tl-title">Registered</div><div class="tl-sub">Case created in registry.</div></div></div>
               <div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 2 ? 'var(--green)' : 'var(--border)'}"></div><div class="tl-line"></div></div><div class="tl-content"><div class="tl-title">Assigned</div><div class="tl-sub">Assigned to an officer.</div></div></div>
-              <div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 3 ? 'var(--green)' : 'var(--border)'}"></div><div class="tl-line"></div></div><div class="tl-content"><div class="tl-title">In Progress</div><div class="tl-sub">Investigation initiated.</div></div></div>
-              <div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 4 ? 'var(--green)' : 'var(--border)'}"></div></div><div class="tl-content"><div class="tl-title">Resolved</div></div></div>
+              <div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 3 ? 'var(--green)' : 'var(--border)'}"></div></div><div class="tl-content"><div class="tl-title">Resolved</div></div></div>
           `;
           $('#trackTimeline').html(timelineHtml);
           $('#trackResult').show();
@@ -451,17 +438,17 @@
 
       // Render Charts if data is available
       const pending = @pending;
-      const inProgress = @inProgress;
+      const assigned = @assigned;
       const resolved = @resolved;
       
-      if(pending > 0 || inProgress > 0 || resolved > 0) {
+      if(pending > 0 || assigned > 0 || resolved > 0) {
           new Chart(document.getElementById('hubStatusChart').getContext('2d'), {
               type: 'doughnut',
               data: {
-                  labels: ['Pending', 'Processing', 'Resolved'],
+                  labels: ['Pending', 'Assigned', 'Resolved'],
                   datasets: [{
-                      data: [pending, inProgress, resolved],
-                      backgroundColor: ['#f97316', '#f59e0b', '#10b981'],
+                      data: [pending, assigned, resolved],
+                      backgroundColor: ['#f97316', '#6366f1', '#10b981'],
                       hoverOffset: 10
                   }]
               },

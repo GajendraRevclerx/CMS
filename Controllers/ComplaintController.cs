@@ -169,7 +169,7 @@ namespace CMS.Controllers
 
             ViewBag.Total = complaints.Count;
             ViewBag.Pending = complaints.Count(c => c.Status == "Pending");
-            ViewBag.InProgress = complaints.Count(c => c.Status == "In Progress" || c.Status == "Assigned");
+            ViewBag.Assigned = complaints.Count(c => c.Status == "Assigned");
             ViewBag.Resolved = complaints.Count(c => c.Status == "Resolved");
 
             if (userRole == "Helpdesk")
@@ -231,13 +231,14 @@ namespace CMS.Controllers
 
         [Authorize(Roles = "Helpdesk,Admin")]
         [HttpPost]
-        public async Task<IActionResult> UpdateStatus(string complaintId, string status)
+        public async Task<IActionResult> UpdateStatus(string complaintId, string status, string? remark)
         {
             var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
             var update = Builders<Complaint>.Update.Set(c => c.Status, status);
             
             if (status == "Resolved") {
-                update = update.Set(c => c.ResolutionDate, System.DateTime.UtcNow);
+                update = update.Set(c => c.ResolutionDate, System.DateTime.UtcNow)
+                               .Set(c => c.ResolutionRemark, remark);
             }
 
             await _context.Complaints.UpdateOneAsync(filter, update);

@@ -3,8 +3,7 @@
 @{
     ViewData["Title"] = "Department Head Hub";
     var total = ViewBag.Total ?? 0;
-    var pending = ViewBag.Pending ?? 0;
-    var inProgress = ViewBag.InProgress ?? 0;
+    var pending = ViewBag.Assigned ?? 0;
     var resolved = ViewBag.Resolved ?? 0;
 }
 
@@ -24,7 +23,7 @@
     /* Vibrant Head Tiles */
     .head-metric-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 30px;
         margin-bottom: 50px;
     }
@@ -110,22 +109,17 @@
         <div class="head-tile">
             <div class="head-tile-icon" style="background: var(--vibrant-1);"><i data-lucide="inbox"></i></div>
             <div class="head-tile-val">@total</div>
-            <div class="head-tile-label">Assigned Workload</div>
+            <div class="head-tile-label">Total Assigned</div>
         </div>
         <div class="head-tile">
             <div class="head-tile-icon" style="background: var(--vibrant-2);"><i data-lucide="clock"></i></div>
             <div class="head-tile-val">@pending</div>
-            <div class="head-tile-label">Awaiting Initial Action</div>
-        </div>
-        <div class="head-tile">
-            <div class="head-tile-icon" style="background: #f59e0b;"><i data-lucide="activity"></i></div>
-            <div class="head-tile-val">@inProgress</div>
-            <div class="head-tile-label">Resolution Phase</div>
+            <div class="head-tile-label">Active Cases</div>
         </div>
         <div class="head-tile">
             <div class="head-tile-icon" style="background: var(--vibrant-3);"><i data-lucide="shield-check"></i></div>
             <div class="head-tile-val">@resolved</div>
-            <div class="head-tile-label">Case Finalized</div>
+            <div class="head-tile-label">Finalized</div>
         </div>
     </div>
 
@@ -161,8 +155,6 @@
                             <td>
                                 <div class="d-flex gap-2">
                                     @if(item.Status == "Assigned") {
-                                        <button class="btn btn-sm btn-dark px-3" onclick="updateHeadStatus('@item.Id', 'In Progress')">Start</button>
-                                    } else if(item.Status == "In Progress") {
                                         <button class="btn btn-sm btn-success px-3" onclick="updateHeadStatus('@item.Id', 'Resolved')">Resolve</button>
                                     }
                                     <button class="btn btn-sm btn-light border px-3" onclick="viewHeadWorkflow('@item.ComplaintNo', '@item.Status')">Track</button>
@@ -183,9 +175,31 @@
         });
 
         function updateHeadStatus(id, newStatus) {
-            $.post('/Head/UpdateStatus', { id: id, status: newStatus }, function(res) {
+            if (newStatus === 'Resolved') {
+                Swal.fire({
+                    title: 'Seal Case',
+                    text: 'Add an optional resolution remark if needed:',
+                    input: 'textarea',
+                    inputPlaceholder: 'Type your resolution summary here...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Resolve Incident',
+                    confirmButtonColor: 'var(--head-accent)',
+                    cancelButtonColor: '#94a3b8',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const remark = result.value || "";
+                        sendUpdate(id, newStatus, remark);
+                    }
+                });
+            } else {
+                sendUpdate(id, newStatus, "");
+            }
+        }
+
+        function sendUpdate(id, status, remark) {
+            $.post('/Head/UpdateStatus', { id: id, status: status, remark: remark }, function(res) {
                 if(res.success) {
-                    Swal.fire({ icon: 'success', title: 'Confirmed', text: 'Incident state updated to ' + newStatus, timer: 2000, showConfirmButton: false })
+                    Swal.fire({ icon: 'success', title: 'Confirmed', text: 'Incident state updated to ' + status, timer: 2000, showConfirmButton: false })
                     .then(() => location.reload());
                 }
             });
@@ -193,12 +207,11 @@
 
         function viewHeadWorkflow(id, status) {
             // Already implemented in previous layout logic - reusing the visual logic
-            let s = 1; if(status=="Assigned") s=2; if(status=="In Progress") s=3; if(status=="Resolved") s=4;
+            let s = 1; if(status=="Assigned") s=2; if(status=="Resolved" || status=="Closed") s=3;
             const html = `<div style="text-align:left; border-left:2px dashed #e2e8f0; margin-left:14px; padding-left:20px;">
                 <div style="margin-bottom:20px; position:relative;"><div style="position:absolute; left:-27px; background:${s>=1?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Logged</strong></div>
                 <div style="margin-bottom:20px; position:relative;"><div style="position:absolute; left:-27px; background:${s>=2?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Assigned to You</strong></div>
-                <div style="margin-bottom:20px; position:relative;"><div style="position:absolute; left:-27px; background:${s>=3?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Resolution Phase</strong></div>
-                <div style="position:relative;"><div style="position:absolute; left:-27px; background:${s>=4?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Finalized</strong></div>
+                <div style="position:relative;"><div style="position:absolute; left:-27px; background:${s>=3?'#6366f1':'#f1f5f9'}; width:14px; height:14px; border-radius:50%;"></div><strong>Finalized</strong></div>
             </div>`;
             Swal.fire({ title: 'Incident Lifecycle: ' + id, html: html, confirmButtonText: 'Command Exit', confirmButtonColor: '#0f172a', customClass: { popup: 'rounded-40' } });
         }
