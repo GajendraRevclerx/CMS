@@ -1,295 +1,364 @@
 @model IEnumerable<CMS.Models.User>
+
 @{
-    ViewData["Title"] = "Super Admin — Management";
-    Layout = "_Layout";
+    Layout = null;
+    var totalStaff = Model.Count();
+    var admins = Model.Count(u => u.Role == "Admin");
+    var helpdesk = Model.Count(u => u.Role == "Helpdesk");
 }
 
-<style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CMS — System Master Control</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <script src="/lib/jquery/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
     :root {
-        --primary: #0f172a;
-        --accent: #3b82f6;
-        --white: #ffffff;
-        --bg: #f8fafc;
-        --border: #e2e8f0;
+      --navy: #0f172a;
+      --blue: #1657a8;
+      --blue-light: #6366f1;
+      --saffron: #f59e0b;
+      --green: #10b981;
+      --red: #ef4444;
+      --amber: #f97316;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --text-mid: #475569;
     }
 
-    .super-container {
-        padding: 40px;
-        background: var(--bg);
-        min-height: 100vh;
-    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    .dashboard-hdr {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-    }
+    /* GOV RIBBON */
+    .gov-ribbon { background: var(--navy); color: #fff; font-size: 11px; padding: 6px 24px; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; border-bottom: 3px solid var(--saffron); }
+    .gov-ribbon .ml { display: flex; align-items: center; gap: 15px; }
+    .ribbon-badge { border: 1px solid rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-weight: 700; background: rgba(255,255,255,0.05); }
 
-    .dashboard-hdr h2 {
-        font-weight: 800;
-        color: var(--primary);
-        letter-spacing: -0.5px;
-    }
+    /* TOP HEADER */
+    .top-header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+    .header-text { flex: 1; }
+    .header-text .title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.3rem; color: var(--navy); line-height: 1.1; }
+    .header-text .sub { font-size: 12px; color: var(--text-light); font-weight: 500; margin-top: 2px; }
+    .admin-badge { display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 6px 14px; border-radius: 12px; border: 1px solid var(--border); }
+    .admin-avatar { width: 34px; height: 34px; background: var(--navy); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+    .admin-info .name { font-weight: 700; font-size: 13px; color: var(--navy); }
+    .admin-info .role { font-size: 11px; color: var(--text-light); }
 
-    .glass-card {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        padding: 30px;
-        margin-bottom: 30px;
-    }
+    .app-body { flex: 1; display: flex; overflow: hidden; }
 
-    .table-premium {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 12px;
-    }
+    /* SIDEBAR */
+    .sidebar { width: 260px; background: var(--navy); padding: 20px 12px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+    .sidebar-section-label { color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 15px 12px 6px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: rgba(255,255,255,0.6); border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 13.5px; font-weight: 600; text-decoration: none; }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .nav-item.active { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .logout-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; color: #fecaca; border-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; text-decoration: none; }
+    .logout-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
-    .table-premium th {
-        color: #64748b;
-        font-weight: 700;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 10px 20px;
-        border: none;
-    }
+    /* MAIN CONTENT */
+    .main-content { flex: 1; padding: 24px; overflow-y: auto; }
+    .page-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .page-hdr h2 { font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--navy); }
+    .page-hdr p { font-size: 13px; color: var(--text-light); }
 
-    .table-premium tr {
-        background: white;
-        transition: transform 0.2s;
-    }
+    /* STAT CARDS */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
+    .stat-card { background: var(--panel); padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; }
+    .stat-info h4 { font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-info .val { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 800; color: var(--navy); line-height: 1; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .stat-icon.total { background: #f1f5f9; color: var(--navy); }
+    .stat-icon.admins { background: #eef2ff; color: var(--blue-light); }
+    .stat-icon.helpdesk { background: #ecfdf5; color: var(--green); }
 
-    .table-premium tr:hover {
-        transform: scale(1.005);
-    }
+    /* TABLE CARD */
+    .card { background: var(--panel); border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); overflow: hidden; }
+    .card-hdr { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fcfcfd; }
+    .card-hdr h3 { font-size: 15px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 8px; }
 
-    .table-premium td {
-        padding: 18px 20px;
-        border-top: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        vertical-align: middle;
-        font-size: 14px;
-        color: var(--primary);
-    }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 12px 24px; font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--bg); background: #fcfcfd; }
+    .data-table td { padding: 16px 24px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-mid); }
+    .data-table tr:hover { background: #f8fafc; }
 
-    .table-premium td:first-child {
-        border-left: 1px solid var(--border);
-        border-radius: 12px 0 0 12px;
-    }
+    .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .badge-admin { background: #eef2ff; color: var(--blue-light); }
+    .badge-helpdesk { background: #ecfdf5; color: var(--green); }
 
-    .table-premium td:last-child {
-        border-right: 1px solid var(--border);
-        border-radius: 0 12px 12px 0;
-    }
+    .btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; border: none; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-primary { background: var(--navy); color: #fff; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(15, 23, 42, 0.25); }
+    
+    .action-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; color: var(--text-light); background: #fff; }
+    .action-btn:hover { border-color: var(--navy); color: var(--navy); background: #f8fafc; }
+    .action-btn.del:hover { border-color: var(--red); color: var(--red); background: #fef2f2; }
 
-    .badge-admin {
-        background: #eff6ff;
-        color: #1d4ed8;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 11px;
-    }
+    /* MODAL */
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; animation: slideUp 0.3s ease; }
+    @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-hdr { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fcfcfd; }
+    .modal-hdr h3 { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 700; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #fcfcfd; }
 
-    .badge-helpdesk {
-        background: #f0fdf4;
-        color: #15803d;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 11px;
-    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-mid); margin-bottom: 6px; text-transform: uppercase; }
+    .form-control { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; transition: 0.2s; outline: none; }
+    .form-control:focus { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.05); }
 
-    .btn-action {
-        width: 34px;
-        height: 34px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: white;
-        color: #64748b;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
+  </style>
+</head>
+<body>
 
-    .btn-action:hover {
-        background: #f1f5f9;
-        color: var(--primary);
-    }
-
-    .btn-delete:hover {
-        background: #fee2e2;
-        color: #ef4444;
-        border-color: #fca5a5;
-    }
-
-    .btn-create {
-        background: var(--primary);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 10px;
-        font-weight: 600;
-        border: none;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-    }
-
-    .btn-create:hover {
-        background: #1e293b;
-    }
-</style>
-
-<div class="super-container">
-    <div class="dashboard-hdr">
-        <div>
-            <h2>Staff Registry</h2>
-            <p class="text-secondary small">System-wide control for Administrators and Helpdesk officers.</p>
-        </div>
-        <button class="btn-create" onclick="openAdminModal()">+ Register New Officer</button>
-    </div>
-
-    <div class="glass-card">
-        <table class="table-premium">
-            <thead>
-                <tr>
-                    <th>Full Name</th>
-                    <th>Email Address</th>
-                    <th>Mobile (ID)</th>
-                    <th>System Role</th>
-                    <th class="text-end">Operations</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var user in Model)
-                {
-                    <tr>
-                        <td>
-                            <div class="fw-bold">@user.FullName</div>
-                        </td>
-                        <td>@user.Email</td>
-                        <td><code class="text-primary">@user.MobileNo</code></td>
-                        <td>
-                            @if (user.Role == "Admin") { <span class="badge-admin">ADMINISTRATOR</span> }
-                            else { <span class="badge-helpdesk">HELPDESK</span> }
-                        </td>
-                        <td class="text-end">
-                            <button class="btn-action" title="Edit" onclick="openAdminModal('@user.Id', '@user.FullName', '@user.Email', '@user.MobileNo', '@user.Role')">✏️</button>
-                            <button class="btn-action btn-delete" title="Delete" onclick="deleteAdmin('@user.Id')">🗑️</button>
-                        </td>
-                    </tr>
-                }
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">No officers found in the registry.</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+<!-- GOV RIBBON -->
+<div class="gov-ribbon">
+  <strong>CMS — SYSTEM MASTER CONTROL</strong>
+  <div class="ml">
+    <span class="ribbon-badge">🛡️ Super Admin Session</span>
+    <span style="opacity:.3;">|</span>
+    <span>@DateTime.Now.ToString("ddd, dd MMM yyyy") &nbsp; @DateTime.Now.ToString("t")</span>
+  </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="adminModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-            <div class="modal-header bg-dark text-white p-4">
-                <h5 class="modal-title fw-bold" id="modalTitle">Manage Staff Officer</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="adminForm">
-                <div class="modal-body p-4">
-                    <input type="hidden" name="Id" id="adminId">
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">OFFICER TYPE / ROLE</label>
-                        <select name="Role" id="adminRole" class="form-control form-control-lg border-2" required>
-                            <option value="Admin">Administrator (Full System Access + Reports)</option>
-                            <option value="Helpdesk">Helpdesk (Complaint Registration & Processing)</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">FULL NAME</label>
-                        <input type="text" name="FullName" id="adminName" class="form-control form-control-lg border-2" placeholder="e.g. Rahul Sharma" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">EMAIL ADDRESS (FOR REPORTS - ADMINS ONLY)</label>
-                        <input type="email" name="Email" id="adminEmail" class="form-control form-control-lg border-2" placeholder="name@example.com" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">MOBILE NUMBER (LOGIN ID)</label>
-                        <input type="text" name="MobileNo" id="adminMobile" class="form-control form-control-lg border-2" placeholder="10-digit mobile" maxlength="10" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">PASSWORD (OPTIONAL)</label>
-                        <input type="password" name="Password" id="adminPass" class="form-control form-control-lg border-2" placeholder="Leave blank to keep current or use mobile">
-                    </div>
-                </div>
-                <div class="modal-footer bg-light p-4 border-0">
-                    <button type="button" class="btn btn-link text-secondary text-decoration-none fw-bold" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-dark px-4 fw-bold" id="btnSave">Save Staff Entry</button>
-                </div>
-            </form>
-        </div>
+<!-- TOP HEADER -->
+<header class="top-header">
+  <img src="/img/logo.png" style="height: 100px; width: auto;" alt="Logo">
+  <div class="header-text">
+    <div class="title">System Staff Registry</div>
+    <div class="sub">Comprehensive Registry and Access Control for Administrators and Helpdesk Officers</div>
+  </div>
+  <div class="admin-badge">
+    <div class="admin-avatar">SA</div>
+    <div class="admin-info">
+      <div class="name">@User.Identity.Name</div>
+      <div class="role">System Administrator</div>
     </div>
+  </div>
+</header>
+
+<div class="app-body">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section-label">Personnel Control</div>
+    <a href="#" class="nav-item active">
+      <span>👥</span><span>Staff Registry</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span>📜</span><span>Audit Logs</span>
+    </a>
+    <div class="sidebar-section-label">System</div>
+    <a href="#" class="nav-item">
+      <span>⚙️</span><span>Main Settings</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span>🛡️</span><span>Security Policies</span>
+    </a>
+    
+    <div class="sidebar-footer">
+      <a href="/Account/Logout" class="logout-btn">
+        <span>🚪</span><span>Sign Out Securely</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div class="page-hdr">
+      <div class="page-hdr-left">
+        <h2>System Personnel Registry</h2>
+        <p>Manage access levels, roles, and profiles for administrative staff.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAdminModal()">
+        <span>➕</span> Register New Officer
+      </button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Total Personnel</h4>
+          <div class="val">@totalStaff</div>
+        </div>
+        <div class="stat-icon total">👥</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Administrators</h4>
+          <div class="val">@admins</div>
+        </div>
+        <div class="stat-icon admins">🛡️</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <h4>Helpdesk Staff</h4>
+          <div class="val">@helpdesk</div>
+        </div>
+        <div class="stat-icon helpdesk">📞</div>
+      </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card">
+      <div class="card-hdr">
+        <h3><span>📋</span> Active Staff Members</h3>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Full Name</th>
+            <th>Contact / ID</th>
+            <th>System Role</th>
+            <th style="text-align:right;">Operations</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var user in Model)
+          {
+            <tr>
+              <td style="font-weight:700; color:var(--navy);">@user.FullName</td>
+              <td>
+                <div style="font-weight:600;">@user.MobileNo</div>
+                <div style="font-size:11px; opacity:0.6;">@user.Email</div>
+              </td>
+                <td>
+                  @if (user.Role == "Admin") { <span class="badge badge-admin">Administrator</span> }
+                  else { <span class="badge badge-helpdesk">Helpdesk Staff</span> }
+                </td>
+              <td style="text-align:right;">
+                <button class="action-btn" title="Edit Profile" onclick="openAdminModal('@user.Id', '@user.FullName', '@user.Email', '@user.MobileNo', '@user.Role')">✏️</button>
+                <button class="action-btn del" title="Revoke Access" onclick="deleteAdmin('@user.Id')">🗑️</button>
+              </td>
+            </tr>
+          }
+          @if (!Model.Any())
+          {
+            <tr>
+              <td colspan="5" style="text-align:center; padding:60px 0; color:var(--text-light);">
+                <div style="font-size:2rem; margin-bottom:10px;">👤</div>
+                <p>No personnel entries found in the registry.</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        function openAdminModal(id = '', name = '', email = '', mobile = '', role = 'Admin') {
-            $('#adminId').val(id);
-            $('#adminName').val(name);
-            $('#adminEmail').val(email);
-            $('#adminMobile').val(mobile);
-            $('#adminRole').val(role);
-            $('#adminPass').val('');
-            
-            $('#modalTitle').text(id ? 'Edit Staff Officer' : 'Register New Officer');
-            $('#adminModal').modal('show');
-        }
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="adminModalOverlay">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="modalTitle">Register System Officer</h3>
+      <button class="modal-close" onclick="closeAdminModal()">×</button>
+    </div>
+    <form id="adminForm">
+      <div class="modal-body">
+        <input type="hidden" name="Id" id="adminId">
+        
+        <div class="form-group">
+          <label>Assign System Role</label>
+          <select name="Role" id="adminRole" class="form-control" required>
+            <option value="Admin">Administrator (Reports + Full Access)</option>
+            <option value="Helpdesk">Helpdesk (Complaint Processing)</option>
+          </select>
+        </div>
 
-        $('#adminForm').on('submit', function(e) {
-            e.preventDefault();
-            const $btn = $('#btnSave');
-            $btn.prop('disabled', true).text('Saving...');
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="FullName" id="adminName" class="form-control" placeholder="e.g. Rahul Sharma" required>
+        </div>
 
-            const formData = $(this).serialize();
+        <div class="form-group">
+          <label>Official Email</label>
+          <input type="email" name="Email" id="adminEmail" class="form-control" placeholder="name@example.com" required>
+        </div>
 
-            $.post('/SuperAdmin/UpsertAdmin', formData, function(res) {
-                if (res.success) {
-                    Swal.fire('Success', res.message, 'success').then(() => location.reload());
-                } else {
-                    Swal.fire('Error', res.message, 'error');
-                    $btn.prop('disabled', false).text('Save Admin Registry');
-                }
-            });
+        <div class="form-group">
+          <label>Primary Mobile (Login ID)</label>
+          <input type="text" name="MobileNo" id="adminMobile" class="form-control" placeholder="10-digit primary" maxlength="10" required>
+        </div>
+
+        <div class="form-group">
+          <label>Access Password</label>
+          <input type="password" name="Password" id="adminPass" class="form-control" placeholder="Optional: mobile is used if blank">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" style="background:#f1f5f9; color:var(--text-mid);" onclick="closeAdminModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="btnSave">Save Staff Entry</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+    function openAdminModal(id = '', name = '', email = '', mobile = '', role = 'Admin') {
+        $('#adminId').val(id);
+        $('#adminName').val(name);
+        $('#adminEmail').val(email);
+        $('#adminMobile').val(mobile);
+        $('#adminRole').val(role);
+        $('#adminPass').val('');
+        
+        $('#modalTitle').text(id ? 'Modify Staff Profile' : 'Register System Officer');
+        $('#adminModalOverlay').addClass('show');
+    }
+
+    function closeAdminModal() {
+        $('#adminModalOverlay').removeClass('show');
+    }
+
+    $('#adminForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = $(this).serialize();
+        
+        $.post('/SuperAdmin/UpsertAdmin', data, function(res) {
+            if (res.success) {
+                Swal.fire('Success', res.message, 'success').then(() => location.reload());
+            } else {
+                Swal.fire('Error', res.message, 'error');
+            }
         });
+    });
 
-        function deleteAdmin(id) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This admin will no longer receive system reports or be able to log in.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: 'Yes, remove them'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post('/SuperAdmin/DeleteAdmin', { id: id }, function(res) {
-                        if (res.success) {
-                            Swal.fire('Removed!', res.message, 'success').then(() => location.reload());
-                        } else {
-                            Swal.fire('Error', res.message, 'error');
-                        }
-                    });
-                }
-            });
+    function deleteAdmin(id) {
+        Swal.fire({
+            title: 'Revoke Access?',
+            text: "This officer will no longer be able to log in to the system.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0f172a',
+            confirmButtonText: 'Yes, Revoke Access'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('/SuperAdmin/DeleteAdmin', { id: id }, function(res) {
+                    if (res.success) {
+                        Swal.fire('Revoked', 'Staff access has been revoked.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    $(window).on('click', function(e) {
+        if ($(e.target).hasClass('modal-overlay')) {
+            closeAdminModal();
         }
-    </script>
-}
+    });
+</script>
+
+</body>
+</html>
