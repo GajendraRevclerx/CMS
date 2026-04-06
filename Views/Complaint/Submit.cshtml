@@ -212,7 +212,7 @@
           <h5>📌 Please keep ready before filing</h5>
           <ul>
             <li>Ward / Sector / Locality of the complaint site</li>
-            <li>Detailed description (min. 200 characters)</li>
+            <li>Complaint description (min. 200 characters)</li>
             <li>Photo/video evidence (optional, max 10 MB)</li>
           </ul>
         </div>
@@ -281,8 +281,8 @@
           <div class="form-card-title"><span class="badge">3</span> Complaint Details</div>
           <div class="form-grid-2">
             <div class="form-group">
-              <label>Complaint Title <span class="required">*</span></label>
-              <input type="text" name="ComplaintTitle" id="ComplaintTitle" placeholder="Brief title of the issue" required>
+              <label>Complaint Title</label>
+              <input type="text" name="ComplaintTitle" id="ComplaintTitle" placeholder="Brief title of the issue">
             </div>
             
             <div class="form-group">
@@ -319,7 +319,7 @@
             </div>
 
             <div class="form-group span-2">
-              <label>Detailed Description <span class="required">*</span></label>
+              <label>Complaint Description <span class="required">*</span></label>
               <textarea name="Description" id="Description" rows="5" minlength="10" placeholder="Describe the issue in detail (minimum 200 characters). Include exact location, nature of problem, and any previous action taken..." required></textarea>
               <div style="display:flex; justify-content:space-between;">
                   <div class="form-note">Minimum 200 characters required. No special characters (#$@@^*~|!).</div>
@@ -401,7 +401,7 @@
                 e.preventDefault();
                 
                 if ($('#Description').val().length < 200) {
-                    Swal.fire('Description Too Short', 'Please provide a detailed description (minimum 200 characters).', 'warning');
+                        Swal.fire('Description Too Short', 'Please provide a complaint description.', 'warning');
                     return;
                 }
 

@@ -14,13 +14,11 @@ namespace CMS.Models
         [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Please enter a valid 10-digit mobile number.")]
         public string MobileNo { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email address is required.")]
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = string.Empty;
 
 
         // Complaint Details
-        [Required(ErrorMessage = "Complaint Title is required.")]
         public string ComplaintTitle { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "State is required.")]
