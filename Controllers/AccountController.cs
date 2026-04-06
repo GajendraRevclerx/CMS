@@ -56,12 +56,14 @@ namespace CMS.Controllers
 
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     {
-                        var redirectUrl = user.Role == "Admin" ? "/Admin/Index" : 
+                        var redirectUrl = user.Role == "SuperAdmin" ? "/SuperAdmin/Index" :
+                                         user.Role == "Admin" ? "/Admin/Index" : 
                                          user.Role == "DeptHead" ? "/Head/Dashboard" : 
                                          "/Complaint/Dashboard";
                         return Ok(new { success = true, redirectUrl });
                     }
 
+                    if (user.Role == "SuperAdmin") return RedirectToAction("Index", "SuperAdmin");
                     if (user.Role == "Admin") return RedirectToAction("Index", "Admin");
                     if (user.Role == "DeptHead") return RedirectToAction("Dashboard", "Head");
 

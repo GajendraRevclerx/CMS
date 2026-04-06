@@ -441,9 +441,17 @@ namespace CMS.Controllers
             {
                 var (body, csvData, fileName) = await _reportingService.GenerateDailyReportAsync();
                 
-                await _emailService.SendEmailWithAttachmentAsync(_emailSettings.AdminEmail, "CCMS Daily Status Report", body, csvData, fileName);
-                
-                return Json(new { success = true, message = "Test email with CSV attachment successfully sent to " + _emailSettings.AdminEmail });
+                // Fetch all admins from DB
+                var admins = await _context.Users.Find(u => u.Role == "Admin").ToListAsync();
+                var adminEmails = string.Join(",", admins.Select(a => a.Email).Where(e => !string.IsNullOrEmpty(e)));
+
+                if (string.IsNullOrEmpty(adminEmails))
+                {
+                    return Json(new { success = false, message = "No administrators found in the database. Email not sent." });
+                }
+
+                await _emailService.SendEmailWithAttachmentAsync(adminEmails, "Manual CLI Report Trigger", body, csvData, fileName);
+                return Json(new { success = true, message = "Manual report successfully sent to " + admins.Count + " administrators: " + adminEmails });
             }
             catch (System.Exception ex)
             {

@@ -15,11 +15,11 @@ namespace CMS.Models
         public string MobileNo { get; set; } = string.Empty;
 
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
 
 
         // Complaint Details
-        public string ComplaintTitle { get; set; } = string.Empty;
+        public string? ComplaintTitle { get; set; }
 
         [Required(ErrorMessage = "State is required.")]
         public string State { get; set; } = string.Empty;

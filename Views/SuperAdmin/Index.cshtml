@@ -1,0 +1,295 @@
+@model IEnumerable<CMS.Models.User>
+@{
+    ViewData["Title"] = "Super Admin — Management";
+    Layout = "_Layout";
+}
+
+<style>
+    :root {
+        --primary: #0f172a;
+        --accent: #3b82f6;
+        --white: #ffffff;
+        --bg: #f8fafc;
+        --border: #e2e8f0;
+    }
+
+    .super-container {
+        padding: 40px;
+        background: var(--bg);
+        min-height: 100vh;
+    }
+
+    .dashboard-hdr {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-hdr h2 {
+        font-weight: 800;
+        color: var(--primary);
+        letter-spacing: -0.5px;
+    }
+
+    .glass-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .table-premium {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 12px;
+    }
+
+    .table-premium th {
+        color: #64748b;
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 10px 20px;
+        border: none;
+    }
+
+    .table-premium tr {
+        background: white;
+        transition: transform 0.2s;
+    }
+
+    .table-premium tr:hover {
+        transform: scale(1.005);
+    }
+
+    .table-premium td {
+        padding: 18px 20px;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        font-size: 14px;
+        color: var(--primary);
+    }
+
+    .table-premium td:first-child {
+        border-left: 1px solid var(--border);
+        border-radius: 12px 0 0 12px;
+    }
+
+    .table-premium td:last-child {
+        border-right: 1px solid var(--border);
+        border-radius: 0 12px 12px 0;
+    }
+
+    .badge-admin {
+        background: #eff6ff;
+        color: #1d4ed8;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 11px;
+    }
+
+    .badge-helpdesk {
+        background: #f0fdf4;
+        color: #15803d;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 11px;
+    }
+
+    .btn-action {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: white;
+        color: #64748b;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-action:hover {
+        background: #f1f5f9;
+        color: var(--primary);
+    }
+
+    .btn-delete:hover {
+        background: #fee2e2;
+        color: #ef4444;
+        border-color: #fca5a5;
+    }
+
+    .btn-create {
+        background: var(--primary);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    }
+
+    .btn-create:hover {
+        background: #1e293b;
+    }
+</style>
+
+<div class="super-container">
+    <div class="dashboard-hdr">
+        <div>
+            <h2>Staff Registry</h2>
+            <p class="text-secondary small">System-wide control for Administrators and Helpdesk officers.</p>
+        </div>
+        <button class="btn-create" onclick="openAdminModal()">+ Register New Officer</button>
+    </div>
+
+    <div class="glass-card">
+        <table class="table-premium">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Email Address</th>
+                    <th>Mobile (ID)</th>
+                    <th>System Role</th>
+                    <th class="text-end">Operations</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold">@user.FullName</div>
+                        </td>
+                        <td>@user.Email</td>
+                        <td><code class="text-primary">@user.MobileNo</code></td>
+                        <td>
+                            @if (user.Role == "Admin") { <span class="badge-admin">ADMINISTRATOR</span> }
+                            else { <span class="badge-helpdesk">HELPDESK</span> }
+                        </td>
+                        <td class="text-end">
+                            <button class="btn-action" title="Edit" onclick="openAdminModal('@user.Id', '@user.FullName', '@user.Email', '@user.MobileNo', '@user.Role')">✏️</button>
+                            <button class="btn-action btn-delete" title="Delete" onclick="deleteAdmin('@user.Id')">🗑️</button>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">No officers found in the registry.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="adminModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header bg-dark text-white p-4">
+                <h5 class="modal-title fw-bold" id="modalTitle">Manage Staff Officer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="adminForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="Id" id="adminId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">OFFICER TYPE / ROLE</label>
+                        <select name="Role" id="adminRole" class="form-control form-control-lg border-2" required>
+                            <option value="Admin">Administrator (Full System Access + Reports)</option>
+                            <option value="Helpdesk">Helpdesk (Complaint Registration & Processing)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">FULL NAME</label>
+                        <input type="text" name="FullName" id="adminName" class="form-control form-control-lg border-2" placeholder="e.g. Rahul Sharma" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">EMAIL ADDRESS (FOR REPORTS - ADMINS ONLY)</label>
+                        <input type="email" name="Email" id="adminEmail" class="form-control form-control-lg border-2" placeholder="name@example.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">MOBILE NUMBER (LOGIN ID)</label>
+                        <input type="text" name="MobileNo" id="adminMobile" class="form-control form-control-lg border-2" placeholder="10-digit mobile" maxlength="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">PASSWORD (OPTIONAL)</label>
+                        <input type="password" name="Password" id="adminPass" class="form-control form-control-lg border-2" placeholder="Leave blank to keep current or use mobile">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light p-4 border-0">
+                    <button type="button" class="btn btn-link text-secondary text-decoration-none fw-bold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark px-4 fw-bold" id="btnSave">Save Staff Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function openAdminModal(id = '', name = '', email = '', mobile = '', role = 'Admin') {
+            $('#adminId').val(id);
+            $('#adminName').val(name);
+            $('#adminEmail').val(email);
+            $('#adminMobile').val(mobile);
+            $('#adminRole').val(role);
+            $('#adminPass').val('');
+            
+            $('#modalTitle').text(id ? 'Edit Staff Officer' : 'Register New Officer');
+            $('#adminModal').modal('show');
+        }
+
+        $('#adminForm').on('submit', function(e) {
+            e.preventDefault();
+            const $btn = $('#btnSave');
+            $btn.prop('disabled', true).text('Saving...');
+
+            const formData = $(this).serialize();
+
+            $.post('/SuperAdmin/UpsertAdmin', formData, function(res) {
+                if (res.success) {
+                    Swal.fire('Success', res.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                    $btn.prop('disabled', false).text('Save Admin Registry');
+                }
+            });
+        });
+
+        function deleteAdmin(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This admin will no longer receive system reports or be able to log in.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, remove them'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/SuperAdmin/DeleteAdmin', { id: id }, function(res) {
+                        if (res.success) {
+                            Swal.fire('Removed!', res.message, 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

@@ -22,7 +22,7 @@ namespace CMS.Models
         public string? Email { get; set; }
 
         // Form Fields
-        public string ComplaintTitle { get; set; } = string.Empty;
+        public string? ComplaintTitle { get; set; }
         public string State { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string Department { get; set; } = string.Empty;

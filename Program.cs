@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
+using MongoDB.Driver;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,14 +53,26 @@ if (args.Contains("--report"))
         var services = scope.ServiceProvider;
         try
         {
+            var dbContext = services.GetRequiredService<MongoDbContext>();
             var reportingService = services.GetRequiredService<IReportingService>();
             var emailService = services.GetRequiredService<IEmailService>();
             var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailSettings>>();
             
             Console.WriteLine("Triggering Daily Status Report...");
+            
+            // Fetch all admin emails from database
+            var admins = await dbContext.Users.Find(u => u.Role == "Admin").ToListAsync();
+            var adminEmails = string.Join(",", admins.Select(a => a.Email).Where(e => !string.IsNullOrEmpty(e)));
+
+            if (string.IsNullOrEmpty(adminEmails))
+            {
+                Console.WriteLine("Warning: No administrators found in the database. Report will not be sent.");
+                return;
+            }
+
             var (body, csvData, fileName) = await reportingService.GenerateDailyReportAsync();
-            await emailService.SendEmailWithAttachmentAsync(options.Value.AdminEmail, "CCMS Daily Status Report", body, csvData, fileName);
-            Console.WriteLine("Report sent successfully to: " + options.Value.AdminEmail);
+            await emailService.SendEmailWithAttachmentAsync(adminEmails, "CCMS Daily Status Report", body, csvData, fileName);
+            Console.WriteLine($"Report sent successfully to {admins.Count} administrators: {adminEmails}");
         }
         catch (Exception ex)
         {
@@ -69,7 +85,37 @@ if (args.Contains("--report"))
 // Seed database on startup
 using (var scope = app.Services.CreateScope())
 {
-    var _ = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
+
+    // DEDICATED SUPER ADMIN SEEDING (9999999999)
+    // 1. Demote any accidental SuperAdmins back to Admin
+    await context.Users.UpdateManyAsync(
+        u => u.Role == "SuperAdmin" && u.MobileNo != "9999999999",
+        Builders<User>.Update.Set(u => u.Role, "Admin")
+    );
+
+    // 2. Ensure Dedicated SuperAdmin exists
+    var dedicatedSuperAdmin = await context.Users.Find(u => u.MobileNo == "9999999999").FirstOrDefaultAsync();
+    if (dedicatedSuperAdmin == null)
+    {
+        var sa = new User
+        {
+            FullName = "Master Super Admin",
+            MobileNo = "9999999999",
+            Password = "@@SuperAdmin123",
+            Role = "SuperAdmin",
+            Email = "superadmin@cms.gov"
+        };
+        await context.Users.InsertOneAsync(sa);
+        Console.WriteLine("System: Created Dedicated SuperAdmin (9999999999)");
+    }
+    else if (dedicatedSuperAdmin.Role != "SuperAdmin")
+    {
+        await context.Users.UpdateOneAsync(
+            u => u.MobileNo == "9999999999",
+            Builders<User>.Update.Set(u => u.Role, "SuperAdmin")
+        );
+    }
 }
 
 // Configure the HTTP request pipeline.
