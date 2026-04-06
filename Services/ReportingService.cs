@@ -24,8 +24,14 @@ namespace CMS.Services
 
         public async Task<(string body, byte[] csvData, string fileName)> GenerateDailyReportAsync()
         {
-            // 1. Fetch complaints and master data for naming
-            var allComplaints = await _context.Complaints.Find(_ => true).ToListAsync();
+            // 1. Fetch today's complaints and master data
+            var today = DateTime.Today;
+            var tomorrow = today.AddDays(1);
+
+            var allComplaints = await _context.Complaints
+                .Find(c => c.CreatedDate >= today && c.CreatedDate < tomorrow)
+                .ToListAsync();
+                
             var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
             
             // Create a lookup for Full Department Names
@@ -67,10 +73,10 @@ namespace CMS.Services
 <div style='font-family:sans-serif;max-width:800px;'>
     <h2 style='color:#2c3e50;'>Daily Complaint Status Report</h2>
     <p>Dear Administrator,</p>
-    <p>Please find the daily summary of complaints registered in the system as of <strong>{DateTime.Now:dd MMM yyyy, hh:mm tt}</strong>.</p>
+    <p>Please find the summary of complaints registered in the system **TODAY** as of <strong>{DateTime.Now:dd MMM yyyy, hh:mm tt}</strong>.</p>
     
     <div style='background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:20px;'>
-        <h3 style='margin-top:0;'>Departmental Summary</h3>
+        <h3 style='margin-top:0;'>Today's Departmental Summary</h3>
         {summaryTableHtml}
     </div>
 
@@ -89,10 +95,10 @@ namespace CMS.Services
             var csv = new StringBuilder();
             csv.Append('\uFEFF'); // UTF-8 BOM
 
-            csv.AppendLine("DEPARTMENT SUMMARY REPORT");
+            csv.AppendLine("DAILY SUMMARY REPORT (TODAY ONLY)");
             csv.AppendLine($"Generated On,{DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             csv.AppendLine("");
-            csv.AppendLine("Department,Total Complaints,Resolved,Pending");
+            csv.AppendLine("Department,Today's Total,Resolved,Pending");
             foreach (var s in deptSummary)
             {
                 csv.AppendLine($"{Escape(s.Dept)},{s.Total},{s.Resolved},{s.Pending}");
@@ -100,7 +106,7 @@ namespace CMS.Services
             csv.AppendLine("");
             csv.AppendLine("");
 
-            csv.AppendLine("DETAILED COMPLAINT LOG");
+            csv.AppendLine("DETAILED LOG (TODAY'S COMPLAINTS)");
             csv.AppendLine("Complaint No,Date,Citizen Name,Mobile No,Department,Issue,Status,Priority");
 
             var sortedDetails = allComplaints

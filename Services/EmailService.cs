@@ -46,7 +46,13 @@ namespace CMS.Services
                     Body = body,
                     IsBodyHtml = true
                 };
-                mailMessage.To.Add(to);
+
+                // Split recipients by comma and add each one
+                var recipients = to.Split(',', System.StringSplitOptions.RemoveEmptyEntries);
+                foreach (var recipient in recipients)
+                {
+                    mailMessage.To.Add(recipient.Trim());
+                }
 
                 if (attachmentData != null && !string.IsNullOrEmpty(fileName))
                 {

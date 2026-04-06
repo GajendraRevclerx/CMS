@@ -383,7 +383,7 @@
           <p>Summary for @DateTime.Now.ToString("MMMM yyyy")</p>
         </div>
         <div class="page-hdr-actions">
-          <button class="btn btn-outline btn-sm" onclick="testEmailEmailReport()">📧 Test Daily Report Email</button>
+         @*  <button class="btn btn-outline btn-sm" onclick="testEmailEmailReport()">📧 Test Daily Report Email</button> *@
           <button class="btn btn-outline btn-sm" onclick="showPanel('analytics')">View Full Report</button>
           <button class="btn btn-saffron btn-sm" onclick="showPanel('assignments')">Assign Pending →</button>
         </div>
@@ -1496,6 +1496,16 @@
               <div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 2 ? 'var(--green)' : 'var(--border)'}"></div><div class="tl-line"></div></div><div class="tl-content"><div class="tl-title">Assigned</div><div class="tl-sub">Assigned to an officer.</div></div></div>
               <div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 3 ? 'var(--green)' : 'var(--border)'}"></div></div><div class="tl-content"><div class="tl-title">Resolved</div></div></div>
           `;
+          
+          if (match.Status === "Resolved" && match.ResolutionRemark) {
+              timelineHtml += `
+                  <div style="background:#f0fff4;border-radius:8px;padding:12px;margin-top:15px;border-left:4px solid var(--green);">
+                      <div style="font-weight:700;font-size:12px;color:#2f855a;margin-bottom:4px;text-transform:uppercase;">Resolution Remark</div>
+                      <div style="font-size:13px;color:#22543d;">${match.ResolutionRemark}</div>
+                  </div>
+              `;
+          }
+          
           $('#trackResult .timeline').html(timelineHtml);
           $('#trackResult').show();
       } else {

@@ -20,7 +20,6 @@ builder.Services.AddSingleton<ComplaintService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddSingleton<IReportingService, ReportingService>();
-builder.Services.AddHostedService<DailyReportWorker>();
 
 
 // Session State Configuration
@@ -41,6 +40,31 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 var app = builder.Build();
+
+// CLI REPORT TRIGGER
+if (args.Contains("--report"))
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var reportingService = services.GetRequiredService<IReportingService>();
+            var emailService = services.GetRequiredService<IEmailService>();
+            var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailSettings>>();
+            
+            Console.WriteLine("Triggering Daily Status Report...");
+            var (body, csvData, fileName) = await reportingService.GenerateDailyReportAsync();
+            await emailService.SendEmailWithAttachmentAsync(options.Value.AdminEmail, "CCMS Daily Status Report", body, csvData, fileName);
+            Console.WriteLine("Report sent successfully to: " + options.Value.AdminEmail);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error generating report: " + ex.Message);
+        }
+    }
+    return; // Exit immediately
+}
 
 // Seed database on startup
 using (var scope = app.Services.CreateScope())

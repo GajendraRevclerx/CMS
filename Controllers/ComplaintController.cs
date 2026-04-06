@@ -216,7 +216,8 @@ namespace CMS.Controllers
                 category = complaint.Department,
                 createdDate = complaint.CreatedDate.ToString("dd MMM yyyy"),
                 title = complaint.ComplaintTitle,
-                assignedTo = complaint.AssignedToName ?? "Processing"
+                assignedTo = complaint.AssignedToName ?? "Processing",
+                resolutionRemark = complaint.ResolutionRemark
             });
         }
 

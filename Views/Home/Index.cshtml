@@ -403,6 +403,16 @@
                                         </div>
                                     </div>
                                     
+                                    ${res.status === 'Resolved' && res.resolutionRemark ? `
+                                        <div class="alert alert-success border-0 rounded-4 p-3 mb-3 shadow-sm">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="fs-5 me-2">📝</span>
+                                                <h6 class="fw-bold mb-0">Resolution Remark</h6>
+                                            </div>
+                                            <p class="mb-0 small text-dark">${res.resolutionRemark}</p>
+                                        </div>
+                                    ` : ''}
+                                    
                                     <div class="card bg-light border-0 rounded-4 p-3 mt-2">
                                         <div class="row text-center">
                                             <div class="col-6 border-end">
