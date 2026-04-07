@@ -1,6 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Collections.Generic;
 
 namespace CMS.Models
 {
@@ -23,7 +24,8 @@ namespace CMS.Models
         public string Role { get; set; } = "Citizen";
 
         // For DeptHead role
-        public string? Department { get; set; }
+        [BsonSerializer(typeof(BsonStringToListSerializer))]
+        public List<string> Department { get; set; } = new List<string>();
         public string? Division { get; set; }
         public string? SubDivision { get; set; }
         public string? Designation { get; set; }

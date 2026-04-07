@@ -22,8 +22,8 @@
   <meta charset="UTF-8">
   <title>Enterprise Support Portal — Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/lib/daterangepicker/daterangepicker.css">
+  <link rel="stylesheet" href="/lib/select2/css/select2.min.css">
   <style>
     :root {
       --navy: #0f172a;
@@ -474,7 +474,7 @@
                   <div class="officer-avatar" style="background:var(--blue-light)">@(off.FullName.Substring(0,1))</div>
                   <div class="officer-info">
                     <div class="oname">@off.FullName</div>
-                    <div class="orole"><span class="role-tag role-je">JE</span> @off.Department</div>
+                    <div class="orole"><span class="role-tag role-je">JE</span> @string.Join(", ", off.Department)</div>
                   </div>
                   <div class="officer-stats"><div class="ocount">Active</div><div class="olbl">Status</div></div>
                 </div>
@@ -508,11 +508,13 @@
                   <option>Resolved</option>
               </select>
             </div>
-            <div class="form-group" style="margin-bottom:0;"><label>Officer</label>
-              <select id="filterOfficer">
-                  <option value="">All Officers</option>
-                  @foreach(var off in allOfficers) {
-                      <option value="@off.Id">@off.FullName (@off.Department)</option>
+            <div class="form-group" style="margin-bottom:0;"><label>Department</label>
+              <select id="filterDept">
+                  <option value="">All Departments</option>
+                  @if(ViewBag.AllDepartments != null) {
+                      foreach(var d in (List<string>)ViewBag.AllDepartments) {
+                          <option>@d</option>
+                      }
                   }
               </select>
             </div>
@@ -538,22 +540,24 @@
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
-            <thead><tr><th>Complaint No.</th><th>Citizen</th><th>Issue</th><th>Dept.</th><th>Assigned To</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+            <thead><tr><th>Complaint No.</th><th>Full Name</th><th>Address</th><th>Issue</th><th>Mobile No</th><th>Assign To</th><th>Assign to Mob</th><th>Status</th><th>Date & Time</th><th>Action</th></tr></thead>
             <tbody>
                 @foreach(var item in Model) {
                     <tr class="complaint-row" 
                         data-status="@item.Status" 
-                        data-officer="@(item.AssignedToId ?? "")" 
+                        data-dept="@item.Department" 
                         data-priority="@(item.Priority ?? "Medium")"
                         data-date="@item.CreatedDate.ToString("yyyy-MM-dd")">
-                      <td><span class="mono">@item.ComplaintNo</span></td>
+                      <td><span class="mono" style="font-size:11px;">@item.ComplaintNo</span></td>
+                      <td><div style="font-weight:700;">@item.FullName</div></td>
+                      <td title="@item.Locality"><div style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px;">@item.Locality</div></td>
+                      <td title="@item.ComplaintTitle"><div style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@item.ComplaintTitle</div></td>
                       <td>@item.UserId</td>
-                      <td>@item.ComplaintTitle</td>
-                      <td>@item.Department</td>
                       <td>@(item.AssignedToName ?? "—")</td>
+                      <td>@(item.AssignedToMobile ?? "—")</td>
                       <td><span class="pill @(item.Status == "Pending" ? "pill-amber" : item.Status == "Resolved" ? "pill-green" : "pill-blue")">@item.Status</span></td>
-                      <td>@item.CreatedDate.ToString("dd MMM yyyy")</td>
-                      <td><button class="btn btn-outline btn-sm" onclick="openTicketModal('@item.Id', '@item.ComplaintNo', '@item.ComplaintTitle', '@item.Department', '@item.Status', '@item.AssignedToName', '@(item.Priority ?? "Medium")')">Manage</button></td>
+                      <td style="font-size:11px;">@item.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                      <td><button class="btn btn-outline btn-sm" onclick="openTicketModal('@item.Id', '@item.ComplaintNo', '@(item.ComplaintTitle?.Replace("'","\\'"))', '@item.Department', '@item.Status', '@item.AssignedToName', '@(item.Priority ?? "Medium")')">Manage</button></td>
                     </tr>
                 }
             </tbody>
@@ -648,14 +652,14 @@
             <thead><tr><th>Officer</th><th>Mobile</th><th>Department</th><th>Jurisdiction</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
                 @foreach(var off in allOfficers) {
-                    <tr class="roster-row" data-name="@off.FullName" data-mobile="@off.MobileNo" data-dept="@off.Department">
+                    <tr class="roster-row" data-name="@off.FullName" data-mobile="@off.MobileNo" data-dept="@string.Join(",", off.Department)">
                       <td><div style="display:flex;align-items:center;gap:10px;"><div class="officer-avatar" style="background:var(--blue-light);width:32px;height:32px;font-size:12px;">@(off.FullName.Substring(0,1))</div><div><div style="font-weight:600;">@off.FullName</div></div></div></td>
                       <td>@off.MobileNo</td>
-                      <td><span class="role-tag role-je">JE</span> @off.Department</td>
+                      <td><span class="role-tag role-je">JE</span> @string.Join(", ", off.Department)</td>
                       <td>@(off.AreaOfJurisdiction ?? off.Area ?? "N/A")</td>
                       <td><span class="pill pill-green">On Duty</span></td>
                       <td>
-                          <button class="btn btn-outline btn-sm" onclick="openEditOfficerModal('@off.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.FullName))', '@off.MobileNo', '@off.Email', '@off.Department', '@off.Landline', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.Designation ?? ""))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.AreaOfJurisdiction ?? off.Area ?? ""))', '@off.Division', '@off.SubDivision')">Edit</button>
+                          <button class="btn btn-outline btn-sm" onclick="openEditOfficerModal('@off.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.FullName))', '@off.MobileNo', '@off.Email', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(off.Department)), '@off.Landline', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.Designation ?? ""))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(off.AreaOfJurisdiction ?? off.Area ?? ""))', '@off.Division', '@off.SubDivision')">Edit</button>
                           <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);" onclick="deleteOfficer('@off.Id')">Delete</button>
                       </td>
                     </tr>
@@ -1061,7 +1065,7 @@
       <div class="form-row-2">
         <div class="form-group">
           <label>Department <span class="required">*</span></label>
-          <select id="offDept" onchange="loadDivisionsForOfficer()">
+          <select id="offDept" multiple="multiple" style="width:100%;">
             <option value="">Select Dept</option>
             @if(masters != null && masters.Departments != null) {
                 @foreach(var d in masters.Departments) {
@@ -1203,12 +1207,12 @@
   </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/lib/jquery/dist/jquery.min.js"></script>
+<script src="/lib/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="/lib/select2/js/select2.min.js"></script>
+<script src="/lib/moment/moment.min.js"></script>
+<script src="/lib/daterangepicker/daterangepicker.min.js"></script>
+<script src="/lib/chart.js/chart.min.js"></script>
 <script>
   const masters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(masters));
   const officers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allOfficers));
@@ -1395,7 +1399,7 @@
   function applyFilters() {
       const search = $('#complaintSearch').val()?.toLowerCase().trim() || "";
       const status = $('#filterStatus').val();
-      const selOfficer = $('#filterOfficer').val();
+      const selDept = $('#filterDept').val();
       const priority = $('#filterPriority').val();
       
       const dateVal = $('#filterDateRange').val();
@@ -1407,7 +1411,7 @@
           const row = $(this);
           const rowText = row.text().toLowerCase();
           const rowStatus = row.data('status');
-          const rowOfficer = row.data('officer');
+          const rowDept = row.data('dept');
           const rowPriority = row.data('priority');
           const rowDateStr = row.data('date');
           const rowDate = moment(rowDateStr, 'YYYY-MM-DD');
@@ -1417,8 +1421,8 @@
           if (search && !rowText.includes(search)) show = false;
           if (status && rowStatus !== status) show = false;
           
-          if (selOfficer && selOfficer !== "" && selOfficer !== "null") {
-              if (rowOfficer != selOfficer) show = false;
+          if (selDept && selDept !== "") {
+              if (rowDept != selDept) show = false;
           }
           
           if (priority && rowPriority !== priority) show = false;
@@ -1446,7 +1450,7 @@
           let show = true;
           if (name && rowName !== name) show = false;
           if (mobile && !rowMobile.includes(mobile)) show = false;
-          if (dept && rowDept !== dept) show = false;
+          if (dept && (!rowDept || !rowDept.split(',').includes(dept))) show = false;
 
           if (show) row.show();
           else row.hide();
@@ -1573,7 +1577,7 @@
        $('#offMobile').val('');
        $('#offEmail').val('');
        $('#offLandline').val('');
-       $('#offDept').val('');
+       $('#offDept').val([]).trigger('change');
        $('#offDiv').html('<option value="">Select Division</option>');
        $('#offSubDiv').html('<option value="">Select Sub-Division</option>');
        $('#offDesignation').val('');
@@ -1582,21 +1586,18 @@
        document.getElementById('officerModal').classList.add('show');
    }
 
-   function openEditOfficerModal(id, name, mobile, email, dept, landline, designation, area, div, sub) {
+   function openEditOfficerModal(id, name, mobile, email, deptArray, landline, designation, area, div, sub) {
        $('#offId').val(id);
        $('#offName').val(name);
        $('#offMobile').val(mobile);
        $('#offEmail').val(email);
        $('#offLandline').val(landline || '');
-       $('#offDept').val(dept);
        
-       loadDivisionsForOfficer(function() {
-           $('#offDiv').val(div);
-           loadSubDivisionsForOfficer(function() {
-               $('#offSubDiv').val(sub);
-           });
-       });
-
+       let depts = Array.isArray(deptArray) ? deptArray : (deptArray ? [deptArray] : []);
+       $('#offDept').val(depts).trigger('change');
+       
+       $('#offDiv').val(div);
+       $('#offSubDiv').val(sub);
        $('#offDesignation').val(designation || '');
        $('#offAreaOfJurisdiction').val(area || '');
        $('#officerModal .modal-hdr h3').text('Edit Officer');
@@ -1668,7 +1669,7 @@
            MobileNo: mobile,
            Email: email,
            Landline: landline,
-           Department: dept,
+           Department: $('#offDept').val(),
            Division: $('#offDiv').val(),
            SubDivision: $('#offSubDiv').val(),
            Designation: designation,
@@ -1982,6 +1983,7 @@
       });
 
       $('#filterDateRange').on('apply.daterangepicker', function(ev, picker) {
+          console.log("Date Range Applied:", picker.startDate.format('YYYY-MM-DD'));
           $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
           applyFilters();
       });
@@ -1991,9 +1993,9 @@
           applyFilters();
       });
 
-      // Initialize Select2 for Officer Dropdown
-      $('#filterOfficer').select2({
-          placeholder: "Select Officer",
+      // Initialize Select2 for Department Dropdown
+      $('#filterDept').select2({
+          placeholder: "Select Department",
           allowClear: true,
           width: '100%'
       }).on('change', function() {
@@ -2007,6 +2009,14 @@
           width: '100%'
       }).on('change', function() {
           applyRosterFilters();
+      });
+
+      // Initialize Select2 for Officer Dept Multi-select
+      $('#offDept').select2({
+          placeholder: "Select Department(s)",
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#officerModal') // Ensure it works inside the modal
       });
 
       $('#rosterSearchMobile').on('input', function() {

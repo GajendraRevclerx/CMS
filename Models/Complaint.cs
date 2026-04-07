@@ -46,6 +46,7 @@ namespace CMS.Models
         // Assigned to a specific Department Head (User Id)
         public string? AssignedToId { get; set; }
         public string? AssignedToName { get; set; }
+        public string? AssignedToMobile { get; set; }
 
         public string? AttachmentPath { get; set; }
         public DateTime? ResolutionDate { get; set; }

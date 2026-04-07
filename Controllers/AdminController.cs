@@ -57,6 +57,9 @@ namespace CMS.Controllers
                             .Average(c => (c.ResolutionDate!.Value - c.CreatedDate).TotalDays);
             }
             ViewBag.AvgResolutionTime = avgTime.ToString("F1") + "d";
+            
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            ViewBag.AllDepartments = master?.Departments.Select(d => d.Name).ToList() ?? new List<string>();
 
             var ratedComplaints = complaints.Where(c => c.Rating > 0).ToList();
             double avgRating = ratedComplaints.Any() ? ratedComplaints.Average(c => c.Rating) : 0;
@@ -188,9 +191,11 @@ namespace CMS.Controllers
         public async Task<IActionResult> Reassign(string complaintId, string headId, string headName)
         {
             var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var officer = await _context.Users.Find(u => u.Id == headId).FirstOrDefaultAsync();
             var update = Builders<Complaint>.Update
                 .Set(c => c.AssignedToId, headId)
                 .Set(c => c.AssignedToName, headName)
+                .Set(c => c.AssignedToMobile, officer?.MobileNo)
                 .Set(c => c.Status, "Assigned");
 
             await _context.Complaints.UpdateOneAsync(filter, update);

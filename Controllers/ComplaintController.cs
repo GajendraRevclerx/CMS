@@ -42,7 +42,7 @@ namespace CMS.Controllers
                 if (model.State != "Chandigarh" || model.City != "Chandigarh")
                     return BadRequest(new { success = false, message = "Only Chandigarh is supported for registration." });
                 
-                if (string.IsNullOrEmpty(model.PinCode) || !model.PinCode.StartsWith("160"))
+                if (!string.IsNullOrEmpty(model.PinCode) && !model.PinCode.StartsWith("160"))
                     return BadRequest(new { success = false, message = "Invalid Chandigarh Pin Code. Area must be within 160xxx series." });
 
                 var allowedSources = new[] { "Mobile", "WhatsApp" };
@@ -121,7 +121,7 @@ namespace CMS.Controllers
                 if (model.State != "Chandigarh" || model.City != "Chandigarh")
                     return BadRequest(new { success = false, message = "Only Chandigarh is supported for registration." });
                 
-                if (string.IsNullOrEmpty(model.PinCode) || !model.PinCode.StartsWith("160"))
+                if (!string.IsNullOrEmpty(model.PinCode) && !model.PinCode.StartsWith("160"))
                     return BadRequest(new { success = false, message = "Invalid Chandigarh Pin Code. Area must be within 160xxx series." });
 
                 var allowedSources = new[] { "Mobile", "WhatsApp" };
@@ -175,7 +175,9 @@ namespace CMS.Controllers
             if (userRole == "Helpdesk")
             {
                 ViewBag.Heads = await _context.Users.Find(u => u.Role == "DeptHead").ToListAsync();
-                ViewBag.Masters = await _context.Masters.Find(_ => true).FirstOrDefaultAsync() ?? new Master();
+                var masters = await _context.Masters.Find(_ => true).FirstOrDefaultAsync() ?? new Master();
+                ViewBag.Masters = masters;
+                ViewBag.AllDepartments = masters.Departments.Select(d => d.Name).ToList();
                 return View("HelpdeskDashboard", complaints);
             }
 
@@ -188,9 +190,11 @@ namespace CMS.Controllers
         public async Task<IActionResult> Reassign(string complaintId, string headId, string headName)
         {
             var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var officer = await _context.Users.Find(u => u.Id == headId).FirstOrDefaultAsync();
             var update = Builders<Complaint>.Update
                 .Set(c => c.AssignedToId, headId)
                 .Set(c => c.AssignedToName, headName)
+                .Set(c => c.AssignedToMobile, officer?.MobileNo)
                 .Set(c => c.Status, "Assigned");
 
             await _context.Complaints.UpdateOneAsync(filter, update);

@@ -101,7 +101,7 @@ namespace CMS.Services
                     Password = "password",
                     FullName = "Electrical Head (North)",
                     Role = "DeptHead",
-                    Department = "ELE",
+                    Department = new List<string> { "ELE" },
                     Area = "North Zone"
                 });
             }
@@ -114,7 +114,7 @@ namespace CMS.Services
                     Password = "password",
                     FullName = "Water Head (South)",
                     Role = "DeptHead",
-                    Department = "WAT",
+                    Department = new List<string> { "WAT" },
                     Area = "South Zone"
                 });
             }

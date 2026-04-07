@@ -287,21 +287,24 @@
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
-            <thead><tr><th>Complaint No.</th><th>Issue</th><th>Dept.</th><th>Assigned To</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+            <thead><tr><th>Complaint No.</th><th>Full Name</th><th>Address</th><th>Issue</th><th>Mobile No</th><th>Assign To</th><th>Assign to Mob</th><th>Status</th><th>Date & Time</th><th>Action</th></tr></thead>
             <tbody>
                 @foreach(var item in Model) {
                     <tr>
-                      <td><span class="mono">@item.ComplaintNo</span></td>
-                      <td>@item.ComplaintTitle</td>
-                      <td>@item.Department</td>
+                      <td><span class="mono" style="font-size:11px;">@item.ComplaintNo</span></td>
+                      <td><div style="font-weight:700;">@item.FullName</div></td>
+                      <td title="@item.Locality"><div style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px;">@item.Locality</div></td>
+                      <td title="@item.ComplaintTitle"><div style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@item.ComplaintTitle</div></td>
+                      <td>@item.UserId</td>
                       <td>@(item.AssignedToName ?? "—")</td>
+                      <td>@(item.AssignedToMobile ?? "—")</td>
                       <td><span class="pill @(item.Status == "Pending" ? "pill-amber" : item.Status == "Resolved" ? "pill-green" : "pill-blue")">@item.Status</span></td>
-                      <td>@item.CreatedDate.ToString("dd MMM yyyy")</td>
+                      <td style="font-size:11px;">@item.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
                       <td><button class="btn btn-outline btn-sm" onclick="launchJourney('@item.ComplaintNo', '@item.Status')">Track Journey</button></td>
                     </tr>
                 }
                 @if(!Model.Any()) {
-                    <tr><td colspan="7" style="text-align: center; padding: 40px;">No complaints found.</td></tr>
+                    <tr><td colspan="10" style="text-align: center; padding: 40px;">No complaints found.</td></tr>
                 }
             </tbody>
           </table>
@@ -341,9 +344,9 @@
   </main>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="~/lib/chart.js/chart.min.js"></script>
 <script>
   function showPanel(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));

@@ -103,7 +103,7 @@ namespace CMS.Controllers
         [HttpGet("find-head")]
         public async Task<IActionResult> FindHead(string dept, string area)
         {
-            var head = await _context.Users.Find(u => u.Role == "DeptHead" && u.Department == dept && u.Area == area).FirstOrDefaultAsync();
+            var head = await _context.Users.Find(u => u.Role == "DeptHead" && u.Department.Contains(dept) && u.Area == area).FirstOrDefaultAsync();
             if (head == null) return NotFound(new { message = "No head assigned yet" });
             return Ok(new { id = head.Id, name = head.FullName });
         }
