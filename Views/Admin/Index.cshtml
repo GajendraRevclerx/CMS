@@ -2144,7 +2144,6 @@
       // Initialize Select2 for Department Dropdown
       $('#filterDept').select2({
           placeholder: "Select Department",
-          allowClear: true,
           width: '100%'
       }).on('change', function() {
           applyFilters();
@@ -2153,7 +2152,6 @@
       // Initialize Select2 for Roster Name Filter
       $('#rosterFilterName').select2({
           placeholder: "Search Officer",
-          allowClear: true,
           width: '100%'
       }).on('change', function() {
           applyRosterFilters();
@@ -2162,7 +2160,6 @@
       // Initialize Select2 for Officer Cascading Dropdowns
       $('#offDept, #offDiv, #offSubDiv').select2({
           placeholder: "Select...",
-          allowClear: true,
           width: '100%',
           dropdownParent: $('#officerModal')
       });
