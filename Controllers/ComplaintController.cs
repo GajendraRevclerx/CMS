@@ -27,8 +27,22 @@ namespace CMS.Controllers
 
         [Authorize(Roles = "Helpdesk")]
         [HttpGet]
-        public IActionResult DirectSubmit()
+        public async Task<IActionResult> DirectSubmit()
         {
+            var userMobile = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            var isStaff = User.IsInRole("Helpdesk") || User.IsInRole("DeptHead") || userRole == "Helpdesk" || userRole == "DeptHead";
+
+            var complaints = await _context.Complaints
+                .Find(c => isStaff ? true : c.UserId == userMobile)
+                .ToListAsync();
+
+            ViewBag.Total = complaints.Count;
+            ViewBag.UnassignedCount = await _context.Complaints.CountDocumentsAsync(c => string.IsNullOrEmpty(c.AssignedToId));
+            
+            var now = DateTime.UtcNow;
+            ViewBag.Escalated = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 1);
+
             return View();
         }
 
@@ -152,12 +166,14 @@ namespace CMS.Controllers
             var userMobile = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userRole = User.FindFirstValue(ClaimTypes.Role);
 
+            var isStaff = User.IsInRole("Helpdesk") || User.IsInRole("DeptHead") || userRole == "Helpdesk" || userRole == "DeptHead";
+
             var complaints = await _context.Complaints
-                .Find(c => userRole == "Helpdesk" ? true : c.UserId == userMobile) // Helpdesk sees all, Citizen sees self
+                .Find(c => isStaff ? true : c.UserId == userMobile) // Staff sees all, Citizen sees self
                 .SortByDescending(c => c.CreatedDate)
                 .ToListAsync();
 
-            if (userRole == "Helpdesk")
+            if (isStaff)
             {
                 var allPending = await _context.Complaints
                     .Find(c => string.IsNullOrEmpty(c.AssignedToId))
@@ -182,7 +198,10 @@ namespace CMS.Controllers
             double avgRating = ratedComplaints.Any() ? ratedComplaints.Average(c => c.Rating) : 0;
             ViewBag.AvgRating = avgRating.ToString("F1") + "/5";
 
-            if (userRole == "Helpdesk")
+            if (User.IsInRole("SuperAdmin") || userRole == "SuperAdmin") return RedirectToAction("Index", "SuperAdmin");
+            if (User.IsInRole("Admin") || userRole == "Admin") return RedirectToAction("Index", "Admin");
+
+            if (isStaff)
             {
                 ViewBag.Users = await _context.Users.Find(_ => true).ToListAsync();
                 ViewBag.Heads = await _context.Users.Find(u => u.Role == "DeptHead").ToListAsync();
@@ -192,8 +211,7 @@ namespace CMS.Controllers
                 return View("HelpdeskDashboard", complaints);
             }
 
-
-            return View(complaints);
+            return RedirectToAction("Index", "Home");
         }
 
         [Authorize(Roles = "Helpdesk,Admin")]
@@ -234,12 +252,23 @@ namespace CMS.Controllers
             return Ok(new {
                 success = true,
                 complaintNo = complaint.ComplaintNo,
+                userId = complaint.UserId,
                 status = complaint.Status,
                 department = complaint.Department,
                 createdDate = complaint.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
                 fullName = complaint.FullName ?? "—",
+                email = complaint.Email ?? "—",
                 address = $"{complaint.Locality}, {complaint.PinCode}",
+                street = complaint.Street ?? "—",
+                locality = complaint.Locality ?? "—",
+                pinCode = complaint.PinCode ?? "—",
+                area = complaint.Area ?? "—",
+                site = complaint.Site ?? "—",
+                source = complaint.Source ?? "—",
+                incidentDate = complaint.IncidentDate != null ? complaint.IncidentDate.Value.ToString("dd/MM/yyyy") : "—",
                 title = complaint.ComplaintTitle,
+                description = complaint.Description ?? "—",
+                priority = complaint.Priority ?? "Medium",
                 assignedTo = complaint.AssignedToName ?? "Pending",
                 assignedToMobile = complaint.AssignedToMobile ?? "—",
                 resolutionDate = complaint.ResolutionDate?.ToString("dd/MM/yyyy HH:mm:ss") ?? "—",

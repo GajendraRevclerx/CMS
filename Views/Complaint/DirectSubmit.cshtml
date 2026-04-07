@@ -155,13 +155,27 @@
     </a>
     <a href="/Complaint/Dashboard#assignments" class="nav-item" id="nav-assignments">
       <span class="icon">🔀</span><span>Assign Complaint</span>
+      <span class="nav-badge amber" style="background:var(--amber);">@ViewBag.UnassignedCount</span>
     </a>
     <a href="/Complaint/Dashboard#complaints" class="nav-item" id="nav-complaints">
-      <span class="icon">📋</span><span>My Registrations</span>
+      <span class="icon">📋</span><span>All Complaints</span>
+      <span class="nav-badge">@ViewBag.Total</span>
     </a>
     
     <a href="/Complaint/Dashboard#track" class="nav-item" id="nav-track">
       <span class="icon">🔍</span><span>Track a Ticket</span>
+    </a>
+    <a href="/Complaint/Dashboard#escalations" class="nav-item" id="nav-escalations">
+      <span class="icon">⚡</span><span>Escalations</span>
+      <span class="nav-badge red" style="background:var(--red);">@ViewBag.Escalated</span>
+    </a>
+    <a href="/Complaint/Dashboard#reports" class="nav-item" id="nav-reports">
+      <span class="icon">📈</span><span>Reports</span>
+    </a>
+    
+    <div class="sidebar-section-label">Master Data</div>
+    <a href="/Complaint/Dashboard#officer-details" class="nav-item" id="nav-officer-details">
+      <span class="icon">📋</span><span>Officer Directory</span>
     </a>
     
     <div class="sidebar-section-label">Actions</div>
@@ -299,10 +313,10 @@
                           <div class="input-group-custom" style="margin-top:10px;">
                               <label class="input-label">Complaint Description <span class="text-danger">*</span></label>
                               <textarea id="Description" name="Description" rows="5" class="form-control-premium" placeholder="Explain the issue in detail..." required></textarea>
-                              <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 200</span></div>
+                              <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 10</span></div>
                           </div>
 
-                          <div class="input-group-custom">
+                          <div class="input-group-custom" style="display:none">
                               <label class="input-label">Upload Evidence (Optional)</label>
                               <input type="file" id="Attachment" name="Attachment" style="display:none;">
                               <div class="dropzone-area" onclick="document.getElementById('Attachment').click()">
@@ -320,7 +334,12 @@
 
                       <!-- Submission -->
                       <div style="display:flex;gap:14px;justify-content:flex-end;padding-top:8px;">
-                          <a href="/Complaint/Dashboard" class="btn-premium btn-back">← Back</a>
+                          @{
+                              var dashboardUrl = User.IsInRole("Admin") ? "/Admin/Index" : 
+                                               User.IsInRole("SuperAdmin") ? "/SuperAdmin/Index" : 
+                                               "/Complaint/Dashboard";
+                          }
+                          <a href="@dashboardUrl" class="btn-premium btn-back">← Back</a>
                           <button type="submit" class="btn-premium btn-submit" id="btnSubmitFinal" style="background:var(--saffron);font-size:17px;padding:12px 36px;">
                               Submit Complaint →
                           </button>
@@ -359,16 +378,16 @@
         // Char counter
         $('#Description').on('input', function() {
             const len = $(this).val().length;
-            $('#premiumCharCount').text(len + ' / 200');
-            $('#premiumCharCount').css('color', len >= 200 ? '#10b981' : '#ef4444');
+            $('#premiumCharCount').text(len + ' / 10');
+            $('#premiumCharCount').css('color', len >= 10 ? '#10b981' : '#ef4444');
         });
 
         // Form Submit
         $('#premiumSubmitForm').on('submit', function(e) {
             e.preventDefault();
             
-            if ($('#Description').val().length < 200) {
-                Swal.fire('Description Required', 'Please provide at least 200 characters in the description.', 'warning');
+            if ($('#Description').val().length < 10) {
+                Swal.fire('Description Required', 'Please provide at least 10 characters in the description.', 'warning');
                 return;
             }
 
@@ -404,7 +423,12 @@
                         icon: 'success',
                         confirmButtonColor: '#1e3a8a'
                     }).then(() => {
-                        window.location.href = '/Complaint/Dashboard';
+                        @{
+                            var redirectTarget = User.IsInRole("Admin") ? "/Admin/Index" : 
+                                               User.IsInRole("SuperAdmin") ? "/SuperAdmin/Index" : 
+                                               "/Complaint/Dashboard";
+                        }
+                        window.location.href = '@redirectTarget';
                     });
                 },
                 error: function(xhr) {

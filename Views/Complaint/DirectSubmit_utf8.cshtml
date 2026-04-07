@@ -452,7 +452,7 @@
                     <div class="input-group-custom">
                         <label class="input-label">Complaint Description <span class="text-danger">*</span></label>
                         <textarea id="Description" name="Description" rows="5" class="form-control-premium" placeholder="Explain the issue in detail..." required></textarea>
-                        <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 200</span></div>
+                        <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 10</span></div>
                     </div>
 
                     <div class="input-group-custom">
@@ -528,8 +528,8 @@
             // Char counter
             $('#Description').on('input', function() {
                 const len = $(this).val().length;
-                $('#premiumCharCount').text(len + ' / 100');
-                $('#premiumCharCount').css('color', len >= 100 ? '#10b981' : '#ef4444');
+                $('#premiumCharCount').text(len + ' / 10');
+                $('#premiumCharCount').css('color', len >= 10 ? '#10b981' : '#ef4444');
             });
 
             // Form Submit
@@ -537,7 +537,7 @@
                 e.preventDefault();
                 
                 if ($('#Description').val().length < 10) {
-                    Swal.fire('Description Required', 'Please provide at least 200 characters in the description.', 'warning');
+                    Swal.fire('Description Required', 'Please provide at least 10 characters in the description.', 'warning');
                     return;
                 }
 

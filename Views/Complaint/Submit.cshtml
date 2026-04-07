@@ -212,7 +212,7 @@
           <h5>📌 Please keep ready before filing</h5>
           <ul>
             <li>Ward / Sector / Locality of the complaint site</li>
-            <li>Complaint description (min. 200 characters)</li>
+            <li>Complaint description (min. 10 characters)</li>
             <li>Photo/video evidence (optional, max 10 MB)</li>
           </ul>
         </div>
@@ -324,11 +324,11 @@
               <textarea name="Description" id="Description" rows="5" minlength="10" placeholder="Describe the issue in detail (minimum 200 characters). Include exact location, nature of problem, and any previous action taken..." required></textarea>
               <div style="display:flex; justify-content:space-between;">
                   <div class="form-note">Minimum 200 characters required. No special characters (#$@@^*~|!).</div>
-                  <div id="descCount" style="font-size:12px; font-weight:700; color:var(--danger);">0 / 200</div>
+                  <div id="descCount" style="font-size:12px; font-weight:700; color:var(--danger);">0 / 10</div>
               </div>
             </div>
-            
-            <div class="form-group span-2">
+
+                <div class="form-group span-2" style="display:none">
               <label>Upload Evidence (Optional)</label>
               <div class="upload-area">
                 <div class="upload-icon">📎</div>
@@ -392,7 +392,7 @@
             $('#Description').on('input', function () {
                 var len = $(this).val().length;
                 var $counter = $('#descCount');
-                $counter.text(len + ' / 200');
+                $counter.text(len + ' / 10');
                 if (len >= 200) { $counter.css('color', '#10b981'); }
                 else { $counter.css('color', 'var(--danger)'); }
             });
@@ -401,7 +401,7 @@
             $('#complaintForm').on('submit', function (e) {
                 e.preventDefault();
                 
-                if ($('#Description').val().length < 200) {
+                if ($('#Description').val().length < 10) {
                         Swal.fire('Description Too Short', 'Please provide a complaint description.', 'warning');
                     return;
                 }

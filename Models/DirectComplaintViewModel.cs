@@ -31,7 +31,7 @@ namespace CMS.Models
         public string Department { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Description is required.")]
-        [MinLength(10, ErrorMessage = "Description must be at least 200 characters long.")]
+        [MinLength(10, ErrorMessage = "Description must be at least 10 characters long.")]
         public string Description { get; set; } = string.Empty;
 
         public string? ComplaintNo { get; set; }
