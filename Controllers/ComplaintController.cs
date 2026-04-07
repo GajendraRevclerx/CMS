@@ -167,10 +167,20 @@ namespace CMS.Controllers
                 ViewBag.UnassignedCount = allPending.Count;
             }
 
+            var now = DateTime.UtcNow;
             ViewBag.Total = complaints.Count;
             ViewBag.Pending = complaints.Count(c => c.Status == "Pending");
             ViewBag.Assigned = complaints.Count(c => c.Status == "Assigned");
             ViewBag.Resolved = complaints.Count(c => c.Status == "Resolved");
+            ViewBag.Escalated = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 1);
+
+            var resolvedComplaints = complaints.Where(c => c.Status == "Resolved" && c.ResolutionDate != null).ToList();
+            double avgTime = resolvedComplaints.Any() ? resolvedComplaints.Average(c => (c.ResolutionDate!.Value - c.CreatedDate).TotalDays) : 0;
+            ViewBag.AvgResolutionTime = avgTime.ToString("F1") + "d";
+
+            var ratedComplaints = complaints.Where(c => c.Rating > 0).ToList();
+            double avgRating = ratedComplaints.Any() ? ratedComplaints.Average(c => c.Rating) : 0;
+            ViewBag.AvgRating = avgRating.ToString("F1") + "/5";
 
             if (userRole == "Helpdesk")
             {

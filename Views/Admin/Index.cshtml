@@ -266,6 +266,8 @@
     .select2-results__option { font-size: 13px; padding: 8px 12px; }
     .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: var(--blue-light); }
     .select2-container { margin-top: 1px; }
+    .stat-card[onclick] { cursor: pointer; transition: all 0.2s; }
+    .stat-card[onclick]:hover { transform: translateY(-3px); border-color: var(--blue-light); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
   </style>
 </head>
 <body>
@@ -394,22 +396,22 @@
 
       <!-- Stats Row -->
       <div class="stats-grid">
-        <div class="stat-card blue">
+        <div class="stat-card blue" onclick="showPanel('complaints'); $('#filterStatus').val('').trigger('change'); applyFilters();">
           <div class="stat-top"><div class="stat-icon blue">📋</div><span class="stat-trend trend-up">↑ 12%</span></div>
           <div class="stat-val">@total</div>
           <div class="stat-lbl">Total Complaints</div>
         </div>
-        <div class="stat-card saffron">
+        <div class="stat-card saffron" onclick="showPanel('assignments')">
           <div class="stat-top"><div class="stat-icon saffron">⏳</div><span class="stat-trend trend-flat">@unassigned new</span></div>
           <div class="stat-val">@unassigned</div>
           <div class="stat-lbl">Unassigned / Pending</div>
         </div>
-        <div class="stat-card green">
+        <div class="stat-card green" onclick="showPanel('complaints'); $('#filterStatus').val('Resolved').trigger('change'); applyFilters();">
           <div class="stat-top"><div class="stat-icon green">✅</div><span class="stat-trend trend-up">↑ 8%</span></div>
           <div class="stat-val">@resolved</div>
           <div class="stat-lbl">Resolved Cases</div>
         </div>
-        <div class="stat-card red">
+        <div class="stat-card red" onclick="showPanel('escalations')">
           <div class="stat-top"><div class="stat-icon red">⚡</div><span class="stat-trend trend-down">↑ @escalated</span></div>
           <div class="stat-val">@escalated</div>
           <div class="stat-lbl">Escalated (SLA Breach)</div>
@@ -418,7 +420,7 @@
 
       <!-- Row 2 -->
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
-        <div class="stat-card blue">
+        <div class="stat-card blue" onclick="showPanel('complaints'); $('#filterStatus').val('Assigned').trigger('change'); applyFilters();">
           <div class="stat-top"><div class="stat-icon blue">📋</div><span class="stat-trend trend-flat">Active</span></div>
           <div class="stat-val">@assigned</div>
           <div class="stat-lbl">Assigned Complaints</div>
@@ -477,7 +479,7 @@
                   <div class="officer-avatar" style="background:var(--blue-light)">@(off.FullName.Substring(0,1))</div>
                   <div class="officer-info">
                     <div class="oname">@off.FullName</div>
-                    <div class="orole"><span class="role-tag role-je">JE</span> @string.Join(", ", off.Department)</div>
+                    <div class="orole">@string.Join(", ", off.Department)</div>
                   </div>
                   <div class="officer-stats"><div class="ocount">Active</div><div class="olbl">Status</div></div>
                 </div>
@@ -662,7 +664,7 @@
                     <tr class="roster-row" data-name="@off.FullName" data-mobile="@off.MobileNo" data-dept="@off.Department">
                       <td><div style="display:flex;align-items:center;gap:10px;"><div class="officer-avatar" style="background:var(--blue-light);width:32px;height:32px;font-size:12px;">@(off.FullName.Substring(0,1))</div><div><div style="font-weight:600;">@off.FullName</div></div></div></td>
                       <td>@off.MobileNo</td>
-                      <td><span class="role-tag role-je">JE</span> @off.Department</td>
+                      <td>@off.Department</td>
                       <td>@(off.AreaOfJurisdiction ?? off.Area ?? "N/A")</td>
                       <td><span class="pill pill-green">On Duty</span></td>
                       <td>
@@ -877,26 +879,21 @@
         </div>
       </div>
       
-      <div class="stats-grid" style="margin-bottom:20px;">
-        <div class="stat-card blue">
+      <div class="stats-grid" style="margin-bottom:20px; grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card blue" onclick="showPanel('complaints'); $('#filterStatus').val('').trigger('change'); applyFilters();">
             <div class="stat-top"><div class="stat-icon blue">📊</div><span class="stat-trend trend-up">Current</span></div>
             <div class="stat-val">@ViewBag.Total</div>
             <div class="stat-lbl">Total Filed (Dept.)</div>
         </div>
-        <div class="stat-card green">
+        <div class="stat-card green" onclick="showPanel('complaints'); $('#filterStatus').val('Resolved').trigger('change'); applyFilters();">
             <div class="stat-top"><div class="stat-icon green">✅</div><span class="stat-trend trend-up">@(ViewBag.Total > 0 ? (ViewBag.Resolved * 100 / ViewBag.Total) : 0)%</span></div>
             <div class="stat-val">@ViewBag.Resolved</div>
             <div class="stat-lbl">Resolved</div>
         </div>
-        <div class="stat-card teal">
-            <div class="stat-top"><div class="stat-icon teal">⏱️</div><span class="stat-trend trend-up">Avg.</span></div>
-            <div class="stat-val">@ViewBag.AvgResolutionTime</div>
-            <div class="stat-lbl">Avg. Resolution Time</div>
-        </div>
-        <div class="stat-card purple">
-            <div class="stat-top"><div class="stat-icon purple">⭐</div><span class="stat-trend trend-up">Global</span></div>
-            <div class="stat-val">@ViewBag.AvgRating</div>
-            <div class="stat-lbl">Avg. Citizen Rating</div>
+        <div class="stat-card red" onclick="showPanel('escalations')">
+            <div class="stat-top"><div class="stat-icon red">⚡</div><span class="stat-trend trend-down">@ViewBag.Escalated Alerts</span></div>
+            <div class="stat-val">@ViewBag.Escalated</div>
+            <div class="stat-lbl">Escalated Tickets</div>
         </div>
       </div>
       
@@ -1442,10 +1439,29 @@
         document.getElementById('panel-overview').classList.add('active');
         name = 'overview';
     }
-
     const nav = document.getElementById('nav-' + name);
     if(nav) nav.classList.add('active');
     document.querySelector('.main-content').scrollTop = 0;
+
+    // Auto-Reset logic for specific panels
+    if (name === 'complaints') {
+        $('#complaintSearch').val('');
+        $('#filterStatus').val('');
+        $('#filterDept').val('').trigger('change');
+        $('#filterPriority').val('');
+        $('#filterDateRange').val('');
+        if (typeof applyFilters === 'function') applyFilters();
+    } else if (name === 'reports') {
+        if (typeof resetReportFilters === 'function') resetReportFilters();
+    } else if (name === 'officers') {
+        $('#rosterFilterName').val('').trigger('change');
+        $('#rosterSearchMobile').val('');
+        $('#rosterFilterDept').val('').trigger('change');
+        if (typeof applyRosterFilters === 'function') applyRosterFilters();
+    } else if (name === 'track') {
+        $('#trackInput').val('');
+        $('#trackResult').hide();
+    }
     
     // Update hash for persistence
     if(window.location.hash !== '#' + name) {
@@ -2219,7 +2235,11 @@
   // ========== REPORTS LOGIC (FLAT LIST) ==========
   const allUsers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Users));
   const userMap = {};
-  allUsers.forEach(u => { userMap[u.MobileNo] = u.FullName; });
+  const userMobileMap = {};
+  allUsers.forEach(u => { 
+      userMap[u.MobileNo] = u.FullName;
+      userMobileMap[u.Id] = u.MobileNo; 
+  });
 
   const allComplaintsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
 
@@ -2236,7 +2256,7 @@
         
         // Also populate officers for this dept name
         const matchingOffs = (officers || []).filter(o => o.Department === deptName);
-        matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
+        matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.Id}">${o.FullName}</option>`));
     }
     renderReportTable();
   }
@@ -2253,7 +2273,7 @@
         filtered.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
 
         const matchingOffs = (officers || []).filter(o => o.Department === deptName && o.Division === div);
-        matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
+        matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.Id}">${o.FullName}</option>`));
     }
     renderReportTable();
   }
@@ -2267,7 +2287,7 @@
     if (sub) {
         const deptName = (masters.Departments.find(d => d.Code === deptCode) || {}).Name;
         const matchingOffs = (officers || []).filter(o => o.Department === deptName && o.Division === div && o.SubDivision === sub);
-        matchingOffs.forEach(o => offSel.append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
+        matchingOffs.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
     }
     renderReportTable();
   }
@@ -2301,7 +2321,8 @@
           }
 
           if (selOff) {
-              if (c.AssignedToId !== selOff && c.RegisteredById !== selOff) match = false;
+              const offMobile = userMobileMap[selOff];
+              if (c.AssignedToId !== selOff && c.RegisteredById !== offMobile) match = false;
           }
           
           return match;
