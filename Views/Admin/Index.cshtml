@@ -842,7 +842,7 @@
                 <table class="data-table">
                     <thead><tr><th>Aging</th><th>Ack No</th><th>Title</th><th>Assigned To</th><th>Action</th></tr></thead>
                     <tbody>
-                        @foreach(var item in Model.Where(c => c.Status != "Resolved" && c.Status != "Closed" && (DateTime.UtcNow - c.CreatedDate).TotalDays > 5).OrderByDescending(c => c.CreatedDate)) {
+                        @foreach(var item in Model.Where(c => c.Status != "Resolved" && c.Status != "Closed" && (DateTime.UtcNow - c.CreatedDate).TotalDays > 1).OrderByDescending(c => c.CreatedDate)) {
                             <tr>
                                 <td><span class="priority priority-high">@(((DateTime.UtcNow - item.CreatedDate).Days)) Days Stuck</span></td>
                                 <td>@item.ComplaintNo</td>
@@ -851,7 +851,7 @@
                                 <td><button class="btn btn-danger btn-sm" onclick="showPanel('assignments')">Reassign</button></td>
                             </tr>
                         }
-                        @if(!Model.Any(c => c.Status != "Resolved" && c.Status != "Closed" && (DateTime.UtcNow - c.CreatedDate).TotalDays > 5)){
+                        @if(!Model.Any(c => c.Status != "Resolved" && c.Status != "Closed" && (DateTime.UtcNow - c.CreatedDate).TotalDays > 1)){
                             <tr><td colspan="5" style="text-align:center;padding:20px;">No active escalations.</td></tr>
                         }
                     </tbody>
@@ -2234,8 +2234,8 @@
         const filtered = (masters.Divisions || []).filter(d => d.DepartmentName === deptName);
         filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
         
-        // Also populate officers for this dept code
-        const matchingOffs = (officers || []).filter(o => o.Department && o.Department.includes(deptCode));
+        // Also populate officers for this dept name
+        const matchingOffs = (officers || []).filter(o => o.Department === deptName);
         matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
     }
     renderReportTable();
@@ -2252,7 +2252,7 @@
         const filtered = (masters.SubDivisions || []).filter(s => s.DepartmentName === deptName && s.DivisionName === div);
         filtered.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
 
-        const matchingOffs = (officers || []).filter(o => o.Department === deptCode && o.Division === div);
+        const matchingOffs = (officers || []).filter(o => o.Department === deptName && o.Division === div);
         matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
     }
     renderReportTable();
@@ -2265,7 +2265,8 @@
     const offSel = $('#repOff').html('<option value="">All Officers</option>');
 
     if (sub) {
-        const matchingOffs = (officers || []).filter(o => o.Department === deptCode && o.Division === div && o.SubDivision === sub);
+        const deptName = (masters.Departments.find(d => d.Code === deptCode) || {}).Name;
+        const matchingOffs = (officers || []).filter(o => o.Department === deptName && o.Division === div && o.SubDivision === sub);
         matchingOffs.forEach(o => offSel.append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
     }
     renderReportTable();
@@ -2291,9 +2292,14 @@
           if (statusFilter && c.Status !== statusFilter) match = false;
           
           if (selDept && c.Department !== selDept) match = false;
-          // Note: In some schemas Division/SubDiv might be optional or in different fields, 
-          // but we apply them if present in the model or via AssignedToId/User lookup
-          // For now, filtering by AssignedTo/Helpdesk if an officer is selected
+          
+          // Cascading filter logic for Division/Sub-Division via Assigned Officer
+          if (selDiv || selSub) {
+              const officer = (officers || []).find(o => o.Id === c.AssignedToId || o.MobileNo === c.AssignedToId);
+              if (selDiv && (!officer || officer.Division !== selDiv)) match = false;
+              if (selSub && (!officer || officer.SubDivision !== selSub)) match = false;
+          }
+
           if (selOff) {
               if (c.AssignedToId !== selOff && c.RegisteredById !== selOff) match = false;
           }

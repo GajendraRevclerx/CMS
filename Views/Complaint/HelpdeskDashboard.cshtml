@@ -906,8 +906,8 @@
         const filtered = (mastersData.Divisions || []).filter(d => d.DepartmentName === deptName);
         filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
         
-        // Also populate officers for this dept code
-        const matchingOffs = (officersList || []).filter(o => o.Department && o.Department.includes(deptCode));
+        // Also populate officers for this dept name
+        const matchingOffs = (officersList || []).filter(o => o.Department === deptName);
         matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
     }
     renderReportTable();
@@ -924,7 +924,7 @@
         const filtered = (mastersData.SubDivisions || []).filter(s => s.DepartmentName === deptName && s.DivisionName === div);
         filtered.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
 
-        const matchingOffs = (officersList || []).filter(o => o.Department === deptCode && o.Division === div);
+        const matchingOffs = (officersList || []).filter(o => o.Department === deptName && o.Division === div);
         matchingOffs.forEach(o => $('#repOff').append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
     }
     renderReportTable();
@@ -937,7 +937,8 @@
     const offSel = $('#repOff').html('<option value="">All Officers</option>');
 
     if (sub) {
-        const matchingOffs = (officersList || []).filter(o => o.Department === deptCode && o.Division === div && o.SubDivision === sub);
+        const deptName = (mastersData.Departments.find(d => d.Code === deptCode) || {}).Name;
+        const matchingOffs = (officersList || []).filter(o => o.Department === deptName && o.Division === div && o.SubDivision === sub);
         matchingOffs.forEach(o => offSel.append(`<option value="${o.MobileNo}">${o.FullName}</option>`));
     }
     renderReportTable();
@@ -963,6 +964,14 @@
           if (statusFilter && c.Status !== statusFilter) match = false;
           
           if (selDept && c.Department !== selDept) match = false;
+
+          // Cascading filter logic for Division/Sub-Division via Assigned Officer
+          if (selDiv || selSub) {
+              const officer = (officersList || []).find(o => o.Id === c.AssignedToId || o.MobileNo === c.AssignedToId);
+              if (selDiv && (!officer || officer.Division !== selDiv)) match = false;
+              if (selSub && (!officer || officer.SubDivision !== selSub)) match = false;
+          }
+
           if (selOff) {
               if (c.AssignedToId !== selOff && c.RegisteredById !== selOff) match = false;
           }

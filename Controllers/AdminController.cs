@@ -43,7 +43,7 @@ namespace CMS.Controllers
             ViewBag.Resolved = complaints.Count(c => c.Status == "Resolved");
             
             var now = System.DateTime.UtcNow;
-            ViewBag.Escalated = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 5);
+            ViewBag.Escalated = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 1);
             ViewBag.Notifications = complaints.Count(c => (now - c.CreatedDate).TotalDays <= 1);
             ViewBag.SLA = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 3);
 
