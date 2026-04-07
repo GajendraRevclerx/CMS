@@ -138,10 +138,9 @@ namespace CMS.Controllers
                 await _context.Users.InsertOneAsync(user);
                 return Json(new { success = true });
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                // Likely duplicate key error for MobileNo
-                return Json(new { success = false, message = "Could not create user. Mobile number might already be registered." });
+                return Json(new { success = false, message = "Could not create user: " + ex.Message });
             }
         }
 

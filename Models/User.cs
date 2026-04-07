@@ -24,8 +24,7 @@ namespace CMS.Models
         public string Role { get; set; } = "Citizen";
 
         // For DeptHead role
-        [BsonSerializer(typeof(BsonStringToListSerializer))]
-        public List<string> Department { get; set; } = new List<string>();
+        public string? Department { get; set; }
         public string? Division { get; set; }
         public string? SubDivision { get; set; }
         public string? Designation { get; set; }

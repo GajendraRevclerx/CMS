@@ -97,12 +97,7 @@ namespace CMS.Controllers
         {
             if (ModelState.IsValid)
             {
-                var existingUser = await _context.Users.Find(u => u.MobileNo == model.MobileNo).FirstOrDefaultAsync();
-                if (existingUser != null)
-                {
-                    ModelState.AddModelError("MobileNo", "Mobile number already registered.");
-                    return View(model);
-                }
+                // Mobile number uniqueness check removed per user requirements
 
                 var user = new User
                 {

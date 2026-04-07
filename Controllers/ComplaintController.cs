@@ -213,15 +213,27 @@ namespace CMS.Controllers
 
             if (complaint == null) return NotFound(new { success = false, message = "No complaint found with this number." });
 
+            string timeTaken = "—";
+            if (complaint.ResolutionDate.HasValue)
+            {
+                var diff = complaint.ResolutionDate.Value - complaint.CreatedDate;
+                timeTaken = $"{(int)diff.TotalDays}d {diff.Hours}h {diff.Minutes}m";
+            }
+
             return Ok(new {
                 success = true,
                 complaintNo = complaint.ComplaintNo,
                 status = complaint.Status,
-                category = complaint.Department,
-                createdDate = complaint.CreatedDate.ToString("dd MMM yyyy"),
+                department = complaint.Department,
+                createdDate = complaint.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
+                fullName = complaint.FullName ?? "—",
+                address = $"{complaint.Locality}, {complaint.PinCode}",
                 title = complaint.ComplaintTitle,
-                assignedTo = complaint.AssignedToName ?? "Processing",
-                resolutionRemark = complaint.ResolutionRemark
+                assignedTo = complaint.AssignedToName ?? "Pending",
+                assignedToMobile = complaint.AssignedToMobile ?? "—",
+                resolutionDate = complaint.ResolutionDate?.ToString("dd/MM/yyyy HH:mm:ss") ?? "—",
+                resolutionRemark = complaint.ResolutionRemark ?? "—",
+                timeTaken = timeTaken
             });
         }
 

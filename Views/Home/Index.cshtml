@@ -165,89 +165,15 @@
         .card-item { width: 100%; max-width: 350px; }
     }
 
-    /* Horizontal Tracker Styles */
-    .track-step-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 40px 10px;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .track-step-container::before {
-        content: '';
-        position: absolute;
-        top: 58px;
-        left: 50px;
-        right: 50px;
-        height: 3px;
-        background: #e2e8f0;
-        z-index: 1;
-    }
-    
-    .track-step-item {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        z-index: 2;
-        position: relative;
-    }
-    
-    .track-step-circle {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: white;
-        border: 3px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 14px;
-        color: #94a3b8;
-        transition: all 0.4s ease;
-        box-shadow: 0 0 0 5px white;
-    }
-    
-    .track-step-item.active .track-step-circle {
-        border-color: #3b82f6;
-        color: #3b82f6;
-        background: white;
-        transform: scale(1.1);
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2), 0 0 0 5px white;
-    }
-    
-    .track-step-item.completed .track-step-circle {
-        background: #10b981;
-        border-color: #10b981;
-        color: white;
-    }
-    
-    .track-step-label {
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-align: center;
-    }
-    
-    .track-step-item.active .track-step-label {
-        color: #1e293b;
-    }
-    
-    .track-progress-line {
-        position: absolute;
-        top: 58px;
-        left: 50px;
-        height: 3px;
-        background: #10b981;
-        z-index: 1;
-        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    .timeline { position: relative; padding-left: 32px; margin-top: 15px; }
+    .tl-item { position: relative; margin-bottom: 24px; }
+    .tl-dot-wrap { position: absolute; left: -32px; top: 0; bottom: -24px; width: 24px; display: flex; flex-direction: column; align-items: center; }
+    .tl-dot { width: 12px; height: 12px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--border); z-index: 1; }
+    .tl-line { flex: 1; width: 2px; background: var(--border); }
+    .tl-content { padding-top: 0; }
+    .tl-title { font-size: 13.5px; font-weight: 700; color: #1e3c72; }
+    .tl-sub { font-size: 12px; color: #64748b; margin: 2px 0; }
+    .tl-time { font-size: 11px; font-weight: 600; color: #64748b; }
 </style>
 
 <div class="hero-section">
@@ -378,51 +304,56 @@
                             if (step === 1) progressWidth = 0;
 
                             $result.html(`
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <h6 class="fw-bold mb-0">${res.complaintNo}</h6>
-                                        <span class="badge ${step === 3 ? 'bg-success' : 'bg-primary'} rounded-pill">${res.status}</span>
-                                    </div>
-                                    <p class="text-muted small">${res.title} · Filed on ${res.createdDate}</p>
-                                    
-                                    <div class="position-relative">
-                                        <div class="track-step-container">
-                                            <div class="track-progress-line" style="width: 0%;" id="actualProgressLine"></div>
-                                            <div class="track-step-item ${step >= 1 ? (step > 1 ? 'completed' : 'active') : ''}">
-                                                <div class="track-step-circle">${step > 1 ? '✓' : '01'}</div>
-                                                <div class="track-step-label">Registered</div>
-                                            </div>
-                                            <div class="track-step-item ${step >= 2 ? (step > 2 ? 'completed' : 'active') : ''}">
-                                                <div class="track-step-circle">${step > 2 ? '✓' : '02'}</div>
-                                                <div class="track-step-label">Assigned</div>
-                                            </div>
-                                            <div class="track-step-item ${step >= 3 ? 'active' : ''}">
-                                                <div class="track-step-circle">${step === 3 ? '✓' : '03'}</div>
-                                                <div class="track-step-label">Resolved</div>
+                                <div class="timeline" style="text-align: left; padding: 10px;">
+                                    <!-- Section 1: Registered -->
+                                    <div class="tl-item">
+                                        <div class="tl-dot-wrap"><div class="tl-dot" style="background:#10b981"></div><div class="tl-line"></div></div>
+                                        <div class="tl-content">
+                                            <div class="tl-title">1. Complaint Registered</div>
+                                            <div class="tl-time">${res.createdDate}</div>
+                                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
+                                                <div><strong>Complaint No:</strong> ${res.complaintNo}</div>
+                                                <div><strong>FullName:</strong> ${res.fullName}</div>
+                                                <div><strong>Issue:</strong> ${res.title}</div>
+                                                <div><strong>Address:</strong> ${res.address}</div>
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    ${res.status === 'Resolved' && res.resolutionRemark ? `
-                                        <div class="alert alert-success border-0 rounded-4 p-3 mb-3 shadow-sm">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <span class="fs-5 me-2">📝</span>
-                                                <h6 class="fw-bold mb-0">Resolution Remark</h6>
+
+                                    <!-- Section 2: Assigned -->
+                                    <div class="tl-item">
+                                        <div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 2 ? '#10b981' : '#e2e8f0'}"></div><div class="tl-line"></div></div>
+                                        <div class="tl-content">
+                                            <div class="tl-title">2. Assigned for Action</div>
+                                            ${step >= 2 ? `
+                                            <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
+                                                <div><strong>Department:</strong> ${res.department}</div>
+                                                <div><strong>Officer:</strong> ${res.assignedTo}</div>
+                                                <div><strong>Mobile No:</strong> ${res.assignedToMobile}</div>
                                             </div>
-                                            <p class="mb-0 small text-dark">${res.resolutionRemark}</p>
+                                            ` : '<div class="tl-sub">Pending assignment to a department head.</div>'}
                                         </div>
-                                    ` : ''}
-                                    
-                                    <div class="card bg-light border-0 rounded-4 p-3 mt-2">
-                                        <div class="row text-center">
-                                            <div class="col-6 border-end">
-                                                <label class="text-muted small d-block mb-1">Category</label>
-                                                <span class="fw-bold text-dark">${res.category}</span>
+                                    </div>
+
+                                    <!-- Section 3: Resolved -->
+                                    <div class="tl-item">
+                                        <div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 3 ? '#10b981' : '#e2e8f0'}"></div></div>
+                                        <div class="tl-content">
+                                            <div class="tl-title">3. Resolution Details</div>
+                                            ${step >= 3 ? `
+                                            <div style="background:#f0fff4; border:1px solid #bbf7d0; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
+                                                <div><strong>Resolved By:</strong> ${res.assignedTo}</div>
+                                                <div><strong>Mobile No:</strong> ${res.assignedToMobile}</div>
+                                                <div><strong>Department:</strong> ${res.department}</div>
+                                                <div style="margin-top:6px; padding-top:6px; border-top:1px solid #bbf7d0;">
+                                                    <strong>Resolution Remark:</strong><br/>
+                                                    <span style="color:#166534;">${res.resolutionRemark}</span>
+                                                </div>
+                                                <div style="margin-top:6px; font-weight:700; color:#166534;">
+                                                    ⏱ Resolved in: ${res.timeTaken}
+                                                </div>
                                             </div>
-                                            <div class="col-6">
-                                                <label class="text-muted small d-block mb-1">Assigned To</label>
-                                                <span class="fw-bold text-dark">${res.assignedTo}</span>
-                                            </div>
+                                            ` : '<div class="tl-sub">Awaiting resolution by the assigned department.</div>'}
                                         </div>
                                     </div>
                                     <div class="text-center mt-4">

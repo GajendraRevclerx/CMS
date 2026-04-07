@@ -1,7 +1,9 @@
 using CMS.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using MongoDB.Bson;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CMS.Services
 {
@@ -15,6 +17,7 @@ namespace CMS.Services
             _database = client.GetDatabase(mongoDBSettings.Value.DatabaseName);
 
             ConfigureIndices();
+            MigrateDepartments();
             SeedData();
         }
 
@@ -26,9 +29,11 @@ namespace CMS.Services
         private void ConfigureIndices()
         {
             var usersCollection = Users;
+            // DROP EXISTING UNIQUE INDEX IF IT EXISTS
+            try { usersCollection.Indexes.DropOne("MobileNo_1"); } catch { }
+
             var indexKeysDefinition = Builders<User>.IndexKeys.Ascending(u => u.MobileNo);
-            var indexOptions = new CreateIndexOptions { Unique = true };
-            var indexModel = new CreateIndexModel<User>(indexKeysDefinition, indexOptions);
+            var indexModel = new CreateIndexModel<User>(indexKeysDefinition);
             usersCollection.Indexes.CreateOne(indexModel);
         }
 
@@ -92,31 +97,22 @@ namespace CMS.Services
                     Role = "Admin"
                 });
             }
+        }
 
-            if (usersCollection.CountDocuments(u => u.MobileNo == "head_ele") == 0)
+        private void MigrateDepartments()
+        {
+            var collection = _database.GetCollection<BsonDocument>("Users");
+            // Find documents where Department is an array
+            var filter = Builders<BsonDocument>.Filter.Type("Department", BsonType.Array);
+            
+            using var cursor = collection.Find(filter).ToCursor();
+            foreach (var doc in cursor.ToEnumerable())
             {
-                usersCollection.InsertOne(new User
-                {
-                    MobileNo = "head_ele",
-                    Password = "password",
-                    FullName = "Electrical Head (North)",
-                    Role = "DeptHead",
-                    Department = new List<string> { "ELE" },
-                    Area = "North Zone"
-                });
-            }
-
-            if (usersCollection.CountDocuments(u => u.MobileNo == "head_wat") == 0)
-            {
-                usersCollection.InsertOne(new User
-                {
-                    MobileNo = "head_wat",
-                    Password = "password",
-                    FullName = "Water Head (South)",
-                    Role = "DeptHead",
-                    Department = new List<string> { "WAT" },
-                    Area = "South Zone"
-                });
+                var deptArray = doc["Department"].AsBsonArray;
+                string firstDept = deptArray.Count > 0 ? deptArray[0].AsString : "";
+                
+                var update = Builders<BsonDocument>.Update.Set("Department", firstDept);
+                collection.UpdateOne(Builders<BsonDocument>.Filter.Eq("_id", doc["_id"]), update);
             }
         }
     }
