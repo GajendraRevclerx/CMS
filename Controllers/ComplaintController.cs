@@ -271,12 +271,19 @@ namespace CMS.Controllers
             var deptName = masters.Departments.FirstOrDefault(d => d.Code == complaint.Department || d.Name == complaint.Department)?.Name ?? complaint.Department;
 
             string officerDeptName = "—";
+            string officerDivision = "—";
+            string officerSubDivision = "—";
+
             if (!string.IsNullOrEmpty(complaint.AssignedToId))
             {
                 var officer = await _context.Users.Find(u => u.Id == complaint.AssignedToId).FirstOrDefaultAsync();
-                if (officer != null && !string.IsNullOrEmpty(officer.Department))
+                if (officer != null)
                 {
-                    officerDeptName = masters.Departments.FirstOrDefault(d => d.Code == officer.Department || d.Name == officer.Department)?.Name ?? officer.Department;
+                    if (!string.IsNullOrEmpty(officer.Department))
+                        officerDeptName = masters.Departments.FirstOrDefault(d => d.Code == officer.Department || d.Name == officer.Department)?.Name ?? officer.Department;
+                    
+                    officerDivision = officer.Division ?? "—";
+                    officerSubDivision = officer.SubDivision ?? "—";
                 }
             }
 
@@ -287,6 +294,8 @@ namespace CMS.Controllers
                 status = complaint.Status,
                 department = deptName,
                 officerDept = officerDeptName,
+                officerDivision = officerDivision,
+                officerSubDivision = officerSubDivision,
                 createdDate = complaint.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
                 fullName = complaint.FullName ?? "—",
                 email = complaint.Email ?? "—",

@@ -1745,8 +1745,6 @@
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                       <div><strong>Ack No:</strong> ${res.complaintNo}</div>
                       <div><strong>Department:</strong> ${res.department}</div>
-                      <div><strong>Division:</strong> ${res.division || '—'}</div>
-                      <div><strong>Sub-Division:</strong> ${res.subDivision || '—'}</div>
                       <div><strong>Source:</strong> ${res.source}</div>
                       <div><strong>Incident Date:</strong> ${res.incidentDate}</div>
                       <div><strong>Priority:</strong> <span class="pill ${res.priority === 'High' ? 'pill-red' : (res.priority === 'Medium' ? 'pill-amber' : 'pill-green')}" style="padding:2px 8px; font-size:11px;">${res.priority}</span></div>
@@ -1763,6 +1761,9 @@
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                       <div><strong>Current Status:</strong> <span class="pill pill-blue" style="padding:2px 8px; font-size:11px;">${res.status}</span></div>
                       <div><strong>Assigned To:</strong> ${res.assignedTo} (${res.assignedToMobile})</div>
+                      <div><strong>Officer Dept:</strong> ${res.officerDept}</div>
+                      <div><strong>Officer Division:</strong> ${res.officerDivision}</div>
+                      <div><strong>Officer Sub-Div:</strong> ${res.officerSubDivision}</div>
                       <div><strong>Created Date:</strong> ${res.createdDate}</div>
                       <div><strong>Resolution Date:</strong> ${res.resolutionDate}</div>
                       <div><strong>SLA Time Taken:</strong> ${res.timeTaken}</div>
@@ -1997,8 +1998,8 @@
                           ${step >= 2 ? `
                           <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
                               <div><strong>Officer Dept:</strong> ${res.officerDept}</div>
-                              <div><strong>Division:</strong> ${res.division || 'N/A'}</div>
-                              <div><strong>Sub-Division:</strong> ${res.subDivision || 'N/A'}</div>
+                              <div><strong>Division:</strong> ${res.officerDivision || 'N/A'}</div>
+                              <div><strong>Sub-Division:</strong> ${res.officerSubDivision || 'N/A'}</div>
                               <div><strong>Officer:</strong> ${res.assignedTo}</div>
                               <div><strong>Mobile No:</strong> ${res.assignedToMobile}</div>
                           </div>
@@ -2016,8 +2017,8 @@
                               <div><strong>Resolved By:</strong> ${res.assignedTo}</div>
                               <div><strong>Mobile No:</strong> ${res.assignedToMobile}</div>
                               <div><strong>Officer Dept:</strong> ${res.officerDept}</div>
-                              <div><strong>Division:</strong> ${res.division || 'N/A'}</div>
-                              <div><strong>Sub-Division:</strong> ${res.subDivision || 'N/A'}</div>
+                              <div><strong>Division:</strong> ${res.officerDivision || 'N/A'}</div>
+                              <div><strong>Sub-Division:</strong> ${res.officerSubDivision || 'N/A'}</div>
                               <div style="margin-top:6px; padding-top:6px; border-top:1px solid #bbf7d0;">
                                   <strong>Resolution Remark:</strong><br/>
                                   <span style="color:#166534;">${res.resolutionRemark}</span>
@@ -2082,8 +2083,8 @@
                       <div><strong>Current Status:</strong> <span class="pill pill-blue" style="padding:2px 8px; font-size:11px;">${res.status}</span></div>
                       <div><strong>Assigned To:</strong> ${res.assignedTo} (${res.assignedToMobile})</div>
                       <div><strong>Officer Dept:</strong> ${res.officerDept}</div>
-                      <div><strong>Officer Division:</strong> ${res.division}</div>
-                      <div><strong>Officer Sub-Div:</strong> ${res.subDivision}</div>
+                      <div><strong>Officer Division:</strong> ${res.officerDivision}</div>
+                      <div><strong>Officer Sub-Div:</strong> ${res.officerSubDivision}</div>
                       <div><strong>Created Date:</strong> ${res.createdDate}</div>
                       <div><strong>Resolution Date:</strong> ${res.resolutionDate}</div>
                       <div><strong>SLA Time Taken:</strong> ${res.timeTaken}</div>
