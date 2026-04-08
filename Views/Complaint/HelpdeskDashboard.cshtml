@@ -797,6 +797,7 @@
           <p>Consolidated progress and performance metrics</p>
         </div>
         <div class="page-hdr-actions">
+           <button class="btn btn-outline btn-sm" style="background:#1e293b; color:#fff;" onclick="downloadReportCSV()"><span class="icon">📁</span> Download CSV</button>
            <button class="btn btn-green btn-sm" onclick="downloadReportPDF()"><span class="icon">⬇</span> Download PDF</button>
         </div>
       </div>
@@ -1523,6 +1524,91 @@
       html2pdf().set(opt).from(element).save().then(() => {
           $('.print-only-header').hide();
       });
+  }
+
+  function downloadReportCSV() {
+      // 1. Get filtered data (reuse logic from renderReportTable)
+      const dateVal = $('#reportDateRange').val();
+      const drp = $('#reportDateRange').data('daterangepicker');
+      const start = (dateVal && drp) ? drp.startDate.startOf('day') : null;
+      const end = (dateVal && drp) ? drp.endDate.endOf('day') : null;
+      const statusFilter = $('#reportStatus').val();
+      const selDept = $('#repDept').val();
+      const selDiv = $('#repDiv').val();
+      const selSub = $('#repSub').val();
+      const selOff = $('#repOff').val();
+      const search = $('#reportSearch').val().toLowerCase().trim();
+
+      let filtered = (allComplaintsData || []).filter(c => {
+          let match = true;
+          const cDate = moment(c.CreatedDate);
+          if (start && end && (cDate.isBefore(start) || cDate.isAfter(end))) match = false;
+          if (statusFilter && c.Status !== statusFilter) match = false;
+          if (selDept && c.Department !== selDept) match = false;
+          if (selDiv || selSub) {
+              const officer = (officersList || []).find(o => o.Id === c.AssignedToId || o.MobileNo === c.AssignedToId);
+              if (selDiv && (!officer || officer.Division !== selDiv)) match = false;
+              if (selSub && (!officer || officer.SubDivision !== selSub)) match = false;
+          }
+          if (selOff) {
+              const offMobile = userMobileMap[selOff];
+              if (c.AssignedToId !== selOff && c.RegisteredById !== offMobile) match = false;
+          }
+          if (search) {
+              const searchText = (c.ComplaintNo + " " + c.FullName + " " + c.ComplaintTitle + " " + c.UserId).toLowerCase();
+              if (!searchText.includes(search)) match = false;
+          }
+          return match;
+      });
+
+      if (filtered.length === 0) {
+          alert("No data to export.");
+          return;
+      }
+
+      // 2. CSV Generation
+      const headers = [
+          "Complaint No", "Citizen Mobile", "Registered By", "Full Name", "Email", 
+          "Title", "Department", "Description", "Street", "Locality", 
+          "PinCode", "Area", "Status", "Priority", "Assigned To", 
+          "Officer Mobile", "Division", "Sub-Division", "Created Date", "Resolution Date", "Resolution Remark"
+      ];
+
+      let csvContent = [headers.join(",")];
+
+      filtered.forEach(c => {
+          const regBy = userMap[c.RegisteredById] || c.RegisteredById || "Self";
+          const rowData = [
+              c.ComplaintNo, c.UserId, regBy, c.FullName || "N/A", c.Email || "N/A",
+              c.ComplaintTitle, c.Department, c.Description, c.Street || "N/A", c.Locality || "N/A",
+              c.PinCode || "N/A", c.Area || "N/A", c.Status, c.Priority, c.AssignedToName || "Unassigned",
+              c.AssignedToMobile || "N/A", c.Division || "N/A", c.SubDivision || "N/A",
+              moment(c.CreatedDate).format('YYYY-MM-DD HH:mm:ss'),
+              c.ResolutionDate ? moment(c.ResolutionDate).format('YYYY-MM-DD HH:mm:ss') : "N/A",
+              (c.ResolutionRemark || "").replace(/"/g, '""').replace(/\n/g, ' ')
+          ];
+          
+          const escapedRow = rowData.map(val => {
+              let s = (val || "").toString();
+              if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+                  s = '"' + s.replace(/"/g, '""') + '"';
+              }
+              return s;
+          });
+          
+          csvContent.push(escapedRow.join(","));
+      });
+
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent.join("\n")], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `CCMS_Helpdesk_Detailed_Report_${moment().format('YYYYMMDD_HHmm')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
   }
 
   const mastersData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(masters));
