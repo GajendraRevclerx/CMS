@@ -107,6 +107,7 @@ namespace CMS.Controllers
                     IncidentDate = model.IncidentDate,
                     AssignedToId = model.AssignedToId,
                     AssignedToName = model.AssignedToName,
+                    AssignedToMobile = !string.IsNullOrEmpty(model.AssignedToId) ? (await _context.Users.Find(u => u.Id == model.AssignedToId).FirstOrDefaultAsync())?.MobileNo : null,
                     AttachmentPath = attachmentPath,
                     CreatedDate = DateTime.UtcNow,
                     Status = string.IsNullOrEmpty(model.AssignedToId) ? "Pending" : "Assigned"
@@ -249,12 +250,15 @@ namespace CMS.Controllers
                 timeTaken = $"{(int)diff.TotalDays}d {diff.Hours}h {diff.Minutes}m";
             }
 
+            var masters = await _context.Masters.Find(_ => true).FirstOrDefaultAsync() ?? new Master();
+            var deptName = masters.Departments.FirstOrDefault(d => d.Code == complaint.Department || d.Name == complaint.Department)?.Name ?? complaint.Department;
+
             return Ok(new {
                 success = true,
                 complaintNo = complaint.ComplaintNo,
                 userId = complaint.UserId,
                 status = complaint.Status,
-                department = complaint.Department,
+                department = deptName,
                 createdDate = complaint.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
                 fullName = complaint.FullName ?? "—",
                 email = complaint.Email ?? "—",

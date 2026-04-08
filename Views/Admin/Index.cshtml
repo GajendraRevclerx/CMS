@@ -24,6 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/lib/daterangepicker/daterangepicker.css">
   <link rel="stylesheet" href="/lib/select2/css/select2.min.css">
+  <script src="/lib/html2pdf/html2pdf.bundle.min.js"></script>
   <style>
     :root {
       --navy: #0f172a;
@@ -564,7 +565,7 @@
                         data-dept="@item.Department" 
                         data-priority="@(item.Priority ?? "Medium")"
                         data-date="@item.CreatedDate.ToString("yyyy-MM-dd")">
-                      <td><span class="mono" style="font-size:11px;">@item.ComplaintNo</span></td>
+                      <td><a href="javascript:void(0)" onclick="viewFullDetails('@item.ComplaintNo')" class="mono" style="font-size:11px; color:var(--blue-light); font-weight:700; text-decoration:underline;">@item.ComplaintNo</a></td>
                       <td><div style="font-weight:700;">@item.FullName</div></td>
                       <td title="@item.Locality"><div style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px;">@item.Locality</div></td>
                       <td title="@item.ComplaintTitle"><div style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@item.ComplaintTitle</div></td>
@@ -575,7 +576,13 @@
                           </div>
                       </td>
                       <td>@(item.AssignedToName ?? "—")</td>
-                      <td>@(item.AssignedToMobile ?? "—")</td>
+                      <td>
+                        @if(!string.IsNullOrEmpty(item.AssignedToMobile)) { 
+                            @item.AssignedToMobile 
+                        } else if (!string.IsNullOrEmpty(item.AssignedToId)) {
+                             @(allUsers.FirstOrDefault(u => u.Id == item.AssignedToId)?.MobileNo ?? "—")
+                        } else { <span>—</span> }
+                      </td>
                       <td><span class="pill @(item.Status == "Pending" ? "pill-amber" : item.Status == "Resolved" ? "pill-green" : "pill-blue")">@item.Status</span></td>
                       <td style="font-size:11px;">@item.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
                       <td><button class="btn btn-outline btn-sm" onclick="openTicketModal('@item.Id', '@item.ComplaintNo', '@(item.ComplaintTitle?.Replace("'","\\'"))', '@item.Department', '@item.Status', '@item.AssignedToName', '@(item.Priority ?? "Medium")')">Manage</button></td>
@@ -1504,6 +1511,83 @@
     }
   }
 
+  function viewFullDetails(no) {
+      if(!no) return;
+      $.get('/Complaint/Track', { id: no }).done(function(res) {
+          if(res.success) showFullTrackModal(res);
+          else Swal.fire('Error', res.message || 'Details not found', 'error');
+      });
+  }
+
+  function showFullTrackModal(res) {
+      if(!res) return;
+      let html = `
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; font-size:13px;">
+              <div class="detail-section">
+                  <h4 style="margin:0 0 10px 0; color:var(--blue); border-bottom:1px solid #eee; padding-bottom:5px; font-size:14px;">Personal Details</h4>
+                  <div style="margin-bottom:5px;"><strong>Full Name:</strong> ${res.fullName}</div>
+                  <div style="margin-bottom:5px;"><strong>Complainant Mobile:</strong> ${res.userId || '—'}</div>
+                  <div style="margin-bottom:5px;"><strong>Email:</strong> ${res.email}</div>
+              </div>
+              <div class="detail-section">
+                  <h4 style="margin:0 0 10px 0; color:var(--blue); border-bottom:1px solid #eee; padding-bottom:5px; font-size:14px;">Address Details</h4>
+                  <div style="margin-bottom:5px;"><strong>Street/House:</strong> ${res.street}</div>
+                  <div style="margin-bottom:5px;"><strong>Locality:</strong> ${res.locality}</div>
+                  <div style="margin-bottom:5px;"><strong>Sector/Area:</strong> ${res.area}</div>
+                  <div style="margin-bottom:5px;"><strong>PIN Code:</strong> ${res.pinCode}</div>
+              </div>
+              <div class="detail-section" style="grid-column: span 2;">
+                  <h4 style="margin:10px 0 10px 0; color:var(--blue); border-bottom:1px solid #eee; padding-bottom:5px; font-size:14px;">Complaint Details</h4>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                      <div><strong>Ack No:</strong> ${res.complaintNo}</div>
+                      <div><strong>Department:</strong> ${res.department}</div>
+                      <div><strong>Source:</strong> ${res.source}</div>
+                      <div><strong>Incident Date:</strong> ${res.incidentDate}</div>
+                      <div><strong>Priority:</strong> <span class="pill ${res.priority === 'High' ? 'pill-red' : (res.priority === 'Medium' ? 'pill-amber' : 'pill-green')}" style="padding:2px 8px; font-size:11px;">${res.priority}</span></div>
+                      <div><strong>Exact Site:</strong> ${res.site}</div>
+                  </div>
+                  <div style="margin-top:10px;"><strong>Title:</strong> ${res.title}</div>
+                  <div style="margin-top:8px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #eef2ff; color:#334155;">
+                      <strong>Description:</strong><br/>
+                      <p style="margin-top:5px; line-height:1.6;">${res.description}</p>
+                  </div>
+              </div>
+              <div class="detail-section" style="grid-column: span 2;">
+                  <h4 style="margin:10px 0 10px 0; color:var(--blue); border-bottom:1px solid #eee; padding-bottom:5px; font-size:14px;">Status & Resolution</h4>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                      <div><strong>Current Status:</strong> <span class="pill pill-blue" style="padding:2px 8px; font-size:11px;">${res.status}</span></div>
+                      <div><strong>Assigned To:</strong> ${res.assignedTo} (${res.assignedToMobile})</div>
+                      <div><strong>Created Date:</strong> ${res.createdDate}</div>
+                      <div><strong>Resolution Date:</strong> ${res.resolutionDate}</div>
+                      <div><strong>SLA Time Taken:</strong> ${res.timeTaken}</div>
+                  </div>
+                  <div style="margin-top:10px; padding:10px; border:1px dashed #cbd5e1; border-radius:8px;">
+                      <strong>Resolution Remark:</strong><br/>
+                      <span style="color:#166534;">${res.resolutionRemark}</span>
+                  </div>
+              </div>
+          </div>
+      `;
+      $('#fullTrackContent').html(html);
+      $('#trackAckGlobal').text(res.complaintNo); // for PDF naming
+      document.getElementById('fullTrackModal').classList.add('show');
+  }
+
+  function downloadComplaintPDF() {
+      const element = document.getElementById('fullTrackContent');
+      const ackNo = $('#trackAckGlobal').text() || 'Complaint_Details';
+      
+      const opt = {
+          margin: 10,
+          filename: `Complaint_${ackNo}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+  }
+
   function openTicketModal(id, ack, title, dept, status, officer, priority) {
     $('#modId').val(id);
     $('#modAck').text(ack);
@@ -1698,11 +1782,6 @@
                               </div>
                           </div>
                           ` : '<div class="tl-sub">Awaiting resolution by the assigned department.</div>'}
-                      </div>
-                  </div>
-                                   ⏱ Resolved in: ${res.timeTaken}
-                              </div>
-                              ` : '<div class="tl-sub">Awaiting resolution by the assigned department.</div>'}
                       </div>
                   </div>
               `;
@@ -2537,6 +2616,23 @@
       });
   }
 </script>
+
+<div id="fullTrackModal" class="modal-overlay">
+  <div class="modal" style="max-width:800px;">
+    <div class="modal-hdr">
+        <h3>📄 Detailed Complaint Overview</h3>
+        <button class="modal-close" onclick="closeModal('fullTrackModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div id="fullTrackContent" style="padding:10px; background:#fff;"></div>
+        <span id="trackAckGlobal" style="display:none;"></span>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('fullTrackModal')">Close</button>
+        <button class="btn btn-primary" onclick="downloadComplaintPDF()">Download as PDF</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
