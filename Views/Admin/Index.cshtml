@@ -626,7 +626,7 @@
           <div class="card-body">
             <div class="form-group">
               <label>Complaint Number</label>
-              <div style="display:flex;gap:10px;"><input type="text" id="trackInput" placeholder="e.g. CHD/2026/..."><button class="btn btn-primary" onclick="doTrack()">Search</button></div>
+              <div style="display:flex;gap:10px;"><input type="text" id="trackInput" placeholder="e.g. 2026/..."><button class="btn btn-primary" onclick="doTrack()">Search</button></div>
             </div>
           </div>
         </div>
@@ -1578,6 +1578,8 @@
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                       <div><strong>Ack No:</strong> ${res.complaintNo}</div>
                       <div><strong>Department:</strong> ${res.department}</div>
+                      <div><strong>Division:</strong> ${res.division || '—'}</div>
+                      <div><strong>Sub-Division:</strong> ${res.subDivision || '—'}</div>
                       <div><strong>Source:</strong> ${res.source}</div>
                       <div><strong>Incident Date:</strong> ${res.incidentDate}</div>
                       <div><strong>Priority:</strong> <span class="pill ${res.priority === 'High' ? 'pill-red' : (res.priority === 'Medium' ? 'pill-amber' : 'pill-green')}" style="padding:2px 8px; font-size:11px;">${res.priority}</span></div>
@@ -1814,6 +1816,8 @@
                               <div><strong>Complaint No:</strong> ${res.complaintNo}</div>
                               <div><strong>FullName:</strong> ${res.fullName}</div>
                               <div><strong>Issue:</strong> ${res.title}</div>
+                              <div><strong>Division:</strong> ${res.division || 'N/A'}</div>
+                              <div><strong>Sub-Division:</strong> ${res.subDivision || 'N/A'}</div>
                               <div><strong>Address:</strong> ${res.address}</div>
                           </div>
                       </div>
@@ -1827,6 +1831,8 @@
                           ${step >= 2 ? `
                           <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
                               <div><strong>Department:</strong> ${res.department}</div>
+                              <div><strong>Division:</strong> ${res.division || 'N/A'}</div>
+                              <div><strong>Sub-Division:</strong> ${res.subDivision || 'N/A'}</div>
                               <div><strong>Officer:</strong> ${res.assignedTo}</div>
                               <div><strong>Mobile No:</strong> ${res.assignedToMobile}</div>
                           </div>
@@ -1891,6 +1897,8 @@
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                       <div><strong>Ack No:</strong> ${res.complaintNo}</div>
                       <div><strong>Department:</strong> ${res.department}</div>
+                      <div><strong>Division:</strong> ${res.division || '—'}</div>
+                      <div><strong>Sub-Division:</strong> ${res.subDivision || '—'}</div>
                       <div><strong>Source:</strong> ${res.source}</div>
                       <div><strong>Incident Date:</strong> ${res.incidentDate}</div>
                       <div><strong>Priority:</strong> <span class="pill ${res.priority === 'High' ? 'pill-red' : (res.priority === 'Medium' ? 'pill-amber' : 'pill-green')}" style="padding:2px 8px; font-size:11px;">${res.priority}</span></div>
