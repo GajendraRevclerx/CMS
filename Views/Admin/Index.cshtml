@@ -393,9 +393,9 @@
             <div class="title"><h2>Chandigarh CMS — Admin Control Panel</h2></div>
             <div class=""><h4>Complaint Management System</h4></div>
   </div>
-  <div class="header-notif" onclick="showPanel('notifications')">
+@*   <div class="header-notif" onclick="showPanel('notifications')">
     🔔 <span class="notif-dot"></span>
-  </div>
+  </div> *@
   <div class="admin-badge">
     <div class="admin-avatar">AD</div>
     <div class="admin-info">
@@ -428,10 +428,10 @@
     <div class="nav-item" onclick="showPanel('track')" id="nav-track">
       <span class="icon">🔍</span><span>Track a Ticket</span>
     </div>
-    <div class="nav-item" onclick="showPanel('notifications')" id="nav-notifications">
+ @*    <div class="nav-item" onclick="showPanel('notifications')" id="nav-notifications">
       <span class="icon">🔔</span><span>Notifications</span>
       <span class="nav-badge">@notifs</span>
-    </div>
+    </div> *@
 
     <div class="sidebar-section-label">Management</div>
     <div class="nav-item" onclick="showPanel('officers')" id="nav-officers">
@@ -1011,7 +1011,7 @@
 
     <!-- OTHER PANELS -->
     <div id="panel-notifications" class="panel">
-        <div class="page-hdr"><h2>🔔 Notifications</h2><p>Recent unassigned complaints submitted in the last 24hrs</p></div>
+        @* <div class="page-hdr"><h2>🔔 Notifications</h2><p>Recent unassigned complaints submitted in the last 24hrs</p></div> *@
         <div class="card">
             <div class="card-body no-pad">
                 <table class="data-table">
