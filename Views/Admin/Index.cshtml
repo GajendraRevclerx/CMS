@@ -748,16 +748,16 @@
                                           }
                                       }
                                   </select>
-                                  <select class="assign-div" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px;" onchange="cascadeSub(this)">
+                                  <select class="assign-div" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeSub(this)">
                                       <option value="">Select Division</option>
                                   </select>
-                                  <select class="assign-sub" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px;" onchange="cascadeDesig(this)">
+                                  <select class="assign-sub" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeDesig(this)">
                                       <option value="">Select Sub-Division</option>
                                   </select>
-                                  <select class="assign-desig" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px;" onchange="cascadeOff(this)">
+                                  <select class="assign-desig" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeOff(this)">
                                       <option value="">Select Designation</option>
                                   </select>
-                                  <select class="assign-off" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; border: 1.5px solid var(--blue-light); font-weight:600;">
+                                  <select class="assign-off" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; border: 1.5px solid var(--blue-light); font-weight:600; display:none;">
                                       <option value="">Select Officer</option>
                                   </select>
                               </div>
@@ -1412,102 +1412,146 @@
 <script src="/lib/html2pdf/html2pdf.bundle.min.js"></script>
 <script src="/lib/chart.js/chart.min.js"></script>
 <script>
-  const masters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(masters));
-  const officers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allOfficers));
+  // Global Data from Server
+  const masters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(masters)) || { Departments: [], Divisions: [], SubDivisions: [] };
+  const officers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allOfficers)) || [];
+  const allUsers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Users)) || [];
 
-  // Global helper for case-insensitive and trimmed string matching
+  // Consistent Case-Insensitive Matching Utility
   const cleanMatch = (val, attr) => {
-      if (!val) return true;
-      if (!attr) return false;
+      if (!val || !attr) return false;
       return String(val).trim().toLowerCase() === String(attr).trim().toLowerCase();
   };
 
-  function cascadeDiv(el) {
-      const row = $(el).closest('.assign-flow');
-      const dept = $(el).val();
-      const divSel = row.find('.assign-div').html('<option value="">Select Division</option>');
-      const subSel = row.find('.assign-sub').html('<option value="">Select Sub-Div</option>');
-      const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>');
-      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
-
-      if (!dept) return;
-
-      // 1. Check for Divisions
-      const filtered = (masters.Divisions || []).filter(d => cleanMatch(d.DepartmentName, dept));
-      if (filtered.length > 0) {
-          filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
-      } else {
-          // If no Divisions, show officers for this Department directly
-          const matches = officers.filter(o => cleanMatch(o.Department, dept));
-          if (matches.length > 0) {
-              matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+  function initAssignmentFlows() {
+      $('.assign-dept').each(function() {
+          if ($(this).val()) {
+              cascadeDiv(this);
           }
-      }
+      });
+  }
+
+  $(document).ready(function() {
+      console.log("Admin Dashboard Logic Initialized. Masters:", !!masters, "Officers:", officers.length);
+      initAssignmentFlows();
+  });
+
+  function cascadeDiv(el) {
+    const row = $(el).closest('.assign-flow');
+    const dept = $(el).val();
+    const divSel = row.find('.assign-div').html('<option value="">Select Division</option>').hide();
+    const subSel = row.find('.assign-sub').html('<option value="">Select Sub-Div</option>').hide();
+    const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>').hide();
+    const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>').hide();
+
+    if (!dept) return;
+
+    // Populate Divisions
+    const filteredDivs = (masters.Divisions || []).filter(d => cleanMatch(d.DepartmentName, dept));
+    if (filteredDivs.length > 0) {
+        filteredDivs.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
+        divSel.show();
+    }
+
+    // Always show all officers for this Department as fallback/default
+    const matches = officers.filter(o => cleanMatch(o.Department, dept));
+    if (matches.length > 0) {
+        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+        offSel.show();
+    }
   }
 
   function cascadeSub(el) {
-      const row = $(el).closest('.assign-flow');
-      const dept = row.find('.assign-dept').val();
-      const div = $(el).val();
-      const subSel = row.find('.assign-sub').html('<option value="">Select Sub-Div</option>');
-      const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>');
-      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
+    const row = $(el).closest('.assign-flow');
+    const dept = row.find('.assign-dept').val();
+    const div = $(el).val();
+    const subSel = row.find('.assign-sub').html('<option value="">Select Sub-Div</option>').hide();
+    const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>').hide();
+    const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>').hide();
 
-      if (!div) return;
+    if (!div) { 
+        // fallback to department officers
+        const matches = officers.filter(o => cleanMatch(o.Department, dept));
+        matches.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+        offSel.show();
+        return; 
+    }
 
-      // 1. Check for Sub-Divisions
-      const filteredSubs = (masters.SubDivisions || []).filter(s => cleanMatch(s.DepartmentName, dept) && cleanMatch(s.DivisionName, div));
-      if (filteredSubs.length > 0) {
-          filteredSubs.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
-      } else {
-          // If no Sub-Divisions, show officers for this Division directly
-          const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div));
-          if (matches.length > 0) {
-              matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-          }
-      }
+    // Populate Sub-Divisions
+    const filteredSubs = (masters.SubDivisions || []).filter(s => cleanMatch(s.DepartmentName, dept) && cleanMatch(s.DivisionName, div));
+    if (filteredSubs.length > 0) {
+        filteredSubs.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
+        subSel.show();
+    }
+
+    // Populate Officers for this Division
+    const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div));
+    if (matches.length > 0) {
+        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+        offSel.show();
+    }
   }
 
   function cascadeDesig(el) {
-      const row = $(el).closest('.assign-flow');
-      const dept = row.find('.assign-dept').val();
-      const div = row.find('.assign-div').val();
-      const sub = $(el).val();
-      const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>');
-      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
+    const row = $(el).closest('.assign-flow');
+    const dept = row.find('.assign-dept').val();
+    const div = row.find('.assign-div').val();
+    const sub = $(el).val();
+    const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>').hide();
+    const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>').hide();
 
-      if (!sub) return;
+    if (!sub) {
+        // fallback to division officers
+        const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div));
+        matches.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+        offSel.show();
+        return;
+    }
 
-      // 1. Check for Designations
-      const matchingOfficers = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub));
-      const uniqueDesigs = [...new Set(matchingOfficers.filter(o => o.Designation).map(o => o.Designation))];
+    // Populate Officers for this Sub-Division
+    const matchingOfficers = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub));
+    
+    // Populate Unique Designations
+    const uniqueDesigs = [...new Set(matchingOfficers.filter(o => o.Designation).map(o => o.Designation))];
+    if (uniqueDesigs.length > 0) {
+        uniqueDesigs.forEach(d => desigSel.append(`<option value="${d}">${d}</option>`));
+        desigSel.show();
+    }
 
-      if (uniqueDesigs.length > 0) {
-          uniqueDesigs.forEach(d => desigSel.append(`<option value="${d}">${d}</option>`));
-      } else {
-          // If no Designations, show officers for this Sub-Division directly
-          if (matchingOfficers.length > 0) {
-              matchingOfficers.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-          }
-      }
+    // Populate Officers
+    if (matchingOfficers.length > 0) {
+        matchingOfficers.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+        offSel.show();
+    }
   }
 
   function cascadeOff(el) {
-      const row = $(el).closest('.assign-flow');
-      const dept = row.find('.assign-dept').val();
-      const div = row.find('.assign-div').val();
-      const sub = row.find('.assign-sub').val();
-      const desig = $(el).val();
-      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
+    const row = $(el).closest('.assign-flow');
+    const dept = row.find('.assign-dept').val();
+    const div = row.find('.assign-div').val();
+    const sub = row.find('.assign-sub').val();
+    const desig = $(el).val();
+    const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>').hide();
 
-      if (!desig) return;
+    if (!desig) {
+        // fallback to sub-division officers
+        const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub));
+        matches.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+        offSel.show();
+        return;
+    }
 
-      const filtered = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub) && (cleanMatch(o.Designation, desig) || (!o.Designation && desig === "Officer")));
-      if (filtered.length > 0) {
-          filtered.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-      } else {
-          offSel.append('<option value="">No officers found</option>');
-      }
+    const filtered = officers.filter(o => 
+        cleanMatch(o.Department, dept) && 
+        cleanMatch(o.Division, div) && 
+        cleanMatch(o.SubDivision, sub) && 
+        (cleanMatch(o.Designation, desig))
+    );
+
+    if (filtered.length > 0) {
+        filtered.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+        offSel.show();
+    }
   }
   function showPanel(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -2666,7 +2710,6 @@
   }
 
   // ========== REPORTS LOGIC (FLAT LIST) ==========
-  const allUsers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Users));
   const userMap = {};
   const userMobileMap = {};
   allUsers.forEach(u => { 
