@@ -253,12 +253,23 @@ namespace CMS.Controllers
             var masters = await _context.Masters.Find(_ => true).FirstOrDefaultAsync() ?? new Master();
             var deptName = masters.Departments.FirstOrDefault(d => d.Code == complaint.Department || d.Name == complaint.Department)?.Name ?? complaint.Department;
 
+            string officerDeptName = "—";
+            if (!string.IsNullOrEmpty(complaint.AssignedToId))
+            {
+                var officer = await _context.Users.Find(u => u.Id == complaint.AssignedToId).FirstOrDefaultAsync();
+                if (officer != null && !string.IsNullOrEmpty(officer.Department))
+                {
+                    officerDeptName = masters.Departments.FirstOrDefault(d => d.Code == officer.Department || d.Name == officer.Department)?.Name ?? officer.Department;
+                }
+            }
+
             return Ok(new {
                 success = true,
                 complaintNo = complaint.ComplaintNo,
                 userId = complaint.UserId,
                 status = complaint.Status,
                 department = deptName,
+                officerDept = officerDeptName,
                 createdDate = complaint.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
                 fullName = complaint.FullName ?? "—",
                 email = complaint.Email ?? "—",
@@ -275,6 +286,8 @@ namespace CMS.Controllers
                 priority = complaint.Priority ?? "Medium",
                 assignedTo = complaint.AssignedToName ?? "Pending",
                 assignedToMobile = complaint.AssignedToMobile ?? "—",
+                division = complaint.Division ?? "—",
+                subDivision = complaint.SubDivision ?? "—",
                 resolutionDate = complaint.ResolutionDate?.ToString("dd/MM/yyyy HH:mm:ss") ?? "—",
                 resolutionRemark = complaint.ResolutionRemark ?? "—",
                 timeTaken = timeTaken
