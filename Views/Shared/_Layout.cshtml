@@ -139,6 +139,7 @@
             .site-nav { display: none !important; }
             .hamburger-btn { display: flex; }
             .top-header > img:last-child { height: 50px !important; margin-left: 8px !important; }
+            .hide-mob { display: none !important; }
         }
 
         @@media (max-width: 480px) {
@@ -204,7 +205,7 @@
                 <a asp-controller="Account" asp-action="Logout" style="margin-left:10px; font-size:18px; color:var(--red);" title="Logout">🚪</a>
             </div>
         } else {
-            <a href="/#loginModal" style="text-decoration:none;margin-bottom:-6%;" onclick="$('#loginModal').modal('show')">Login to Portal</a>
+            <a href="/#loginModal" class="hide-mob" style="text-decoration:none;margin-bottom:-6%;" onclick="$('#loginModal').modal('show')">Login to Portal</a>
         }
         <img src="~/img/emblem.png" style="height: 100px; width: auto; margin-left:15px;margin-right:6%" alt="Emblem">
     </header>
@@ -245,7 +246,8 @@
             <hr style="border-color:#e2e8f0;margin:8px 0;">
             <a href="/Account/Logout" style="color:var(--red);">🚪 Logout</a>
         } else {
-            <a href="/#loginModal">🔑 Login to Portal</a>
+            <a href="/#loginModal" onclick="closeMobileNav(); $('#loginModal').modal('show')">🔑 Login to Portal</a>
+            <a href="/Account/Register">📝 Register Account</a>
         }
     </div>
     <script>
