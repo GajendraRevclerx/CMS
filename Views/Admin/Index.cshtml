@@ -14,6 +14,7 @@
     var allOfficers = (IEnumerable<CMS.Models.User>)ViewBag.Heads;
     var masters = (CMS.Models.Master)ViewBag.Masters;
     var recentComplaints = Model.Take(10);
+    string activePanel = Context.Request.Query["p"].FirstOrDefault() ?? "overview";
 }
 
 <!DOCTYPE html>
@@ -418,63 +419,63 @@
   <!-- SIDEBAR -->
   <aside class="sidebar" id="adminSidebar">
     <div class="sidebar-section-label">Main</div>
-    <div class="nav-item active" onclick="showPanel('overview')" id="nav-overview">
+    <div class="nav-item @(activePanel == "overview" ? "active" : "")" onclick="showPanel('overview')" id="nav-overview">
       <span class="icon">📊</span><span>Overview</span>
     </div>
-    <div class="nav-item" onclick="showPanel('complaints')" id="nav-complaints">
+    <div class="nav-item @(activePanel == "complaints" ? "active" : "")" onclick="showPanel('complaints')" id="nav-complaints">
       <span class="icon">📋</span><span>All Complaints</span>
       <span class="nav-badge">@total</span>
     </div>
-    <div class="nav-item" onclick="showPanel('track')" id="nav-track">
+    <div class="nav-item @(activePanel == "track" ? "active" : "")" onclick="showPanel('track')" id="nav-track">
       <span class="icon">🔍</span><span>Track a Ticket</span>
     </div>
- @*    <div class="nav-item" onclick="showPanel('notifications')" id="nav-notifications">
+ @*    <div class="nav-item @(activePanel == "notifications" ? "active" : "")" onclick="showPanel('notifications')" id="nav-notifications">
       <span class="icon">🔔</span><span>Notifications</span>
       <span class="nav-badge">@notifs</span>
     </div> *@
 
     <div class="sidebar-section-label">Management</div>
-    <div class="nav-item" onclick="showPanel('officers')" id="nav-officers">
+    <div class="nav-item @(activePanel == "officers" ? "active" : "")" onclick="showPanel('officers')" id="nav-officers">
       <span class="icon">👮</span><span>Officer Roster</span>
     </div>
-    <div class="nav-item" onclick="showPanel('departments')" id="nav-departments">
+    <div class="nav-item @(activePanel == "departments" ? "active" : "")" onclick="showPanel('departments')" id="nav-departments">
       <span class="icon">🏛️</span><span>Departments</span>
     </div>
-    <div  style="display:none;" class="nav-item" onclick="showPanel('locations')" id="nav-locations">
+    <div  style="display:none;" class="nav-item @(activePanel == "locations" ? "active" : "")" onclick="showPanel('locations')" id="nav-locations">
       <span class="icon">📍</span><span>Location Master</span>
     </div>
-    <div class="nav-item" onclick="showPanel('divisions')" id="nav-divisions">
+    <div class="nav-item @(activePanel == "divisions" ? "active" : "")" onclick="showPanel('divisions')" id="nav-divisions">
       <span class="icon">📂</span><span>Divisions</span>
     </div>
-    <div class="nav-item" onclick="showPanel('subdivisions')" id="nav-subdivisions">
+    <div class="nav-item @(activePanel == "subdivisions" ? "active" : "")" onclick="showPanel('subdivisions')" id="nav-subdivisions">
       <span class="icon">📁</span><span>Sub-Divisions</span>
     </div>
-    <div class="nav-item" onclick="showPanel('assignments')" id="nav-assignments">
+    <div class="nav-item @(activePanel == "assignments" ? "active" : "")" onclick="showPanel('assignments')" id="nav-assignments">
       <span class="icon">🔀</span><span>Assign Complaints</span>
       <span class="nav-badge amber">@unassigned</span>
     </div>
-    <div class="nav-item" onclick="showPanel('escalations')" id="nav-escalations">
+    <div class="nav-item @(activePanel == "escalations" ? "active" : "")" onclick="showPanel('escalations')" id="nav-escalations">
       <span class="icon">⚡</span><span>Escalations</span>
       <span class="nav-badge red" style="background:var(--red);">@escalated</span>
     </div>
 
     <div class="sidebar-section-label">Reports</div>
-    <div class="nav-item" onclick="showPanel('analytics')" id="nav-analytics">
+    <div class="nav-item @(activePanel == "analytics" ? "active" : "")" onclick="showPanel('analytics')" id="nav-analytics">
       <span class="icon">📈</span><span>Analytics</span>
     </div>
-    <div class="nav-item" onclick="showPanel('reports')" id="nav-reports">
+    <div class="nav-item @(activePanel == "reports" ? "active" : "")" onclick="showPanel('reports')" id="nav-reports">
       <span class="icon">📋</span><span>Reports</span>
     </div>
-    <div style="display:none;" class="nav-item" onclick="showPanel('sla')" id="nav-sla">
+    <div style="display:none;" class="nav-item @(activePanel == "sla" ? "active" : "")" onclick="showPanel('sla')" id="nav-sla">
         <span class="icon">⏱️</span><span>SLA Monitor</span>
     <span class="nav-badge amber">@slas</span>
     </div>
-    <div style="display:none;" class="nav-item" onclick="showPanel('audit')" id="nav-audit">
+    <div style="display:none;" class="nav-item @(activePanel == "audit" ? "active" : "")" onclick="showPanel('audit')" id="nav-audit">
         <span class="icon">📁</span><span style="display:none;">Audit Log</span>
     </div>
 
             <div style="display:none;" class="sidebar-section-label" style="display:none;">Settings</div>
-    <div  style="display:none;" class="nav-item" onclick="showPanel('settings')" id="nav-settings">
+    <div  style="display:none;" class="nav-item @(activePanel == "settings" ? "active" : "")" onclick="showPanel('settings')" id="nav-settings">
       <span class="icon">⚙️</span><span>Portal Settings</span>
     </div>
 
@@ -491,7 +492,7 @@
   <main class="main-content">
 
     <!-- OVERVIEW PANEL -->
-    <div id="panel-overview" class="panel active">
+    <div id="panel-overview" class="panel @(activePanel == "overview" ? "active" : "")">
       <div class="page-hdr">
         <div class="page-hdr-left">
           <h2>📊 Dashboard Overview</h2>
@@ -601,7 +602,7 @@
     </div>
 
     <!-- COMPLAINTS PANEL -->
-    <div id="panel-complaints" class="panel">
+    <div id="panel-complaints" class="panel @(activePanel == "complaints" ? "active" : "")">
       <div class="page-hdr">
         <div class="page-hdr-left"><h2>📋 All Complaints</h2><p>Registry of all tickets filed in the system</p></div>
         <div class="page-hdr-actions"><button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
@@ -728,7 +729,7 @@
     </div>
 
     <!-- TRACK TICKET -->
-    <div id="panel-track" class="panel">
+    <div id="panel-track" class="panel @(activePanel == "track" ? "active" : "")">
       <div class="page-hdr"><div class="page-hdr-left"><h2>🔍 Track a Ticket</h2><p>Lookup details for any specific complaint</p></div></div>
       <div style="max-width:560px;">
         <div class="card" style="margin-bottom:20px;">
@@ -755,7 +756,7 @@
     </div>
 
     <!-- DEPARTMENTS PANEL -->
-    <div id="panel-departments" class="panel">
+    <div id="panel-departments" class="panel @(activePanel == "departments" ? "active" : "")">
       <div class="page-hdr"><div class="page-hdr-left"><h2>🏛️ Department Management</h2><p>Configure departments and divisions</p></div><button class="btn btn-primary" onclick="openDeptModal()">+ Add Dept</button></div>
       <div class="grid-3">
         @if (masters != null && masters.Departments != null) {
@@ -779,7 +780,7 @@
     </div>
 
     <!-- OFFICERS PANEL -->
-    <div id="panel-officers" class="panel">
+    <div id="panel-officers" class="panel @(activePanel == "officers" ? "active" : "")">
       <div class="page-hdr"><div class="page-hdr-left"><h2>👮 Officer Roster</h2><p>Manage JEs, SEs and Dept Heads</p></div><button class="btn btn-primary" onclick="openAddOfficerModal()">+ Add Officer</button></div>
       
       <!-- ROSTER FILTERS (HIERARCHICAL) -->
@@ -834,7 +835,7 @@
     </div>
 
     <!-- ASSIGNMENTS PANEL -->
-    <div id="panel-assignments" class="panel">
+    <div id="panel-assignments" class="panel @(activePanel == "assignments" ? "active" : "")">
         <div class="page-hdr"><div class="page-hdr-left"><h2>🔀 Assign Complaints</h2><p>Queue of complaints waiting for assignment</p></div></div>
         <div class="card">
           <div class="card-body no-pad">
@@ -881,7 +882,7 @@
     </div>
     
     <!-- LOCATION MASTER PANEL -->
-    <div id="panel-locations" class="panel">
+    <div id="panel-locations" class="panel @(activePanel == "locations" ? "active" : "")">
       <div class="page-hdr"><div class="page-hdr-left"><h2>📍 Location Master</h2><p>Manage States, Cities and Sectors/Wards</p></div><button class="btn btn-primary" onclick="openAddSectorModal()">+ Add Sector</button></div>
       <div class="card">
         <div class="card-body no-pad">
@@ -1010,7 +1011,7 @@
     </div>
 
     <!-- OTHER PANELS -->
-    <div id="panel-notifications" class="panel">
+    <div id="panel-notifications" class="panel @(activePanel == "notifications" ? "active" : "")">
         @* <div class="page-hdr"><h2>🔔 Notifications</h2><p>Recent unassigned complaints submitted in the last 24hrs</p></div> *@
         <div class="card">
             <div class="card-body no-pad">
@@ -1045,7 +1046,7 @@
                                 <td>@item.ComplaintNo</td>
                                 <td>@item.ComplaintTitle</td>
                                 <td>@(string.IsNullOrEmpty(item.AssignedToName) ? "UNASSIGNED" : item.AssignedToName)</td>
-                                <td><button class="btn btn-danger btn-sm" onclick="showPanel('assignments')">Reassign</button></td>
+                                <td><button class="btn btn-danger btn-sm" onclick="triggerReassign('@item.Id')">Reassign</button></td>
                             </tr>
                         }
                         @if(!Model.Any(c => c.Status != "Resolved" && c.Status != "Closed" && (DateTime.UtcNow - c.CreatedDate).TotalDays > 1)){
@@ -1058,7 +1059,7 @@
     </div>
     
     <!-- ANALYTICS PANEL -->
-    <div id="panel-analytics" class="panel">
+    <div id="panel-analytics" class="panel @(activePanel == "analytics" ? "active" : "")">
       <div class="page-hdr">
         <div class="page-hdr-left">
           <h2>📈 Analytics & Reports</h2>
@@ -1233,15 +1234,15 @@
           </div>
       </div>
     </div>
-    <div id="panel-sla" class="panel">
+    <div id="panel-sla" class="panel @(activePanel == "sla" ? "active" : "")">
         <div class="page-hdr"><h2>⏱️ SLA Monitor</h2></div>
         <div class="card"><div class="card-body"><p class="text-muted">Resolution tracking active.</p></div></div>
     </div>
-    <div id="panel-audit" class="panel">
+    <div id="panel-audit" class="panel @(activePanel == "audit" ? "active" : "")">
         <div class="page-hdr"><h2>📁 Audit Log</h2></div>
         <div class="card"><div class="card-body"><p class="text-muted">Audit trail secure.</p></div></div>
     </div>
-    <div id="panel-settings" class="panel">
+    <div id="panel-settings" class="panel @(activePanel == "settings" ? "active" : "")">
         <div class="page-hdr"><h2>⚙️ Portal Settings</h2></div>
         <div class="card"><div class="card-body"><h3>General Configuration</h3></div></div>
     </div>
@@ -1544,6 +1545,15 @@
   $(document).ready(function() {
       console.log("Admin Dashboard Logic Initialized. Masters:", !!masters, "Officers:", officers.length);
       initAssignmentFlows();
+      
+      // Auto-navigate via hash only if no server-side panel 'p' is specified
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!urlParams.has('p')) {
+          const activeHash = window.location.hash.replace('#', '');
+          if (activeHash) {
+              showPanel(activeHash);
+          }
+      }
   });
 
   function cascadeDiv(el) {
@@ -3111,6 +3121,34 @@
           }
       });
   });
+  function triggerReassign(complaintId) {
+      Swal.fire({
+          title: 'Confirm Reassignment',
+          text: "This will clear current assignment and return the ticket to the assignment queue.",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#e11d48',
+          cancelButtonColor: '#64748b',
+          confirmButtonText: 'Yes, move to queue'
+      }).then((result) => {
+          if (result.isConfirmed) {
+              $.post('/Complaint/ResetAssignment', { complaintId: complaintId })
+              .done(function(res) {
+                  if(res.success) {
+                      Swal.fire({
+                        title: 'Moved!',
+                        text: 'Complaint is now in the assignment queue.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                      }).then(() => {
+                          window.location.href = window.location.pathname + '?p=assignments';
+                      });
+                  }
+              });
+          }
+      });
+  }
 </script>
 
 <div id="fullTrackModal" class="modal-overlay">

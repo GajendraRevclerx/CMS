@@ -231,6 +231,23 @@ namespace CMS.Controllers
             return Json(new { success = true });
         }
 
+        [Authorize(Roles = "Helpdesk,Admin")]
+        [HttpPost]
+        public async Task<IActionResult> ResetAssignment(string complaintId)
+        {
+            var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var update = Builders<Complaint>.Update
+                .Set(c => c.AssignedToId, null)
+                .Set(c => c.AssignedToName, null)
+                .Set(c => c.AssignedToMobile, null)
+                .Set(c => c.Division, null)
+                .Set(c => c.SubDivision, null)
+                .Set(c => c.Status, "Pending");
+
+            await _context.Complaints.UpdateOneAsync(filter, update);
+            return Json(new { success = true });
+        }
+
         [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Track(string id)
