@@ -9,6 +9,7 @@
   var officers = ViewBag.Heads as IEnumerable<CMS.Models.User> ?? new List<CMS.Models.User>();
   var masters = ViewBag.Masters as Master ?? new Master();
     var recentComplaints = Model.Take(10);
+    string activePanel = Context.Request.Query["p"].FirstOrDefault() ?? "overview";
 }
 
 <!DOCTYPE html>
@@ -294,31 +295,31 @@
   <!-- SIDEBAR -->
   <aside class="sidebar" id="helpSidebar">
     <div class="sidebar-section-label">Registry</div>
-    <a href="#overview" class="nav-item active" onclick="showPanel('overview')" id="nav-overview">
+    <a href="#overview" class="nav-item @(activePanel == "overview" ? "active" : "")" onclick="showPanel('overview')" id="nav-overview">
       <span class="icon">📊</span><span>My Analytics</span>
     </a>
-    <a href="#assignments" class="nav-item" onclick="showPanel('assignments')" id="nav-assignments">
+    <a href="#assignments" class="nav-item @(activePanel == "assignments" ? "active" : "")" onclick="showPanel('assignments')" id="nav-assignments">
       <span class="icon">🔀</span><span>Assign Complaint</span>
       <span class="nav-badge amber" style="background:var(--amber);">@ViewBag.UnassignedCount</span>
     </a>
-    <a href="#complaints" class="nav-item" onclick="showPanel('complaints')" id="nav-complaints">
+    <a href="#complaints" class="nav-item @(activePanel == "complaints" ? "active" : "")" onclick="showPanel('complaints')" id="nav-complaints">
       <span class="icon">📋</span><span>All Complaints</span>
       <span class="nav-badge">@total</span>
     </a>
     
-    <a href="#track" class="nav-item" onclick="showPanel('track')" id="nav-track">
+    <a href="#track" class="nav-item @(activePanel == "track" ? "active" : "")" onclick="showPanel('track')" id="nav-track">
       <span class="icon">🔍</span><span>Track a Ticket</span>
     </a>
-    <a href="#escalations" class="nav-item" onclick="showPanel('escalations')" id="nav-escalations">
+    <a href="#escalations" class="nav-item @(activePanel == "escalations" ? "active" : "")" onclick="showPanel('escalations')" id="nav-escalations">
       <span class="icon">⚡</span><span>Escalations</span>
       <span class="nav-badge red" style="background:var(--red);">@ViewBag.Escalated</span>
     </a>
-    <a href="#reports" class="nav-item" onclick="showPanel('reports')" id="nav-reports">
+    <a href="#reports" class="nav-item @(activePanel == "reports" ? "active" : "")" onclick="showPanel('reports')" id="nav-reports">
       <span class="icon">📈</span><span>Reports</span>
     </a>
     
     <div class="sidebar-section-label">Master Data</div>
-    <a href="#officer-details" class="nav-item" onclick="showPanel('officer-details')" id="nav-officer-details">
+    <a href="#officer-details" class="nav-item @(activePanel == "officer-details" ? "active" : "")" onclick="showPanel('officer-details')" id="nav-officer-details">
       <span class="icon">📋</span><span>Officer Directory</span>
     </a>
     
@@ -340,7 +341,7 @@
   <main class="main-content">
 
     <!-- OVERVIEW PANEL -->
-    <div id="panel-overview" class="panel active">
+    <div id="panel-overview" class="panel @(activePanel == "overview" ? "active" : "")">
       <div class="page-hdr">
         <div class="page-hdr-left">
           <h2>📊 My Performance</h2>
@@ -439,7 +440,7 @@
     </div>
 
     <!-- ASSIGNMENTS PANEL (Replicated from Admin) -->
-    <div id="panel-assignments" class="panel">
+    <div id="panel-assignments" class="panel @(activePanel == "assignments" ? "active" : "")">
         <div class="page-hdr"><div class="page-hdr-left"><h2>🔀 Assign Complaint</h2><p>All complaints waiting for office assignment</p></div></div>
         
         <!-- Assignment Filters -->
@@ -512,7 +513,7 @@
     </div>
 
     <!-- COMPLAINTS PANEL -->
-    <div id="panel-complaints" class="panel">
+    <div id="panel-complaints" class="panel @(activePanel == "complaints" ? "active" : "")">
       <div class="page-hdr">
         <div class="page-hdr-left"><h2>📋 All Complaints</h2><p>Registry of grievances filed by Helpdesk</p></div>
         <div class="page-hdr-actions"><a href="/Complaint/DirectSubmit" class="btn btn-primary btn-sm">+ Register New</a></div>
@@ -647,12 +648,12 @@
     </div>
 
     <!-- TRACK TICKET -->
-    <div id="panel-escalations" class="panel">
+    <div id="panel-escalations" class="panel @(activePanel == "escalations" ? "active" : "")">
         <div class="page-hdr"><div class="page-hdr-left"><h2>⚡ Escalations</h2><p>Tickets unresolved for over 24 hours requiring attention</p></div></div>
         <div class="card">
             <div class="card-body no-pad">
                 <table class="data-table">
-                    <thead><tr><th>Aging</th><th>Ack No</th><th>Title</th><th>Department</th><th>Assigned To</th></tr></thead>
+                    <thead><tr><th>Aging</th><th>Ack No</th><th>Title</th><th>Department</th><th>Assigned To</th><th>Action</th></tr></thead>
                     <tbody>
                         @{ var now = DateTime.UtcNow; }
                         @foreach(var item in Model.Where(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 1).OrderByDescending(c => c.CreatedDate)) {
@@ -662,17 +663,18 @@
                                 <td>@item.ComplaintTitle</td>
                                 <td>@item.Department</td>
                                 <td>@(string.IsNullOrEmpty(item.AssignedToName) ? "UNASSIGNED" : item.AssignedToName)</td>
+                                <td><button class="btn btn-danger btn-sm" onclick="triggerReassign('@item.Id')">Reassign</button></td>
                             </tr>
                         }
                         @if(!Model.Any(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 1)){
-                            <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light);">No active escalations.</td></tr>
+                            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-light);">No active escalations.</td></tr>
                         }
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-    <div id="panel-track" class="panel">
+    <div id="panel-track" class="panel @(activePanel == "track" ? "active" : "")">
       <div class="page-hdr"><div class="page-hdr-left"><h2>🔍 Track a Ticket</h2><p>Lookup details for any specific complaint</p></div></div>
       <div style="max-width:560px;">
         <div class="card" style="margin-bottom:20px;">
@@ -701,7 +703,7 @@
     <!-- ══════════════════════════════════
          PANEL: OFFICER DETAILS
     ══════════════════════════════════ -->
-    <div id="panel-officer-details" class="panel">
+    <div id="panel-officer-details" class="panel @(activePanel == "officer-details" ? "active" : "")">
       <div class="page-hdr">
         <div class="page-hdr-left">
           <h2>📋 Officer Directory</h2>
@@ -790,7 +792,7 @@
     </div>
 
     <!-- DETAILED REPORTS PANEL -->
-    <div id="panel-reports" class="panel">
+    <div id="panel-reports" class="panel @(activePanel == "reports" ? "active" : "")">
       <div class="page-hdr">
         <div class="page-hdr-left">
           <h2>📊 Reports</h2>
@@ -2087,6 +2089,15 @@
               options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'right' } } }
           });
       }
+      
+      // Auto-navigate via hash only if no server-side panel 'p' is specified
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!urlParams.has('p')) {
+          const activeHash = window.location.hash.replace('#', '');
+          if (activeHash) {
+              showPanel(activeHash);
+          }
+      }
   });
 
   // ── Mobile Sidebar Toggle ──
@@ -2105,6 +2116,34 @@
           if (window.innerWidth <= 768) toggleHelpSidebar();
       });
   });
+  function triggerReassign(complaintId) {
+      Swal.fire({
+          title: 'Confirm Reassignment',
+          text: "This will clear current assignment and return the ticket to the assignment queue.",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#e11d48',
+          cancelButtonColor: '#64748b',
+          confirmButtonText: 'Yes, move to queue'
+      }).then((result) => {
+          if (result.isConfirmed) {
+              $.post('/Complaint/ResetAssignment', { complaintId: complaintId })
+              .done(function(res) {
+                  if(res.success) {
+                      Swal.fire({
+                        title: 'Moved!',
+                        text: 'Complaint is now in the assignment queue.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                      }).then(() => {
+                          window.location.href = window.location.pathname + '?p=assignments';
+                      });
+                  }
+              });
+          }
+      });
+  }
 </script>
 
 <div id="fullTrackModal" class="modal-overlay">
