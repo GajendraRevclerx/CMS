@@ -195,6 +195,8 @@ namespace CMS.Controllers
                 .Set(c => c.AssignedToId, headId)
                 .Set(c => c.AssignedToName, headName)
                 .Set(c => c.AssignedToMobile, officer?.MobileNo)
+                .Set(c => c.Division, officer?.Division)
+                .Set(c => c.SubDivision, officer?.SubDivision)
                 .Set(c => c.Status, "Assigned");
 
             await _context.Complaints.UpdateOneAsync(filter, update);

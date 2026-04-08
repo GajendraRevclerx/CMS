@@ -436,7 +436,7 @@
           <div class="stat-val">@masters.Divisions.Count / @masters.SubDivisions.Count</div>
           <div class="stat-lbl">Divisions / Sub-Divs</div>
         </div>
-        <div class="stat-card green">
+        <div class="stat-card green" onclick="showPanel('officers')">
           <div class="stat-top"><div class="stat-icon green">👮</div><span class="stat-trend trend-flat">Active</span></div>
           <div class="stat-val">@allOfficers.Count()</div>
           <div class="stat-lbl">Officers Registered</div>
@@ -498,45 +498,66 @@
         <div class="page-hdr-actions"><button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
       </div>
 
-      <!-- FILTER BAR -->
+      <!-- FILTER BAR (MATCHING REPORTS UI) -->
       <div class="card" style="margin-bottom:18px;">
-        <div class="card-body" style="padding:14px 18px;">
-          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 80px;gap:12px;align-items:end;">
+        <div class="card-body" style="padding:16px;">
+          <!-- Row 1: Administrative Hierarchy & Date -->
+          <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:12px;align-items:end; margin-bottom:12px;">
             <div class="form-group" style="margin-bottom:0;">
-              <label>Search</label>
-              <div class="search-bar"><span class="icon">🔍</span><input type="text" id="complaintSearch" placeholder="complaint No., name, issue..."></div>
-            </div>
-            <div class="form-group" style="margin-bottom:0;"><label>Status</label>
-              <select id="filterStatus">
-                  <option value="">All Statuses</option>
-                  <option>Pending</option>
-                  <option>Assigned</option>
-                  <option>Resolved</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0;"><label>Department</label>
-              <select id="filterDept">
-                  <option value="">All Departments</option>
-                  @if(ViewBag.AllDepartments != null) {
-                      foreach(var d in (List<CMS.Models.DepartmentBrief>)ViewBag.AllDepartments) {
-                          <option value="@d.Code">@d.Name</option>
-                      }
-                  }
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0;"><label>Priority</label>
-              <select id="filterPriority">
-                  <option value="">All</option>
-                  <option>High</option>
-                  <option>Medium</option>
-                  <option>Low</option>
-              </select>
+                <label style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:4px;display:block;">Department</label>
+                <select id="filterDept" class="form-control" onchange="aCascadeDiv(this)" style="width:100%;height:38px;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:white;font-size:12px;">
+                    <option value="">All Departments</option>
+                    @if(ViewBag.AllDepartments != null) {
+                        foreach(var d in (List<CMS.Models.DepartmentBrief>)ViewBag.AllDepartments) {
+                            <option value="@d.Code">@d.Name</option>
+                        }
+                    }
+                </select>
             </div>
             <div class="form-group" style="margin-bottom:0;">
-                <label>📅 Date Range</label>
-                <input type="text" id="filterDateRange" placeholder="Select Range" readonly style="width:100%;height:38px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:white;cursor:pointer;">
+                <label style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:4px;display:block;">Division</label>
+                <select id="filterDiv" class="form-control" onchange="aCascadeSub(this)" style="width:100%;height:38px;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:white;font-size:12px;">
+                    <option value="">All Divisions</option>
+                </select>
             </div>
-            <button class="btn btn-primary" onclick="applyFilters()" style="margin-top:17px; height:38px;">Filter</button>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:4px;display:block;">Sub-Division</label>
+                <select id="filterSub" class="form-control" onchange="aCascadeOff(this)" style="width:100%;height:38px;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:white;font-size:12px;">
+                    <option value="">All Sub-Divs</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:4px;display:block;">Specific Officer</label>
+                <select id="filterOff" class="form-control" onchange="applyFilters()" style="width:100%;height:38px;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:white;font-size:12px;">
+                    <option value="">All Officers</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:4px;display:block;">📅 Date Range</label>
+                <div class="search-bar">
+                    <input type="text" placeholder="Select Date Range" id="filterDateRange" class="form-control" style="width:100%;height:38px;padding:8px;padding-left:36px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:white;" readonly>
+                </div>
+            </div>
+          </div>
+          <!-- Row 2: Search, Status, Priority & Reset -->
+          <div style="display:flex;gap:12px;align-items:center;">
+             <div style="flex:1;" class="search-bar">
+                 <span class="icon">🔍</span>
+                 <input type="text" id="complaintSearch" oninput="applyFilters()" placeholder="Search by ticket no., name, or issue details..." style="width:100%;padding:9px 12px;padding-left:36px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;">
+             </div>
+             <select id="filterStatus" onchange="applyFilters()" style="width:140px;height:38px;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:white;font-size:12px;">
+                <option value="">All Statuses</option>
+                <option>Pending</option>
+                <option>Assigned</option>
+                <option>Resolved</option>
+             </select>
+             <select id="filterPriority" onchange="applyFilters()" style="width:140px;height:38px;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:white;font-size:12px;">
+                <option value="">All Priority</option>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+             </select>
+             <button class="btn btn-outline" onclick="resetAFilters()" style="height:38px;padding:0 15px;">Reset Filters</button>
           </div>
         </div>
       </div>
@@ -563,6 +584,9 @@
                     <tr class="complaint-row" 
                         data-status="@item.Status" 
                         data-dept="@item.Department" 
+                        data-div="@item.Division"
+                        data-sub="@item.SubDivision"
+                        data-off="@item.AssignedToId"
                         data-priority="@(item.Priority ?? "Medium")"
                         data-date="@item.CreatedDate.ToString("yyyy-MM-dd")">
                       <td><a href="javascript:void(0)" onclick="viewFullDetails('@item.ComplaintNo')" class="mono" style="font-size:11px; color:var(--blue-light); font-weight:700; text-decoration:underline;">@item.ComplaintNo</a></td>
@@ -649,35 +673,29 @@
     <div id="panel-officers" class="panel">
       <div class="page-hdr"><div class="page-hdr-left"><h2>👮 Officer Roster</h2><p>Manage JEs, SEs and Dept Heads</p></div><button class="btn btn-primary" onclick="openAddOfficerModal()">+ Add Officer</button></div>
       
-      <!-- ROSTER FILTERS -->
+      <!-- ROSTER FILTERS (HIERARCHICAL) -->
       <div class="card" style="margin-bottom:18px;">
         <div class="card-body" style="padding:14px 18px;">
-          <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 100px;gap:12px;align-items:end;">
-            <div class="form-group" style="margin-bottom:0;">
-              <label>Search Name</label>
-              <select id="rosterFilterName" style="width:100%;">
-                  <option value="">All Officers</option>
-                  @foreach(var off in allOfficers) {
-                      <option value="@off.FullName">@off.FullName</option>
-                  }
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label>Mobile Number</label>
-              <div class="search-bar"><span class="icon">📱</span><input type="text" id="rosterSearchMobile" placeholder="e.g. 98765..."></div>
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label>Department</label>
-              <select id="rosterFilterDept">
-                  <option value="">All Departments</option>
+          <div style="display:grid;grid-template-columns:repeat(3, 1fr) 2fr 100px;gap:12px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Dept</label>
+              <select id="rosterFilterDept" onchange="rCascadeDiv(this)">
+                  <option value="">All Dept</option>
                   @if(masters != null && masters.Departments != null) {
-                      @foreach(var dept in masters.Departments) {
-                          <option>@dept.Name</option>
-                      }
+                      @foreach(var dept in masters.Departments) { <option>@dept.Name</option> }
                   }
               </select>
             </div>
-            <button class="btn btn-primary" onclick="applyRosterFilters()" style="margin-top:0; height:38px;">Filter</button>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Div</label>
+              <select id="rosterFilterDiv" onchange="rCascadeSub(this)"><option value="">All Div</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Sub-Div</label>
+              <select id="rosterFilterSub" onchange="applyRosterFilters()"><option value="">All Sub-Div</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Search Name/Mobile</label>
+              <div class="search-bar"><span class="icon">👮</span><input type="text" id="rosterSearchMobile" oninput="applyRosterFilters()" placeholder="Name or Mobile..."></div>
+            </div>
+            <button class="btn btn-outline" onclick="resetRosterFilters()" style="height:38px;">Reset</button>
           </div>
         </div>
       </div>
@@ -688,7 +706,7 @@
             <thead><tr><th>Officer</th><th>Mobile</th><th>Department</th><th>Jurisdiction</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
                 @foreach(var off in allOfficers) {
-                    <tr class="roster-row" data-name="@off.FullName" data-mobile="@off.MobileNo" data-dept="@off.Department">
+                    <tr class="roster-row" data-name="@off.FullName" data-mobile="@off.MobileNo" data-dept="@off.Department" data-div="@off.Division" data-sub="@off.SubDivision">
                       <td><div style="display:flex;align-items:center;gap:10px;"><div class="officer-avatar" style="background:var(--blue-light);width:32px;height:32px;font-size:12px;">@(off.FullName.Substring(0,1))</div><div><div style="font-weight:600;">@off.FullName</div></div></div></td>
                       <td>@off.MobileNo</td>
                       <td>@off.Department</td>
@@ -730,16 +748,16 @@
                                           }
                                       }
                                   </select>
-                                  <select class="assign-div" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeSub(this)">
+                                  <select class="assign-div" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px;" onchange="cascadeSub(this)">
                                       <option value="">Select Division</option>
                                   </select>
-                                  <select class="assign-sub" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeDesig(this)">
+                                  <select class="assign-sub" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px;" onchange="cascadeDesig(this)">
                                       <option value="">Select Sub-Division</option>
                                   </select>
-                                  <select class="assign-desig" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none;" onchange="cascadeOff(this)">
+                                  <select class="assign-desig" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px;" onchange="cascadeOff(this)">
                                       <option value="">Select Designation</option>
                                   </select>
-                                  <select class="assign-off" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; display:none; border: 1.5px solid var(--blue-light); font-weight:600;">
+                                  <select class="assign-off" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:12px; border: 1.5px solid var(--blue-light); font-weight:600;">
                                       <option value="">Select Officer</option>
                                   </select>
                               </div>
@@ -787,6 +805,25 @@
     <!-- DIVISIONS PANEL -->
     <div id="panel-divisions" class="panel">
       <div class="page-hdr"><div class="page-hdr-left"><h2>📂 Division Management</h2><p>Manage divisions within departments</p></div><button class="btn btn-primary" onclick="openDivisionModal()">+ Add Division</button></div>
+      
+      <!-- GRID FILTER -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-body" style="padding:14px 18px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:12px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">By Department</label>
+              <select id="gridDivFilterDept" onchange="applyGridDivFilters()">
+                  <option value="">All Departments</option>
+                  @foreach(var d in masters.Departments) { <option>@d.Name</option> }
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Search Name/Code</label>
+              <input type="text" id="gridDivSearch" oninput="applyGridDivFilters()" placeholder="Search divisions...">
+            </div>
+            <button class="btn btn-outline" onclick="$('#gridDivFilterDept, #gridDivSearch').val(''); applyGridDivFilters();" style="height:38px;">Reset</button>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
@@ -794,7 +831,7 @@
             <tbody>
                 @if(masters != null && masters.Divisions != null) {
                     @foreach(var div in masters.Divisions) {
-                        <tr>
+                        <tr class="grid-div-row" data-dept="@div.DepartmentName">
                           <td><strong>@div.Name</strong></td>
                           <td><span class="mono">@div.Code</span></td>
                           <td>@div.DepartmentName</td>
@@ -815,6 +852,28 @@
     <!-- SUB-DIVISIONS PANEL -->
     <div id="panel-subdivisions" class="panel">
       <div class="page-hdr"><div class="page-hdr-left"><h2>📁 Sub-Division Management</h2><p>Manage sub-divisions within divisions</p></div><button class="btn btn-primary" onclick="openSubDivisionModal()">+ Add Sub-Division</button></div>
+      
+      <!-- GRID FILTER -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-body" style="padding:14px 18px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 100px;gap:12px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">By Department</label>
+              <select id="gridSubFilterDept" onchange="gridSubCascadeDiv(this)">
+                  <option value="">All Departments</option>
+                  @foreach(var d in masters.Departments) { <option>@d.Name</option> }
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">By Division</label>
+              <select id="gridSubFilterDiv" onchange="applyGridSubFilters()"><option value="">All Divisions</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--text-light);">Search Name/Code</label>
+              <input type="text" id="gridSubSearch" oninput="applyGridSubFilters()" placeholder="Search sub-divisions...">
+            </div>
+            <button class="btn btn-outline" onclick="$('#gridSubFilterDept, #gridSubFilterDiv, #gridSubSearch').val(''); applyGridSubFilters();" style="height:38px;">Reset</button>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-body no-pad">
           <table class="data-table">
@@ -822,7 +881,7 @@
             <tbody>
                 @if(masters != null && masters.SubDivisions != null) {
                     @foreach(var sub in masters.SubDivisions) {
-                        <tr>
+                        <tr class="grid-sub-row" data-dept="@sub.DepartmentName" data-div="@sub.DivisionName">
                           <td><strong>@sub.Name</strong></td>
                           <td><span class="mono">@sub.Code</span></td>
                           <td>@sub.DepartmentName</td>
@@ -1203,7 +1262,7 @@
       <div class="form-row-2">
         <div class="form-group">
           <label>Department <span class="required">*</span></label>
-          <select id="offDept" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;">
+          <select id="offDept" onchange="loadDivisionsForOfficer()" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;">
             <option value="">Select Dept</option>
             @if(masters != null && masters.Departments != null) {
                 @foreach(var d in masters.Departments) {
@@ -1356,34 +1415,32 @@
   const masters = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(masters));
   const officers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allOfficers));
 
+  // Global helper for case-insensitive and trimmed string matching
+  const cleanMatch = (val, attr) => {
+      if (!val) return true;
+      if (!attr) return false;
+      return String(val).trim().toLowerCase() === String(attr).trim().toLowerCase();
+  };
+
   function cascadeDiv(el) {
       const row = $(el).closest('.assign-flow');
       const dept = $(el).val();
-      const divSel = row.find('.assign-div');
-      const subSel = row.find('.assign-sub');
-      const desigSel = row.find('.assign-desig');
-      const offSel = row.find('.assign-off');
-
-      divSel.html('<option value="">Select Division</option>').hide();
-      subSel.html('<option value="">Select Sub-Div</option>').hide();
-      desigSel.html('<option value="">Select Designation</option>').hide();
-      offSel.html('<option value="">Select Officer</option>').hide();
+      const divSel = row.find('.assign-div').html('<option value="">Select Division</option>');
+      const subSel = row.find('.assign-sub').html('<option value="">Select Sub-Div</option>');
+      const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>');
+      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
 
       if (!dept) return;
 
       // 1. Check for Divisions
-      const filtered = (masters.Divisions || []).filter(d => d.DepartmentName === dept);
+      const filtered = (masters.Divisions || []).filter(d => cleanMatch(d.DepartmentName, dept));
       if (filtered.length > 0) {
           filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
-          divSel.show();
-          offSel.hide(); // Hide officer list because we have deeper levels to go
       } else {
           // If no Divisions, show officers for this Department directly
-          const matches = officers.filter(o => o.Department === dept);
+          const matches = officers.filter(o => cleanMatch(o.Department, dept));
           if (matches.length > 0) {
-              offSel.html('<option value="">Select Officer</option>');
               matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-              offSel.show();
           }
       }
   }
@@ -1392,29 +1449,21 @@
       const row = $(el).closest('.assign-flow');
       const dept = row.find('.assign-dept').val();
       const div = $(el).val();
-      const subSel = row.find('.assign-sub');
-      const desigSel = row.find('.assign-desig');
-      const offSel = row.find('.assign-off');
-
-      subSel.html('<option value="">Select Sub-Div</option>').hide();
-      desigSel.html('<option value="">Select Designation</option>').hide();
-      offSel.html('<option value="">Select Officer</option>').hide();
+      const subSel = row.find('.assign-sub').html('<option value="">Select Sub-Div</option>');
+      const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>');
+      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
 
       if (!div) return;
 
       // 1. Check for Sub-Divisions
-      const filteredSubs = (masters.SubDivisions || []).filter(s => s.DepartmentName === dept && s.DivisionName === div);
+      const filteredSubs = (masters.SubDivisions || []).filter(s => cleanMatch(s.DepartmentName, dept) && cleanMatch(s.DivisionName, div));
       if (filteredSubs.length > 0) {
           filteredSubs.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
-          subSel.show();
-          offSel.hide(); // Hide officer list because we have deeper levels to go
       } else {
           // If no Sub-Divisions, show officers for this Division directly
-          const matches = officers.filter(o => o.Department === dept && o.Division === div);
+          const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div));
           if (matches.length > 0) {
-              offSel.html('<option value="">Select Officer</option>');
               matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-              offSel.show();
           }
       }
   }
@@ -1424,28 +1473,21 @@
       const dept = row.find('.assign-dept').val();
       const div = row.find('.assign-div').val();
       const sub = $(el).val();
-      const desigSel = row.find('.assign-desig');
-      const offSel = row.find('.assign-off');
-
-      desigSel.html('<option value="">Select Designation</option>').hide();
-      offSel.html('<option value="">Select Officer</option>').hide();
+      const desigSel = row.find('.assign-desig').html('<option value="">Select Designation</option>');
+      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
 
       if (!sub) return;
 
       // 1. Check for Designations
-      const matchingOfficers = officers.filter(o => o.Department === dept && o.Division === div && o.SubDivision === sub);
+      const matchingOfficers = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub));
       const uniqueDesigs = [...new Set(matchingOfficers.filter(o => o.Designation).map(o => o.Designation))];
 
       if (uniqueDesigs.length > 0) {
           uniqueDesigs.forEach(d => desigSel.append(`<option value="${d}">${d}</option>`));
-          desigSel.show();
-          offSel.hide(); // Hide officer list because we have deeper levels to go
       } else {
           // If no Designations, show officers for this Sub-Division directly
           if (matchingOfficers.length > 0) {
-              offSel.html('<option value="">Select Officer</option>');
               matchingOfficers.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-              offSel.show();
           }
       }
   }
@@ -1456,18 +1498,15 @@
       const div = row.find('.assign-div').val();
       const sub = row.find('.assign-sub').val();
       const desig = $(el).val();
-      const offSel = row.find('.assign-off');
-
-      offSel.html('<option value="">Select Officer</option>').hide();
+      const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>');
 
       if (!desig) return;
 
-      const filtered = officers.filter(o => o.Department === dept && o.Division === div && o.SubDivision === sub && (o.Designation === desig || (!o.Designation && desig === "Officer")));
+      const filtered = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub) && (cleanMatch(o.Designation, desig) || (!o.Designation && desig === "Officer")));
       if (filtered.length > 0) {
           filtered.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-          offSel.show();
       } else {
-          offSel.append('<option value="">No officers found</option>').show();
+          offSel.append('<option value="">No officers found</option>');
       }
   }
   function showPanel(name) {
@@ -1485,24 +1524,22 @@
     if(nav) nav.classList.add('active');
     document.querySelector('.main-content').scrollTop = 0;
 
-    // Auto-Reset logic for specific panels
+    // Auto-Reset logic for specific panels to ensure consistency
     if (name === 'complaints') {
-        $('#complaintSearch').val('');
-        $('#filterStatus').val('');
-        $('#filterDept').val('').trigger('change');
-        $('#filterPriority').val('');
-        $('#filterDateRange').val('');
-        if (typeof applyFilters === 'function') applyFilters();
+        resetAFilters();
     } else if (name === 'reports') {
         if (typeof resetReportFilters === 'function') resetReportFilters();
     } else if (name === 'officers') {
-        $('#rosterFilterName').val('').trigger('change');
-        $('#rosterSearchMobile').val('');
-        $('#rosterFilterDept').val('').trigger('change');
-        if (typeof applyRosterFilters === 'function') applyRosterFilters();
+        resetRosterFilters();
     } else if (name === 'track') {
         $('#trackInput').val('');
         $('#trackResult').hide();
+    } else if (name === 'divisions') {
+        $('#gridDivFilterDept, #gridDivSearch').val('');
+        applyGridDivFilters();
+    } else if (name === 'subdivisions') {
+        $('#gridSubFilterDept, #gridSubFilterDiv, #gridSubSearch').val('');
+        applyGridSubFilters();
     }
     
     // Update hash for persistence
@@ -1631,64 +1668,98 @@
       });
   }
 
-  function applyFilters() {
-      const search = $('#complaintSearch').val()?.toLowerCase().trim() || "";
-      const status = $('#filterStatus').val();
-      const selDept = $('#filterDept').val();
-      const priority = $('#filterPriority').val();
-      
-      const dateVal = $('#filterDateRange').val();
-      const drp = $('#filterDateRange').data('daterangepicker');
-      const start = (dateVal && drp) ? drp.startDate.startOf('day') : null;
-      const end = (dateVal && drp) ? drp.endDate.endOf('day') : null;
+  // ========== ADMIN CASCADING FILTERS (COMPLAINTS) ==========
+  // Old redundant functions removed. New versions are located at the end of the script.
 
-      $('.complaint-row').each(function() {
-          const row = $(this);
-          const rowText = row.text().toLowerCase();
-          const rowStatus = row.data('status');
-          const rowDept = row.data('dept');
-          const rowPriority = row.data('priority');
-          const rowDateStr = row.data('date');
-          const rowDate = moment(rowDateStr, 'YYYY-MM-DD');
 
-          let show = true;
+  // ========== ROSTER & GRID FILTERS (HIERARCHICAL) ==========
+  function rCascadeDiv(el) {
+    const deptName = $(el).val();
+    const divSel = $('#rosterFilterDiv').html('<option value="">All Divisions</option>');
+    $('#rosterFilterSub').html('<option value="">All Sub-Divs</option>');
 
-          if (search && !rowText.includes(search)) show = false;
-          if (status && rowStatus !== status) show = false;
-          
-          if (selDept && selDept !== "") {
-              if (rowDept != selDept) show = false;
-          }
-          
-          if (priority && rowPriority !== priority) show = false;
-          
-          if (start && end && rowDate.isValid()) {
-              if (rowDate.isBefore(start) || rowDate.isAfter(end)) show = false;
-          }
+    if (deptName) {
+        const filtered = (masters.Divisions || []).filter(d => cleanMatch(d.DepartmentName, deptName));
+        if (filtered.length > 0) {
+            filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
+        }
+    }
+    applyRosterFilters();
+  }
 
-          if (show) row.show();
-          else row.hide();
-      });
+  function rCascadeSub(el) {
+    const deptName = $('#rosterFilterDept').val();
+    const divName = $(el).val();
+    const subSel = $('#rosterFilterSub').html('<option value="">All Sub-Divs</option>');
+
+    if (divName) {
+        const filtered = (masters.SubDivisions || []).filter(s => cleanMatch(s.DepartmentName, deptName) && cleanMatch(s.DivisionName, divName));
+        if (filtered.length > 0) {
+            filtered.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
+        }
+    }
+    applyRosterFilters();
   }
 
   function applyRosterFilters() {
-      const name = $('#rosterFilterName').val();
-      const mobile = $('#rosterSearchMobile').val()?.toLowerCase().trim() || "";
       const dept = $('#rosterFilterDept').val();
+      const div = $('#rosterFilterDiv').val();
+      const sub = $('#rosterFilterSub').val();
+      const search = $('#rosterSearchMobile').val().toLowerCase().trim();
 
       $('.roster-row').each(function() {
-          const row = $(this);
-          const rowName = row.data('name');
-          const rowMobile = row.data('mobile').toString();
-          const rowDept = row.data('dept');
+          const $row = $(this);
+          let match = true;
+          if (dept && !cleanMatch(dept, $row.data('dept'))) match = false;
+          if (div && !cleanMatch(div, $row.data('div'))) match = false;
+          if (sub && !cleanMatch(sub, $row.data('sub'))) match = false;
+          if (search && !$row.text().toLowerCase().includes(search)) match = false;
+          $row.toggle(match);
+      });
+  }
 
-          let show = true;
-          if (name && rowName !== name) show = false;
-          if (mobile && !rowMobile.includes(mobile)) show = false;
-          if (dept && rowDept !== dept) show = false;
+  function resetRosterFilters() {
+      $('#rosterFilterDept, #rosterFilterDiv, #rosterFilterSub, #rosterSearchMobile').val('');
+      //$('#rosterFilterDiv, #rosterFilterSub').hide();
+      applyRosterFilters();
+  }
 
-          if (show) row.show();
-          else row.hide();
+  // ========== GRID MASTER FILTERS (DIV/SUBDIV) ==========
+  function applyGridDivFilters() {
+      const dept = $('#gridDivFilterDept').val();
+      const search = $('#gridDivSearch').val().toLowerCase().trim();
+      $('.grid-div-row').each(function() {
+          const $row = $(this);
+          let match = true;
+          if (dept && !cleanMatch(dept, $row.data('dept'))) match = false;
+          if (search && !$row.text().toLowerCase().includes(search)) match = false;
+          $row.toggle(match);
+      });
+  }
+
+  function gridSubCascadeDiv(el) {
+      const deptName = $(el).val();
+      const divSel = $('#gridSubFilterDiv').html('<option value="">All Divisions</option>');
+      if (deptName) {
+          const filtered = (masters.Divisions || []).filter(d => cleanMatch(d.DepartmentName, deptName));
+          if (filtered.length > 0) {
+              filtered.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
+          }
+      }
+      applyGridSubFilters();
+  }
+
+  function applyGridSubFilters() {
+      const dept = $('#gridSubFilterDept').val();
+      const div = $('#gridSubFilterDiv').val();
+      const search = $('#gridSubSearch').val().toLowerCase().trim();
+      $('.grid-sub-row').each(function() {
+          const $row = $(this);
+          let match = true;
+          if (dept && !cleanMatch(dept, $row.data('dept'))) match = false;
+          if (div && !cleanMatch(div, $row.data('div'))) match = false;
+          if (search && !$row.text().toLowerCase().includes(search)) match = false;
+          $row.toggle(match);
       });
   }
 
@@ -2238,25 +2309,15 @@
 
   function loadDivisionsForSub(callback) {
       const dept = $('#subDept').val();
-      const divSelect = $('#subDiv');
-      divSelect.html('<option value="">Loading...</option>');
+      const divSelect = $('#subDiv').html('<option value="">Select Division</option>');
 
-      if (!dept) {
-          divSelect.html('<option value="">Select Department first</option>');
-          return;
+      if (!dept) return;
+
+      const filtered = (masters.Divisions || []).filter(d => cleanMatch(d.DepartmentName, dept));
+      if (filtered.length > 0) {
+          filtered.forEach(d => divSelect.append(`<option value="${d.Name}">${d.Name}</option>`));
       }
-
-      $.get('/api/MasterData/divisions-by-department', { department: dept })
-      .done(function(data) {
-          divSelect.html('<option value="">Select Division</option>');
-          data.forEach(d => {
-              divSelect.append(`<option value="${d.name}">${d.name}</option>`);
-          });
-          if (callback) callback();
-      })
-      .fail(function() {
-          divSelect.html('<option value="">Error loading divisions</option>');
-      });
+      if (callback) callback();
   }
 
   function saveSubDivision() {
@@ -2359,9 +2420,34 @@
           applyFilters();
       });
 
-      // Initialize Select2 for Department Dropdown
+      // Initialize Select2 for Dashboard Filters
       $('#filterDept').select2({
           placeholder: "Select Department",
+          allowClear: true,
+          width: '100%'
+      }).on('change', function() {
+          aCascadeDiv(this);
+      });
+
+      $('#filterDiv').select2({
+          placeholder: "Select Division",
+          allowClear: true,
+          width: '100%'
+      }).on('change', function() {
+          aCascadeSub(this);
+      });
+
+      $('#filterSub').select2({
+          placeholder: "Select Sub-Div",
+          allowClear: true,
+          width: '100%'
+      }).on('change', function() {
+          aCascadeOff(this);
+      });
+
+      $('#filterOff').select2({
+          placeholder: "Select Officer",
+          allowClear: true,
           width: '100%'
       }).on('change', function() {
           applyFilters();
@@ -2430,6 +2516,146 @@
 
       renderReportTable();
   });
+
+  // ========== DASHBOARD (ALL COMPLAINTS) FILTERS ==========
+  function aCascadeDiv(el) {
+      const deptCode = $(el).val();
+      const divSel = $('#filterDiv').html('<option value="">All Divisions</option>');
+      const subSel = $('#filterSub').html('<option value="">All Sub-Divs</option>');
+      const offSel = $('#filterOff').html('<option value="">All Officers</option>');
+
+      if (deptCode) {
+          const dObj = (masters.Departments || []).find(d => String(d.Code).trim().toLowerCase() === String(deptCode).trim().toLowerCase());
+          const deptName = dObj ? dObj.Name : '';
+          
+          // Populate Divisions
+          const filteredDivs = (masters.Divisions || []).filter(d => String(d.DepartmentName).trim().toLowerCase() === String(deptName).trim().toLowerCase());
+          filteredDivs.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
+          
+          // Show all officers for this dept initially
+          const matchingOffs = (officers || []).filter(o => String(o.Department).trim().toLowerCase() === String(deptName).trim().toLowerCase());
+          matchingOffs.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+      }
+      applyFilters();
+  }
+
+  function aCascadeSub(el) {
+      const deptCode = $('#filterDept').val();
+      const div = $(el).val();
+      const subSel = $('#filterSub').html('<option value="">All Sub-Divs</option>');
+      const offSel = $('#filterOff').html('<option value="">All Officers</option>');
+
+      if (div) {
+          const dObj = (masters.Departments || []).find(d => String(d.Code).trim().toLowerCase() === String(deptCode).trim().toLowerCase());
+          const deptName = dObj ? dObj.Name : '';
+
+          const filteredSubs = (masters.SubDivisions || []).filter(s => 
+              String(s.DepartmentName).trim().toLowerCase() === String(deptName).trim().toLowerCase() && 
+              String(s.DivisionName).trim().toLowerCase() === String(div).trim().toLowerCase()
+          );
+          filteredSubs.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
+
+          const matchingOffs = (officers || []).filter(o => 
+              String(o.Department).trim().toLowerCase() === String(deptName).trim().toLowerCase() && 
+              String(o.Division).trim().toLowerCase() === String(div).trim().toLowerCase()
+          );
+          matchingOffs.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+      } else {
+          aCascadeDiv($('#filterDept')); // Fallback to dept level
+      }
+      applyFilters();
+  }
+
+  function aCascadeOff(el) {
+    const deptCode = $('#filterDept').val();
+    const div = $('#filterDiv').val();
+    const sub = $(el).val();
+    const offSel = $('#filterOff').html('<option value="">All Officers</option>');
+
+    if (sub) {
+        const dObj = (masters.Departments || []).find(d => String(d.Code).trim().toLowerCase() === String(deptCode).trim().toLowerCase());
+        const deptName = dObj ? dObj.Name : '';
+        const matchingOffs = (officers || []).filter(o => 
+            String(o.Department).trim().toLowerCase() === String(deptName).trim().toLowerCase() && 
+            String(o.Division).trim().toLowerCase() === String(div).trim().toLowerCase() && 
+            String(o.SubDivision).trim().toLowerCase() === String(sub).trim().toLowerCase()
+        );
+        matchingOffs.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+    } else {
+        aCascadeSub($('#filterDiv')); // Fallback to div level
+    }
+    applyFilters();
+  }
+
+  function applyFilters() {
+      const search = $('#complaintSearch').val().toLowerCase().trim();
+      const status = $('#filterStatus').val();
+      const deptCode = $('#filterDept').val();
+      const div = $('#filterDiv').val();
+      const sub = $('#filterSub').val();
+      const off = $('#filterOff').val();
+      const priority = $('#filterPriority').val();
+      const dateVal = $('#filterDateRange').val();
+      
+      const drp = $('#filterDateRange').data('daterangepicker');
+      const start = (dateVal && drp) ? drp.startDate.startOf('day') : null;
+      const end = (dateVal && drp) ? drp.endDate.endOf('day') : null;
+
+      let deptName = "";
+      // Removed redundant cleanMatch definition (now global)
+
+      if (deptCode) {
+          const dObj = (masters.Departments || []).find(d => cleanMatch(d.Code, deptCode));
+          if (dObj) deptName = dObj.Name;
+      }
+
+      $('.complaint-row').each(function() {
+          const $row = $(this);
+          let match = true;
+          
+          if (search && !$row.text().toLowerCase().includes(search)) match = false;
+          if (status && !cleanMatch(status, $row.data('status'))) match = false;
+          
+          if (deptCode) {
+              const rowDept = $row.data('dept');
+              const isMatch = cleanMatch(deptCode, rowDept) || cleanMatch(deptName, rowDept);
+              if (!isMatch) match = false;
+          }
+
+          if (div || sub) {
+              const offId = $row.data('off');
+              const officer = (officers || []).find(o => o.Id === offId || o.MobileNo === offId);
+              
+              const rowDiv = $row.data('div');
+              const rowSub = $row.data('sub');
+              
+              if (div) {
+                  const matchDiv = cleanMatch(div, rowDiv) || (officer && cleanMatch(div, officer.Division));
+                  if (!matchDiv) match = false;
+              }
+              if (sub) {
+                  const matchSub = cleanMatch(sub, rowSub) || (officer && cleanMatch(sub, officer.SubDivision));
+                  if (!matchSub) match = false;
+              }
+          }
+
+          if (off && !cleanMatch(off, $row.data('off'))) match = false;
+          if (priority && !cleanMatch(priority, $row.data('priority'))) match = false;
+          
+          if (start && end) {
+              const cDate = moment($row.data('date'));
+              if (cDate.isBefore(start) || cDate.isAfter(end)) match = false;
+          }
+
+          $row.toggle(match);
+      });
+  }
+
+  function resetAFilters() {
+      $('#filterDept, #filterDiv, #filterSub, #filterOff').val('').trigger('change.select2');
+      $('#complaintSearch, #filterStatus, #filterPriority, #filterDateRange').val('');
+      applyFilters();
+  }
 
   // ========== REPORTS LOGIC (FLAT LIST) ==========
   const allUsers = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Users));

@@ -47,6 +47,8 @@ namespace CMS.Models
         public string? AssignedToId { get; set; }
         public string? AssignedToName { get; set; }
         public string? AssignedToMobile { get; set; }
+        public string? Division { get; set; }
+        public string? SubDivision { get; set; }
 
         public string? AttachmentPath { get; set; }
         public DateTime? ResolutionDate { get; set; }
