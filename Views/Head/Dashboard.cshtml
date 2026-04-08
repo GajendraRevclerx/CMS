@@ -96,6 +96,25 @@
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+    @@media (max-width: 768px) {
+        .head-wrapper { padding: 20px 0; }
+        .head-metric-grid { grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+        .head-tile { padding: 20px; border-radius: 20px; }
+        .head-tile-val { font-size: 2rem; }
+        .head-panel { padding: 20px; border-radius: 24px; }
+        .head-table th, .head-table td { padding: 14px; font-size: 0.8rem; }
+        .head-table td { border-radius: 0; }
+    }
+
+    @@media (max-width: 480px) {
+        .head-metric-grid { grid-template-columns: 1fr; gap: 12px; }
+        .head-tile { padding: 16px; border-radius: 16px; }
+        .head-tile-val { font-size: 1.8rem; }
+        .head-panel { padding: 14px; border-radius: 16px; overflow-x: auto; }
+        .head-table { min-width: 480px; }
+    }
 </style>
 
 <div class="container head-wrapper">

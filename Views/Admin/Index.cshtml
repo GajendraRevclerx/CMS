@@ -20,6 +20,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Enterprise Support Portal — Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/lib/daterangepicker/daterangepicker.css">
@@ -269,6 +270,107 @@
     .select2-container { margin-top: 1px; }
     .stat-card[onclick] { cursor: pointer; transition: all 0.2s; }
     .stat-card[onclick]:hover { transform: translateY(-3px); border-color: var(--blue-light); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+
+    /* ─── MOBILE HAMBURGER ─── */
+    .mob-menu-btn {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        flex-direction: column;
+        gap: 5px;
+        padding: 8px;
+        border-radius: 8px;
+        margin-left: auto;
+    }
+    .mob-menu-btn span { display:block; width:22px; height:2px; background:var(--navy); border-radius:2px; }
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,0.5);
+        z-index: 99;
+    }
+    .sidebar-backdrop.open { display: block; }
+
+    /* ─── RESPONSIVE BREAKPOINTS ─── */
+    @@media (max-width: 1024px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        .grid-2, .grid-2-1 { grid-template-columns: 1fr; }
+        .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @@media (max-width: 768px) {
+        body { overflow: auto; height: auto; }
+        .app-body { flex-direction: column; overflow: visible; }
+
+        /* Sidebar becomes a slide-in drawer */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -260px;
+            width: 250px;
+            height: 100%;
+            z-index: 100;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+
+        /* Header layout */
+        .top-header { padding: 10px 14px; gap: 10px; }
+        .top-header > img:first-child { height: 55px !important; }
+        .header-text h2 { font-size: 1rem !important; }
+        .header-text h4 { font-size: 12px !important; }
+        .admin-badge { display: none; }
+        .header-notif { padding: 8px; }
+        .mob-menu-btn { display: flex; }
+        .gov-ribbon { font-size: 10px; padding: 5px 12px; }
+        .gov-ribbon .ml { gap: 8px; }
+
+        /* Main content takes full width */
+        .main-content { padding: 16px; width: 100%; }
+
+        /* Stats */
+        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+        .stat-card { padding: 16px; }
+        .stat-val { font-size: 1.5rem; }
+
+        /* Grids */
+        .grid-2, .grid-2-1, .grid-3 { grid-template-columns: 1fr; gap: 14px; }
+
+        /* Page header */
+        .page-hdr { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+        .page-hdr h2 { font-size: 1.4rem; }
+        .page-hdr-actions { width: 100%; flex-wrap: wrap; }
+
+        /* Tables: horizontal scroll */
+        .card-body.no-pad { overflow-x: auto; }
+        .data-table { min-width: 600px; }
+        .data-table th, .data-table td { padding: 10px 12px; font-size: 12px; }
+
+        /* Filter bars */
+        [style*="grid-template-columns"] { grid-template-columns: 1fr 1fr !important; }
+        .form-row-2 { grid-template-columns: 1fr !important; }
+
+        /* Assignment flow */
+        .assign-flow { min-width: 160px !important; }
+
+        /* Modal */
+        .modal { max-width: 95vw !important; }
+        .modal-body { max-height: 80vh; }
+    }
+
+    @@media (max-width: 480px) {
+        .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-card { padding: 12px; }
+        .stat-val { font-size: 1.3rem; }
+        .stat-lbl { font-size: 10px; }
+        [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+        .main-content { padding: 12px; }
+        .top-header > img:first-child { height: 44px !important; }
+        .page-hdr h2 { font-size: 1.2rem; }
+    }
   </style>
 </head>
 <body>
@@ -302,12 +404,19 @@
     </div>
   </div>
   <img src="~/img/emblem.png" style="height: 100px; width: auto; margin-left:15px;" alt="Emblem">
+  <!-- Hamburger (mobile only) -->
+  <button class="mob-menu-btn" id="adminMenuBtn" onclick="toggleAdminSidebar()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </header>
 
 <div class="app-body">
 
+  <!-- Sidebar backdrop (mobile) -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleAdminSidebar()"></div>
+
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="adminSidebar">
     <div class="sidebar-section-label">Main</div>
     <div class="nav-item active" onclick="showPanel('overview')" id="nav-overview">
       <span class="icon">📊</span><span>Overview</span>
@@ -1446,18 +1555,19 @@
 
     if (!dept) return;
 
-    // Populate Divisions
+    // 1. Check for Divisions
     const filteredDivs = (masters.Divisions || []).filter(d => cleanMatch(d.DepartmentName, dept));
     if (filteredDivs.length > 0) {
+        // Show only Divisions
         filteredDivs.forEach(d => divSel.append(`<option value="${d.Name}">${d.Name}</option>`));
         divSel.show();
-    }
-
-    // Always show all officers for this Department as fallback/default
-    const matches = officers.filter(o => cleanMatch(o.Department, dept));
-    if (matches.length > 0) {
-        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-        offSel.show();
+    } else {
+        // No Divisions -> Show Officers immediately
+        const matches = officers.filter(o => cleanMatch(o.Department, dept));
+        if (matches.length > 0) {
+            matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+            offSel.show();
+        }
     }
   }
 
@@ -1470,25 +1580,26 @@
     const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>').hide();
 
     if (!div) { 
-        // fallback to department officers
+        // Fallback to department officers if division deselected
         const matches = officers.filter(o => cleanMatch(o.Department, dept));
-        matches.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
         offSel.show();
         return; 
     }
 
-    // Populate Sub-Divisions
+    // 1. Check for Sub-Divisions
     const filteredSubs = (masters.SubDivisions || []).filter(s => cleanMatch(s.DepartmentName, dept) && cleanMatch(s.DivisionName, div));
     if (filteredSubs.length > 0) {
+        // Show only Sub-Divisions
         filteredSubs.forEach(s => subSel.append(`<option value="${s.Name}">${s.Name}</option>`));
         subSel.show();
-    }
-
-    // Populate Officers for this Division
-    const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div));
-    if (matches.length > 0) {
-        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-        offSel.show();
+    } else {
+        // No Sub-Divisions -> Show Officers for this Division
+        const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div));
+        if (matches.length > 0) {
+            matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+            offSel.show();
+        }
     }
   }
 
@@ -1501,9 +1612,9 @@
     const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>').hide();
 
     if (!sub) {
-        // fallback to division officers
+        // Fallback to division officers if sub-division deselected
         const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div));
-        matches.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
         offSel.show();
         return;
     }
@@ -1511,17 +1622,18 @@
     // Populate Officers for this Sub-Division
     const matchingOfficers = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub));
     
-    // Populate Unique Designations
+    // 1. Check for Designations
     const uniqueDesigs = [...new Set(matchingOfficers.filter(o => o.Designation).map(o => o.Designation))];
     if (uniqueDesigs.length > 0) {
+        // Show only Designations
         uniqueDesigs.forEach(d => desigSel.append(`<option value="${d}">${d}</option>`));
         desigSel.show();
-    }
-
-    // Populate Officers
-    if (matchingOfficers.length > 0) {
-        matchingOfficers.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
-        offSel.show();
+    } else {
+        // No Designations -> Show Officers for this Sub-Division
+        if (matchingOfficers.length > 0) {
+            matchingOfficers.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+            offSel.show();
+        }
     }
   }
 
@@ -1534,22 +1646,22 @@
     const offSel = row.find('.assign-off').html('<option value="">Select Officer</option>').hide();
 
     if (!desig) {
-        // fallback to sub-division officers
+        // Fallback to sub-division officers if designation deselected
         const matches = officers.filter(o => cleanMatch(o.Department, dept) && cleanMatch(o.Division, div) && cleanMatch(o.SubDivision, sub));
-        matches.forEach(o => offSel.append(`<option value="${o.Id}">${o.FullName}</option>`));
+        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
         offSel.show();
         return;
     }
 
-    const filtered = officers.filter(o => 
+    // Final filter by Designation -> Show Officer
+    const matches = officers.filter(o => 
         cleanMatch(o.Department, dept) && 
         cleanMatch(o.Division, div) && 
         cleanMatch(o.SubDivision, sub) && 
-        (cleanMatch(o.Designation, desig))
+        cleanMatch(o.Designation, desig)
     );
-
-    if (filtered.length > 0) {
-        filtered.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
+    if (matches.length > 0) {
+        matches.forEach(o => offSel.append(`<option value="${o.Id}" data-name="${o.FullName}">${o.FullName}</option>`));
         offSel.show();
     }
   }
@@ -2892,6 +3004,25 @@
           $('.print-only-header').hide();
       });
   }
+
+  // ── Mobile Sidebar Toggle ──
+  function toggleAdminSidebar() {
+      const sidebar = document.getElementById('adminSidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const isOpen = sidebar.classList.contains('open');
+      sidebar.classList.toggle('open', !isOpen);
+      backdrop.classList.toggle('open', !isOpen);
+      document.body.style.overflow = isOpen ? '' : 'hidden';
+  }
+
+  // Auto-close sidebar on panel navigation (mobile)
+  document.querySelectorAll('#adminSidebar .nav-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+          if (window.innerWidth <= 768) {
+              toggleAdminSidebar();
+          }
+      });
+  });
 </script>
 
 <div id="fullTrackModal" class="modal-overlay">

@@ -8,6 +8,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Helpdesk — Register Complaint</title>
   <script src="/lib/jquery/dist/jquery.min.js"></script>
   <link rel="stylesheet" href="/lib/select2/css/select2.min.css">
@@ -115,6 +116,54 @@
     .selected-file-badge { background: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; display: none; align-items: center; gap: 8px; }
     
     .text-danger { color: var(--red); }
+
+    /* ─── MOBILE ─── */
+    .mob-menu-btn {
+        display: none; background: none; border: none; cursor: pointer;
+        flex-direction: column; gap: 5px; padding: 8px;
+        border-radius: 8px; margin-left: auto;
+    }
+    .mob-menu-btn span { display: block; width: 22px; height: 2px; background: var(--navy); border-radius: 2px; }
+    .sidebar-backdrop {
+        display: none; position: fixed; inset: 0;
+        background: rgba(15,23,42,0.5); z-index: 99;
+    }
+    .sidebar-backdrop.open { display: block; }
+
+    @@media (max-width: 1024px) {
+        .grid-2 { grid-template-columns: 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @@media (max-width: 768px) {
+        body { overflow: auto; height: auto; }
+        .app-body { flex-direction: column; overflow: visible; }
+        .sidebar {
+            position: fixed; top: 0; left: -260px;
+            width: 250px; height: 100%; z-index: 100;
+            transition: left 0.3s ease; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .top-header { padding: 10px 14px; gap: 10px; }
+        .top-header > img:first-child { height: 55px !important; margin-right: 10px !important; }
+        .top-header > img:last-child { height: 55px !important; }
+        .header-text h2 { font-size: 1rem !important; }
+        .header-text h4 { font-size: 12px !important; }
+        .admin-badge { display: none; }
+        .mob-menu-btn { display: flex; }
+        .gov-ribbon { font-size: 10px; padding: 5px 12px; }
+        .main-content { padding: 14px; width: 100%; }
+        .form-content { padding: 20px !important; }
+        .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
+        .ack-banner { flex-direction: column; gap: 10px; text-align: center; border-radius: 16px 16px 0 0; padding: 16px 20px; }
+        .ack-banner h3 { font-size: 1.1rem; }
+        .form-actions { flex-direction: column; align-items: stretch; }
+        .btn-premium { max-width: 100% !important; }
+    }
+    @@media (max-width: 480px) {
+        .form-content { padding: 14px !important; }
+        .top-header > img:first-child { height: 40px !important; }
+        .top-header > img:last-child { height: 40px !important; }
+    }
   </style>
 </head>
 <body>
@@ -144,11 +193,15 @@
     </div>
   </div>
   <img src="/img/emblem.png" style="height: 100px; width: auto; margin-left:15px;" alt="Emblem">
+  <button class="mob-menu-btn" onclick="toggleDirectSidebar()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </header>
 
 <div class="app-body">
+  <div class="sidebar-backdrop" id="directSidebarBackdrop" onclick="toggleDirectSidebar()"></div>
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="directSidebar">
     <div class="sidebar-section-label">Registry</div>
     <a href="/Complaint/Dashboard#overview" class="nav-item" id="nav-overview">
       <span class="icon">📊</span><span>My Analytics</span>
@@ -480,6 +533,16 @@
             }
         });
     }
+</script>
+<script>
+  function toggleDirectSidebar() {
+      const sidebar = document.getElementById('directSidebar');
+      const backdrop = document.getElementById('directSidebarBackdrop');
+      const isOpen = sidebar.classList.contains('open');
+      sidebar.classList.toggle('open', !isOpen);
+      backdrop.classList.toggle('open', !isOpen);
+      document.body.style.overflow = isOpen ? '' : 'hidden';
+  }
 </script>
 </body>
 </html>

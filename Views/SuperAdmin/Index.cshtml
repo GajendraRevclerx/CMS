@@ -11,6 +11,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CMS — System Master Control</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <script src="/lib/jquery/dist/jquery.min.js"></script>
@@ -115,6 +116,51 @@
     .form-control { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; transition: 0.2s; outline: none; }
     .form-control:focus { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.05); }
 
+    /* ─── MOBILE RESPONSIVE ─── */
+    .mob-menu-btn {
+        display: none; background: none; border: none; cursor: pointer;
+        flex-direction: column; gap: 5px; padding: 8px; border-radius: 8px; margin-left: auto;
+    }
+    .mob-menu-btn span { display: block; width: 22px; height: 2px; background: var(--navy); border-radius: 2px; }
+    
+    .sidebar-backdrop {
+        display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 1001;
+    }
+    .sidebar-backdrop.open { display: block; }
+
+    @@media (max-width: 1024px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @@media (max-width: 768px) {
+        body { overflow: auto; height: auto; }
+        .app-body { flex-direction: column; overflow: visible; }
+        
+        .sidebar {
+            position: fixed; top: 0; left: -260px; width: 250px; height: 100%;
+            z-index: 1002; transition: left 0.3s ease; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        
+        .top-header { padding: 10px 14px; gap: 10px; }
+        .top-header > img:first-child { height: 50px !important; }
+        .header-text .title { font-size: 1.1rem; }
+        .header-text .sub { display: none; }
+        .admin-badge { display: none; }
+        .mob-menu-btn { display: flex; }
+        
+        .gov-ribbon { font-size: 10px; padding: 6px 12px; }
+        .main-content { padding: 16px; width: 100%; }
+        
+        .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+        .page-hdr { flex-direction: column; align-items: stretch; gap: 12px; }
+        .btn-primary { width: 100%; justify-content: center; }
+        
+        .card { overflow-x: auto; }
+        .data-table { min-width: 600px; }
+        .data-table th, .data-table td { padding: 12px 16px; }
+    }
+
   </style>
 </head>
 <body>
@@ -143,25 +189,29 @@
       <div class="role">System Administrator</div>
     </div>
   </div>
+  <button class="mob-menu-btn" onclick="toggleSuperSidebar()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </header>
 
 <div class="app-body">
+  <div class="sidebar-backdrop" id="superSidebarBackdrop" onclick="toggleSuperSidebar()"></div>
   <!-- SIDEBAR -->
-  <div class="sidebar">
+  <aside class="sidebar" id="superSidebar">
     <div class="sidebar-section-label">Personnel Control</div>
     <a href="#" class="nav-item active">
       <span>👥</span><span>Staff Registry</span>
     </a>
-@*     <a href="#" class="nav-item">
+    <a href="#" class="nav-item">
       <span>📜</span><span>Audit Logs</span>
-    </a> *@
-   @*  <div class="sidebar-section-label">System</div>
+    </a>
+    <div class="sidebar-section-label">System</div>
     <a href="#" class="nav-item">
       <span>⚙️</span><span>Main Settings</span>
     </a>
     <a href="#" class="nav-item">
       <span>🛡️</span><span>Security Policies</span>
-    </a> *@
+    </a>
     
     <div class="sidebar-footer">
       <a href="/Account/Logout" class="logout-btn">
@@ -358,6 +408,15 @@
             closeAdminModal();
         }
     });
+
+    function toggleSuperSidebar() {
+        const sidebar = document.getElementById('superSidebar');
+        const backdrop = document.getElementById('superSidebarBackdrop');
+        const isOpen = sidebar.classList.contains('open');
+        sidebar.classList.toggle('open', !isOpen);
+        backdrop.classList.toggle('open', !isOpen);
+        document.body.style.overflow = isOpen ? '' : 'hidden';
+    }
 </script>
 
 </body>
