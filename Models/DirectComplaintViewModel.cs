@@ -9,10 +9,9 @@ namespace CMS.Models
         // User Details
         [Required(ErrorMessage = "Full Name is required.")]
         public string FullName { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Mobile Number is required.")]
+ 
         [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Please enter a valid 10-digit mobile number.")]
-        public string MobileNo { get; set; } = string.Empty;
+        public string? MobileNo { get; set; }
 
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string? Email { get; set; }
