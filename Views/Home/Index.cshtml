@@ -1,8 +1,388 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        --accent-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --text-dark: #1e293b;
+        --text-light: #64748b;
+    }
+
+    body {
+        background: #f1f5f9;
+        overflow-x: hidden;
+    }
+
+    .hero-section {
+        background: var(--primary-gradient);
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 10px;
+        position: relative;
+        color: white;
+        clip-path: ellipse(150% 100% at 50% 0%);
+    }
+
+    .hero-content {
+        text-align: center;
+        max-width: 850px;
+        z-index: 2;
+        animation: fadeIn 1s ease-out;
+    }
+
+    .hero-content h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        letter-spacing: -1px;
+    }
+
+    .hero-content p {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-bottom: 40px;
+    }
+
+    .feature-cards {
+        display: flex;
+        gap: 30px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .card-item {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px);
+        width: 320px;
+        padding: 40px 30px;
+        border-radius: 24px;
+        text-align: center;
+        color: var(--text-dark);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-item:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    }
+
+    .card-item .icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .card-item:hover .icon {
+        transform: scale(1.2);
+    }
+
+    .card-item h3 {
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .card-item p {
+        color: var(--text-light);
+        font-size: 0.95rem;
+        margin-bottom: 0;
+    }
+
+    .card-btn {
+        margin-top: 25px;
+        display: inline-block;
+        padding: 10px 25px;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-track {
+        background: var(--primary-gradient);
+        color: white !important;
+    }
+
+    .btn-register {
+        background: var(--accent-gradient);
+        color: white !important;
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 25px;
+    }
+
+    .modal-body {
+        padding: 40px;
+    }
+
+    .form-control-custom {
+        border-radius: 12px;
+        padding: 12px 20px;
+        background: #f8fafc;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-custom:focus {
+        background: white;
+        border-color: #2a5298;
+        box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.1);
+        outline: none;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @@media (max-width: 768px) {
+        .hero-content h1 { font-size: 2.5rem; }
+        .feature-cards { flex-direction: column; align-items: center; }
+        .card-item { width: 100%; max-width: 350px; }
+    }
+
+    .timeline { position: relative; padding-left: 32px; margin-top: 15px; }
+    .tl-item { position: relative; margin-bottom: 24px; }
+    .tl-dot-wrap { position: absolute; left: -32px; top: 0; bottom: -24px; width: 24px; display: flex; flex-direction: column; align-items: center; }
+    .tl-dot { width: 12px; height: 12px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--border); z-index: 1; }
+    .tl-line { flex: 1; width: 2px; background: var(--border); }
+    .tl-content { padding-top: 0; }
+    .tl-title { font-size: 13.5px; font-weight: 700; color: #1e3c72; }
+    .tl-sub { font-size: 12px; color: #64748b; margin: 2px 0; }
+    .tl-time { font-size: 11px; font-weight: 600; color: #64748b; }
+</style>
+
+<div class="hero-section">
+    <div class="hero-content">
+        <h3>Empowering Citizens, Enhancing Governance</h3>
+        <p>A seamless platform to voice your concerns and track resolutions in real-time. Join thousands of citizens in making our city better.</p>
+
+        <div class="feature-cards">
+            <!-- Box 1: Track -->
+            <div class="card-item" onclick="$('#trackModal').modal('show')">
+                <span class="icon">🔍</span>
+                <h3>Track Your Complaint</h3>
+                <p>Check the real-time status using your complaint number.</p>
+                <div class="card-btn btn-track">Track Complaint</div>
+            </div>
+
+            <!-- Box 2: Register -->
+@*             <a href="/Complaint/DirectSubmit" class="card-item" style="text-decoration: none;">
+                <span class="icon">📝</span>
+                <h3>Register a Complaint</h3>
+                <p>Submit a new request instantly without a complex login process.</p>
+                <div class="card-btn btn-register">File Instant Complaint</div>
+            </a> *@
+        </div>
+    </div>
 </div>
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Welcome Back</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="loginAlert"></div>
+                <form id="ajaxLoginForm" method="post">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">User ID</label>
+                        <input type="text" name="MobileNo" class="form-control form-control-custom" placeholder="Enter your User Id" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Password</label>
+                        <input type="password" name="Password" class="form-control form-control-custom" placeholder="Enter your password" required>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill py-3 fw-bold" style="background: var(--primary-gradient); border: none;">Login & Track</button>
+                    </div>
+                    <div class="text-center mt-4">
+                       @*  <p class="text-muted small">Don't have an account? <a href="/Account/Register" class="text-primary fw-bold">Register Now</a></p> *@
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Track Complaint Modal -->
+<div class="modal fade" id="trackModal" tabindex="-1" aria-labelledby="trackModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-gradient); color: white; border: none;">
+                <h5 class="modal-title" id="trackModalLabel">Track Complaint</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="trackContentArea">
+                    <div id="trackResult"></div>
+                    <form id="trackForm">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Complaint/Acknowledgement No.</label>
+                            <input type="text" id="trackId" class="form-control form-control-custom" placeholder="e.g. 2026/0001" required autocomplete="off">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary rounded-pill py-3 fw-bold" style="background: var(--primary-gradient); border: none;">Search Status</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#ajaxLoginForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+                
+                $.ajax({
+                    url: '/Account/Login',
+                    type: 'POST',
+                    data: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function(response) {
+                        if(response.success) {
+                            window.location.href = response.redirectUrl;
+                        }
+                    },
+                    error: function(xhr) {
+                        var msg = xhr.responseJSON ? xhr.responseJSON.message : "An error occurred. Please try again.";
+                        $('#loginAlert').html('<div class="alert alert-danger p-2 small">' + msg + '</div>');
+                    }
+                });
+            });
+            
+            // Public Tracking
+            $('#trackForm').on('submit', function(e) {
+                e.preventDefault();
+                var id = $('#trackId').val().trim();
+                var $result = $('#trackResult');
+                
+                $result.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
+                
+                $.ajax({
+                    url: '/Complaint/Track',
+                    type: 'GET',
+                    data: { id: id },
+                    success: function(res) {
+                        if(res.success) {
+                            let step = 1;
+                            if (res.status === 'Assigned') step = 2;
+                            if (res.status === 'Resolved' || res.status === 'Closed') step = 3;
+                            
+                            var progressWidth = ((step - 1) / 2) * 100;
+                            if (step === 1) progressWidth = 0;
+
+                            $result.html(`
+                                <div class="timeline" style="text-align: left; padding: 10px;">
+                                    <!-- Section 1: Registered -->
+                                    <div class="tl-item">
+                                        <div class="tl-dot-wrap"><div class="tl-dot" style="background:#10b981"></div><div class="tl-line"></div></div>
+                                        <div class="tl-content">
+                                            <div class="tl-title">1. Complaint Registered</div>
+                                            <div class="tl-time">${res.createdDate}</div>
+                                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
+                                                <div><strong>Complaint No:</strong> ${res.complaintNo}</div>
+                                                <div><strong>FullName:</strong> ${res.fullName}</div>
+                                                <div><strong>Issue:</strong> ${res.title}</div>
+                                                <div><strong>Address:</strong> ${res.address}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Section 2: Assigned -->
+                                    <div class="tl-item">
+                                        <div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 2 ? '#10b981' : '#e2e8f0'}"></div><div class="tl-line"></div></div>
+                                        <div class="tl-content">
+                                            <div class="tl-title">2. Assigned for Action</div>
+                                            ${step >= 2 ? `
+                                            <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
+                                                <div><strong>Department:</strong> ${res.department}</div>
+                                                <div><strong>Officer:</strong> ${res.assignedTo}</div>
+                                                <div><strong>Mobile No:</strong> ${res.assignedToMobile}</div>
+                                            </div>
+                                            ` : '<div class="tl-sub">Pending assignment to a department head.</div>'}
+                                        </div>
+                                    </div>
+
+                                    <!-- Section 3: Resolved -->
+                                    <div class="tl-item">
+                                        <div class="tl-dot-wrap"><div class="tl-dot" style="background:${step >= 3 ? '#10b981' : '#e2e8f0'}"></div></div>
+                                        <div class="tl-content">
+                                            <div class="tl-title">3. Resolution Details</div>
+                                            ${step >= 3 ? `
+                                            <div style="background:#f0fff4; border:1px solid #bbf7d0; border-radius:8px; padding:10px; margin-top:8px; font-size:12px;">
+                                                <div><strong>Resolved By:</strong> ${res.assignedTo}</div>
+                                                <div><strong>Mobile No:</strong> ${res.assignedToMobile}</div>
+                                                <div><strong>Department:</strong> ${res.department}</div>
+                                                <div style="margin-top:6px; padding-top:6px; border-top:1px solid #bbf7d0;">
+                                                    <strong>Resolution Remark:</strong><br/>
+                                                    <span style="color:#166534;">${res.resolutionRemark}</span>
+                                                </div>
+                                                <div style="margin-top:6px; font-weight:700; color:#166534;">
+                                                    ⏱ Resolved in: ${res.timeTaken}
+                                                </div>
+                                            </div>
+                                            ` : '<div class="tl-sub">Awaiting resolution by the assigned department.</div>'}
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-4">
+                                        <button class="btn btn-outline-secondary btn-sm rounded-pill px-4" onclick="location.reload()">Track Another</button>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            // Animate progress line
+                            setTimeout(() => {
+                                $('#actualProgressLine').css('width', `calc(${progressWidth}% - 0px)`);
+                            }, 100);
+                            
+                            $('#trackForm').hide();
+                        }
+                    },
+                    error: function(xhr) {
+                        var msg = xhr.responseJSON ? xhr.responseJSON.message : "Complaint not found or system error.";
+                        $result.html('<div class="alert alert-danger p-3 rounded-4 mb-4">' + msg + '</div>');
+                    }
+                });
+            });
+
+            // Clear modal on close
+            $('#trackModal').on('hidden.bs.modal', function () {
+                $('#trackId').val('');
+                $('#trackResult').html('');
+                $('#trackForm').show();
+            });
+        });
+    </script>
+}

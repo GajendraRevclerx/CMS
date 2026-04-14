@@ -1,7 +1,9 @@
 using CMS.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using MongoDB.Bson;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CMS.Services
 {
@@ -15,6 +17,7 @@ namespace CMS.Services
             _database = client.GetDatabase(mongoDBSettings.Value.DatabaseName);
 
             ConfigureIndices();
+            MigrateDepartments();
             SeedData();
         }
 
@@ -29,9 +32,11 @@ namespace CMS.Services
         private void ConfigureIndices()
         {
             var usersCollection = Users;
+            // DROP EXISTING UNIQUE INDEX IF IT EXISTS
+            try { usersCollection.Indexes.DropOne("MobileNo_1"); } catch { }
+
             var indexKeysDefinition = Builders<User>.IndexKeys.Ascending(u => u.MobileNo);
-            var indexOptions = new CreateIndexOptions { Unique = true };
-            var indexModel = new CreateIndexModel<User>(indexKeysDefinition, indexOptions);
+            var indexModel = new CreateIndexModel<User>(indexKeysDefinition);
             usersCollection.Indexes.CreateOne(indexModel);
 
             // States / Cities indices
@@ -43,20 +48,23 @@ namespace CMS.Services
         {
             // Seed Master Data
             var mastersCollection = Masters;
-            if (mastersCollection.CountDocuments(FilterDefinition<Master>.Empty) == 0)
+            var master = mastersCollection.Find(FilterDefinition<Master>.Empty).FirstOrDefault();
+            
+            if (master == null)
             {
-                var masterData = new Master
+                master = new Master
                 {
-                    States = new List<StateData>
+                    States = new List<string> { "CHD", "PUN", "HAR", "DEL" },
+                    Cities = new List<string> { "Chandigarh", "Mohali", "Panchkula", "New Delhi" },
+                    Areas = new List<string> { "North Zone", "South Zone", "East Zone", "West Zone", "Central Mall" },
+                    Sectors = new List<SectorMapping> 
                     {
-                        new StateData { ShortCode = "PB", FullName = "Punjab", Cities = new List<string> { "Chandigarh", "Amritsar", "Ludhiana", "Jalandhar", "Patiala", "Mohali" } },
-                        new StateData { ShortCode = "HR", FullName = "Haryana", Cities = new List<string> { "Panchkula", "Gurugram", "Faridabad", "Rohtak", "Ambala", "Karnal" } },
-                        new StateData { ShortCode = "UP", FullName = "Uttar Pradesh", Cities = new List<string> { "Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Ghaziabad", "Prayagraj" } },
-                        new StateData { ShortCode = "DL", FullName = "Delhi", Cities = new List<string> { "New Delhi", "North Delhi", "South Delhi", "Central Delhi" } },
-                        new StateData { ShortCode = "RJ", FullName = "Rajasthan", Cities = new List<string> { "Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer", "Bikaner" } },
-                        new StateData { ShortCode = "MH", FullName = "Maharashtra", Cities = new List<string> { "Mumbai", "Pune", "Nagpur", "Thane", "Nashik" } },
-                        new StateData { ShortCode = "KA", FullName = "Karnataka", Cities = new List<string> { "Bengaluru", "Mysuru", "Hubballi", "Mangaluru" } },
-                        new StateData { ShortCode = "TN", FullName = "Tamil Nadu", Cities = new List<string> { "Chennai", "Coimbatore", "Madurai", "Salem" } }
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 1" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 2" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 17" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 22" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 34" },
+                        new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 35" }
                     },
                     Departments = new List<DepartmentMaster>
                     {
@@ -66,7 +74,53 @@ namespace CMS.Services
                         new DepartmentMaster { Name = "Electrical", Code = "ELE" }
                     }
                 };
-                mastersCollection.InsertOne(masterData);
+                mastersCollection.InsertOne(master);
+            }
+            else if (master.Sectors == null || master.Sectors.Count == 0)
+            {
+                // Force seed sectors if missing in existing master record
+                var update = Builders<Master>.Update.Set(m => m.Sectors, new List<SectorMapping> 
+                {
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 1" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 2" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 17" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 22" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 34" },
+                    new SectorMapping { State = "CHD", City = "Chandigarh", SectorName = "Sector 35" }
+                });
+                mastersCollection.UpdateOne(m => m.Id == master.Id, update);
+            }
+
+            // Seed Users (Admin & Dept Heads)
+            var usersCollection = Users;
+
+            // Check by MobileNo to ensure exact accounts exist
+            if (usersCollection.CountDocuments(u => u.MobileNo == "admin") == 0)
+            {
+                usersCollection.InsertOne(new User
+                {
+                    MobileNo = "admin",
+                    Password = "admin",
+                    FullName = "Super Administrator",
+                    Role = "Admin"
+                });
+            }
+        }
+
+        private void MigrateDepartments()
+        {
+            var collection = _database.GetCollection<BsonDocument>("Users");
+            // Find documents where Department is an array
+            var filter = Builders<BsonDocument>.Filter.Type("Department", BsonType.Array);
+            
+            using var cursor = collection.Find(filter).ToCursor();
+            foreach (var doc in cursor.ToEnumerable())
+            {
+                var deptArray = doc["Department"].AsBsonArray;
+                string firstDept = deptArray.Count > 0 ? deptArray[0].AsString : "";
+                
+                var update = Builders<BsonDocument>.Update.Set("Department", firstDept);
+                collection.UpdateOne(Builders<BsonDocument>.Filter.Eq("_id", doc["_id"]), update);
             }
 
             // Seed States
