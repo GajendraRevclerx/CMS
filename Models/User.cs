@@ -1,9 +1,11 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Collections.Generic;
 
 namespace CMS.Models
 {
+    [BsonIgnoreExtraElements]
     public class User
     {
         [BsonId]
@@ -16,17 +18,18 @@ namespace CMS.Models
         public string MobileNo { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;
-
         public string Email { get; set; } = string.Empty;
 
-        public string Role { get; set; } = "Citizen"; // Valid values: "Citizen", "Admin", "Officer"
+        // Citizen, DeptHead, Admin
+        public string Role { get; set; } = "Citizen";
 
-        // Officer Specific Fields
-        public string Designation { get; set; } = string.Empty;
-        public string Department { get; set; } = string.Empty; // Department Name or ID
-        public string AreaOfJurisdiction { get; set; } = string.Empty;
-        public string Landline { get; set; } = string.Empty;
-
-        public string Status { get; set; } = "Active"; // "Active" or "Inactive"
+        // For DeptHead role
+        public string? Department { get; set; }
+        public string? Division { get; set; }
+        public string? SubDivision { get; set; }
+        public string? Designation { get; set; }
+        public string? Area { get; set; }
+        public string? AreaOfJurisdiction { get; set; }
+        public string? Landline { get; set; }
     }
 }

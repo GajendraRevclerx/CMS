@@ -10,8 +10,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-using MongoDB.Driver;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

@@ -1,0 +1,669 @@
+@model CMS.Models.DirectComplaintViewModel
+
+@{
+    ViewData["Title"] = "Direct Complaint Registration";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #2a5298 0%, #1e3a8a 100%);
+        --accent-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --glass-border: rgba(255, 255, 255, 0.2);
+    }
+
+    body {
+        background: #f0f2f5;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .premium-container {
+        max-width: 1100px;
+        margin: 40px auto;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Ack Banner */
+    .ack-banner {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 20px 40px;
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(30, 58, 138, 0.15);
+    }
+
+    .ack-banner h3 {
+        font-family: 'Rajdhani', sans-serif;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: 1px;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .ack-number {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 6px 16px;
+        border-radius: 10px;
+        font-family: monospace;
+        letter-spacing: 2px;
+        font-size: 1.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .glass-main-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-radius: 0 0 24px 24px;
+        border: 1px solid var(--border);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    /* Step Tracker */
+    .step-tracker {
+        display: flex;
+        padding: 30px 50px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 2;
+        flex: 1;
+        position: relative;
+    }
+
+    .step-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #94a3b8;
+        transition: all 0.3s ease;
+    }
+
+    .step-item.active .step-circle {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+        box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.15);
+    }
+
+    .step-item.completed .step-circle {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .step-item.active .step-label { color: #1e293b; }
+
+    /* Form Styles */
+    .form-content {
+        padding: 50px;
+    }
+
+    .form-section {
+        display: none;
+        animation: slideIn 0.5s ease;
+    }
+
+    .form-section.active {
+        display: block;
+    }
+
+    @@keyframes slideIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .section-header {
+        margin-bottom: 35px;
+    }
+
+    .section-header h4 {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .section-header p {
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    .input-group-custom {
+        margin-bottom: 25px;
+    }
+
+    .input-label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #475569;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control-premium {
+        width: 100%;
+        padding: 14px 20px;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        background: #fff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        color: #1e293b;
+    }
+
+    .form-control-premium:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+        outline: none;
+    }
+
+    .form-control-premium::placeholder {
+        color: #cbd5e1;
+    }
+
+    textarea.form-control-premium {
+        resize: none;
+    }
+
+    /* Actions */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-premium {
+        padding: 14px 35px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-next {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2);
+    }
+
+    .btn-next:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(30, 58, 138, 0.3);
+    }
+
+    .btn-back {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-back:hover {
+        background: #e2e8f0;
+    }
+
+    .btn-submit {
+        background: var(--accent-gradient);
+        color: white;
+        box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
+    }
+
+    /* Evidence Upload Dropzone Area */
+    .dropzone-area {
+        border: 2px dashed #cbd5e1;
+        border-radius: 16px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .dropzone-area:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+
+    .dropzone-icon {
+        font-size: 3rem;
+        color: #94a3b8;
+    }
+
+    .dropzone-text h5 {
+        margin: 0;
+        color: #1e293b;
+        font-weight: 700;
+    }
+
+    .dropzone-text p {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    .selected-file-badge {
+        background: #dcfce7;
+        color: #166534;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: none;
+        align-items: center;
+        gap: 8px;
+    }
+
+    @@media (max-width: 768px) {
+        .grid-2 { grid-template-columns: 1fr; }
+        .grid-3 { grid-template-columns: 1fr; }
+        .step-label { display: none; }
+        .ack-banner { flex-direction: column; gap: 10px; text-align: center; }
+        .premium-container { margin: 10px; }
+        .form-content { padding: 25px; }
+    }
+</style>
+
+<div class="premium-container">
+    <!-- ACK Banner -->
+    <div class="ack-banner">
+        <h3>CITIZEN GRIEVANCE PORTAL</h3>
+        <div style="display:flex; align-items:center; gap:15px;">
+            <span style="font-size:0.8rem; font-weight:600; opacity:0.8; text-transform:uppercase;">Complaint No:</span>
+            <div class="ack-number" id="nextAckNo">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="glass-main-card">
+        <!-- Progress -->
+        <div class="step-tracker">
+            <div class="step-item active" id="step-dot-1">
+                <div class="step-circle">01</div>
+                <div class="step-label">Account</div>
+            </div>
+            <div class="step-item" id="step-dot-2">
+                <div class="step-circle">02</div>
+                <div class="step-label">Issue</div>
+            </div>
+            <div class="step-item" id="step-dot-3">
+                <div class="step-circle">03</div>
+                <div class="step-label">Location</div>
+            </div>
+            <div class="step-item" id="step-dot-4">
+                <div class="step-circle">04</div>
+                <div class="step-label">Evidence</div>
+            </div>
+        </div>
+
+        <form id="premiumSubmitForm" enctype="multipart/form-data">
+            <div class="form-content">
+                
+                <!-- STEP 1: Personal Info -->
+                <div class="form-section active" id="section-1">
+                    <div class="section-header">
+                        <h4>Account Information</h4>
+                        <p>We need your contact details to keep you updated on the resolution progress.</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="input-group-custom">
+                            <label class="input-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="FullName" class="form-control-premium" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="input-group-custom">
+                            <label class="input-label">Email Address</label>
+                            <input type="email" name="Email" class="form-control-premium" placeholder="name@example.com">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="input-group-custom">
+                            <label class="input-label">Mobile Number</label>
+                            <input type="text" name="MobileNo" class="form-control-premium" placeholder="10-digit primary contact" maxlength="10">
+                        </div>
+                        <div class="input-group-custom">
+                            <label class="input-label">Create Password <span class="text-danger">*</span></label>
+                            <input type="password" name="Password" class="form-control-premium" placeholder="Used to track your complaint" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Issue Details -->
+                <div class="form-section" id="section-2">
+                    <div class="section-header">
+                        <h4>Complaint Details</h4>
+                        <p>Tell us about the issue you are facing so we can categorize it correctly.</p>
+                    </div>
+
+                    <div class="input-group-custom">
+                        <label class="input-label">Subject / Title</label>
+                        <input type="text" id="ComplaintTitle" name="ComplaintTitle" class="form-control-premium" placeholder="Brief title of the issue">
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="input-group-custom">
+                            <label class="input-label">Department <span class="text-danger">*</span></label>
+                            <select id="Department" name="Department" class="form-control-premium" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="input-group-custom">
+                            <label class="input-label">Source</label>
+                            <select name="Source" class="form-control-premium">
+                                <option value="Web Portal" selected>Citizen Web Portal</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Location -->
+                <div class="form-section" id="section-3">
+                    <div class="section-header">
+                        <h4>Incident Location</h4>
+                        <p>Provide the precise location where the issue occurred.</p>
+                    </div>
+
+                    <div class="grid-3">
+                        <div class="input-group-custom">
+                            <label class="input-label">State <span class="text-danger">*</span></label>
+                            <select id="State" name="State" class="form-control-premium" required>
+                                <option value="">Select State</option>
+                            </select>
+                        </div>
+                        <div style="display:none" class="input-group-custom">
+                            <label class="input-label">City <span class="text-danger">*</span></label>
+                            <select id="City" name="City" class="form-control-premium" required>
+                                <option value="">Select City</option>
+                            </select>
+                        </div>
+                        <div class="input-group-custom">
+                            <label class="input-label">PIN Code <span class="text-danger">*</span></label>
+                            <input type="text" name="PinCode" class="form-control-premium" placeholder="6-digit ZIP" maxlength="6" required>
+                        </div>
+                    </div>
+
+                    <div class="input-group-custom">
+                        <label class="input-label">Sector / ward</label>
+                        <select id="Area" name="Area" class="form-control-premium">
+                            <option value="">Select Area</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Evidence -->
+                <div class="form-section" id="section-4">
+                    <div class="section-header">
+                        <h4>Evidence & Description</h4>
+                        <p>Finally, provide a detailed explanation and upload any photos if available.</p>
+                    </div>
+
+                    <div class="input-group-custom">
+                        <label class="input-label">Complaint Description <span class="text-danger">*</span></label>
+                        <textarea id="Description" name="Description" rows="5" class="form-control-premium" placeholder="Explain the issue in detail..." required></textarea>
+                        <div style="text-align:right; margin-top:5px;"><span id="premiumCharCount" style="font-size:0.75rem; font-weight:700; color:#ef4444;">0 / 10</span></div>
+                    </div>
+
+                    <div class="input-group-custom">
+                        <label class="input-label">Files & Attachments</label>
+                        <input type="file" id="Attachment" name="Attachment" style="display:none;">
+                        <div class="dropzone-area" onclick="document.getElementById('Attachment').click()">
+                            <div class="dropzone-icon"></div>
+                            <div class="dropzone-text">
+                                <h5>Upload supporting documents</h5>
+                                <p>Drag and drop or click to browse files (Images/PDF Max 4MB)</p>
+                            </div>
+                            <div class="selected-file-badge" id="fileBadge">
+                                <span>ðŸ“„</span> <span id="fileName">No file selected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="form-actions">
+                    <button type="button" class="btn-premium btn-back" id="btnPrev" style="visibility:hidden;">
+                        <span>&larr;</span> Previous
+                    </button>
+                    <button type="button" class="btn-premium btn-next" id="btnNext">
+                        Next Step <span>&rarr;</span>
+                    </button>
+                    <button type="submit" class="btn-premium btn-submit" id="btnSubmitFinal" style="display:none;">
+                        Submit Complaint
+                    </button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        $(document).ready(function() {
+            // Initial Data Fetch
+            fetchNextAckNo();
+            loadMasterData();
+
+            // Navigation Logic
+            $('#btnNext').on('click', function() {
+                if (validateCurrentStep()) {
+                    if (currentStep < totalSteps) {
+                        goToStep(currentStep + 1);
+                    }
+                }
+            });
+
+            $('#btnPrev').on('click', function() {
+                if (currentStep > 1) {
+                    goToStep(currentStep - 1);
+                }
+            });
+
+            // File selection UI
+            $('#Attachment').on('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    $('#fileName').text(file.name);
+                    $('#fileBadge').css('display', 'flex');
+                }
+            });
+
+            // Char counter
+            $('#Description').on('input', function() {
+                const len = $(this).val().length;
+                $('#premiumCharCount').text(len + ' / 10');
+                $('#premiumCharCount').css('color', len >= 10 ? '#10b981' : '#ef4444');
+            });
+
+            // Form Submit
+            $('#premiumSubmitForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                if ($('#Description').val().length < 10) {
+                    Swal.fire('Description Required', 'Please provide at least 10 characters in the description.', 'warning');
+                    return;
+                }
+
+                const formData = new FormData(this);
+                $('#btnSubmitFinal').prop('disabled', true).text('ðŸ“¤ Submitting...');
+
+                $.ajax({
+                    url: '/Complaint/DirectSubmit',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        Swal.fire({
+                            title: 'Submitted Successfully!',
+                            text: 'Your complaint ID is ' + res.complaintNo,
+                            icon: 'success',
+                            confirmButtonColor: '#1e3a8a'
+                        }).then(() => {
+                            window.location.href = '/';
+                        });
+                    },
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Submission failed';
+                        Swal.fire('Error', msg, 'error');
+                        $('#btnSubmitFinal').prop('disabled', false).text('ðŸš€ Submit Grievance');
+                    }
+                });
+            });
+
+            // Auto-Suggest Dept
+            $('#ComplaintTitle').on('blur', function() {
+                const t = $(this).val().toLowerCase();
+                const map = { 'ELE': ['wire', 'electricity', 'light', 'current', 'spark'], 'WAT': ['water', 'leak', 'drain', 'overflow'], 'SAN': ['garbage', 'waste', 'cleaning'], 'ROA': ['road', 'pothole', 'street'] };
+                for (let key in map) {
+                    if (map[key].some(kw => t.includes(kw))) { $('#Department').val(key); break; }
+                }
+            });
+        });
+
+        function goToStep(step) {
+            // Update dots
+            $('.step-item').removeClass('active');
+            for(let i=1; i<=step; i++) {
+                $(`#step-dot-${i}`).addClass(i === step ? 'active' : 'completed');
+            }
+
+            // Update sections
+            $(`.form-section`).removeClass('active');
+            $(`#section-${step}`).addClass('active');
+
+            // Update btns
+            currentStep = step;
+            $('#btnPrev').css('visibility', currentStep === 1 ? 'hidden' : 'visible');
+            
+            if (currentStep === totalSteps) {
+                $('#btnNext').hide();
+                $('#btnSubmitFinal').show();
+            } else {
+                $('#btnNext').show();
+                $('#btnSubmitFinal').hide();
+            }
+        }
+
+        function validateCurrentStep() {
+            const currentSection = $(`#section-${currentStep}`);
+            let valid = true;
+            currentSection.find('input[required], select[required], textarea[required]').each(function() {
+                if (!$(this).val()) {
+                    valid = false;
+                    $(this).css('border-color', '#ef4444');
+                    setTimeout(() => $(this).css('border-color', ''), 2000);
+                }
+            });
+
+            if (!valid) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Please fill required fields',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }
+            return valid;
+        }
+
+        function fetchNextAckNo() {
+            $.get('/Complaint/GetNextId', function(res) {
+                $('#nextAckNo').text(res.nextId);
+            }).fail(() => $('#nextAckNo').text('PENDING'));
+        }
+
+        function loadMasterData() {
+            // States
+            $.get('/api/MasterData/states', function(data) {
+                data.forEach(function(s) { $('#State').append(new Option(s, s)); });
+            });
+
+            // Cities
+            $('#State').on('change', function() {
+                const s = $(this).val();
+                $('#City').empty().append(new Option('Select City', ''));
+                if (s) {
+                    $.get('/api/MasterData/cities-by-state?state=' + s, function(data) {
+                        data.forEach(function(c) { $('#City').append(new Option(c, c)); });
+                    });
+                }
+            });
+
+            // Areas
+            $('#City').on('change', function() {
+                const c = $(this).val();
+                $('#Area').empty().append(new Option('Select Area', ''));
+                if (c) {
+                    $.get('/api/MasterData/sectors-by-city?city=' + c, function(data) {
+                        data.forEach(function(a) { $('#Area').append(new Option(a, a)); });
+                    });
+                }
+            });
+
+            // Departments
+            $.get('/api/MasterData/departments', function(data) {
+                data.forEach(function(d) { $('#Department').append(new Option(d.name, d.code)); });
+            });
+        }
+    </script>
+}

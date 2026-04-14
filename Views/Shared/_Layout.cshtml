@@ -8,68 +8,257 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CMS.styles.css" asp-append-version="true" />
-    @await RenderSectionAsync("Styles", required: false)
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0f172a;
+            --blue: #1657a8;
+            --blue-light: #6366f1;
+            --saffron: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --bg: #f8fafc;
+            --panel: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-light: #64748b;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        
+        /* GOV RIBBON */
+        .gov-ribbon { background: var(--navy); color: #fff; font-size: 11px; padding: 8px 24px; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; border-bottom: 3px solid var(--green); }
+        .gov-ribbon .ml { display: flex; align-items: center; gap: 15px; }
+        .ribbon-badge { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+
+        /* TOP HEADER */
+        .top-header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .header-emblem { width: 42px; height: 42px; text-decoration: none; cursor: pointer; }
+        .header-text { flex: 1; }
+        .header-text .title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.3rem; color: var(--navy); line-height: 1.1; }
+        .header-text .sub { font-size: 11px; color: var(--text-light); font-weight: 500; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .auth-badge { display: flex; align-items: center; gap: 12px; background: #f1f5f9; padding: 6px 14px; border-radius: 12px; border: 1px solid var(--border); text-decoration: none; transition: all 0.2s; }
+        .auth-badge:hover { background: #e2e8f0; text-decoration: none; }
+        .auth-avatar { width: 34px; height: 34px; background: var(--navy); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+        .auth-info .name { font-weight: 700; font-size: 13px; color: var(--navy); }
+        .auth-info .role { font-size: 10px; color: var(--text-light); font-weight: 700; text-transform: uppercase; }
+
+        .site-nav { display: flex; gap: 24px; margin-right: 20px; }
+        .site-nav a { text-decoration: none; color: var(--text-mid); font-weight: 600; font-size: 13px; transition: color 0.2s; }
+        .site-nav a:hover { color: var(--blue-light); }
+
+        .btn-login-sm { background: var(--blue-light); color: white !important; font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: 8px; text-decoration: none; }
+        .btn-login-sm:hover { background: var(--navy); }
+
+        .main-container { padding-top: 20px; }
+
+        /* ─── MOBILE RESPONSIVE ─── */
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 5px;
+            padding: 6px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .hamburger-btn span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--navy);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        .hamburger-btn:hover { background: #f1f5f9; }
+
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.5);
+            z-index: 998;
+        }
+        .mobile-nav-overlay.open { display: block; }
+
+        .mobile-nav-drawer {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 260px;
+            height: 100%;
+            background: var(--panel);
+            z-index: 999;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+        .mobile-nav-drawer.open { right: 0; }
+        .mobile-nav-drawer a {
+            display: block;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--navy);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .mobile-nav-drawer a:hover { background: #f1f5f9; }
+        .mobile-nav-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--text-light);
+            align-self: flex-end;
+            margin-bottom: 10px;
+        }
+
+        @@media (max-width: 768px) {
+            .gov-ribbon { font-size: 10px; padding: 6px 12px; flex-wrap: wrap; gap: 4px; }
+            .gov-ribbon .ml { gap: 8px; }
+
+            .top-header { padding: 10px 14px; gap: 10px; flex-wrap: nowrap; }
+            .top-header > a { width: auto !important; }
+            .top-header > a img { height: 50px !important; margin-left: 0 !important; }
+            .header-text .title { font-size: 1rem; }
+            .header-text .title h2 { font-size: 1rem; }
+            .header-text h6 { font-size: 11px; }
+            .auth-badge { padding: 4px 8px; gap: 8px; }
+            .auth-info .name { font-size: 11px; }
+            .auth-info .role { display: none; }
+            .site-nav { display: none !important; }
+            .hamburger-btn { display: flex; }
+            .top-header > img:last-child { height: 50px !important; margin-left: 8px !important; }
+            .hide-mob { display: none !important; }
+        }
+
+        @@media (max-width: 480px) {
+            .top-header > a img { height: 40px !important; }
+            .top-header > img:last-child { height: 40px !important; }
+            .auth-avatar { width: 28px; height: 28px; font-size: 11px; }
+        }
+</style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CMS</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
-                        {
-                            if (User.IsInRole("Admin"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
-                                </li>
-                            }
-                            else
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Complaint" asp-action="Dashboard">My Complaints</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Complaint" asp-action="Submit">Submit Complaint</a>
-                                </li>
-                            }
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Logout">Logout (@User.Identity.Name)</a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Complaint" asp-action="Submit">Register & Submit Complaint</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
+    <div class="gov-ribbon">
+        <div><strong>ENTERPRISE SUPPORT</strong> &nbsp;·&nbsp; <strong>CORPORATE HELPDESK</strong></div>
+        <div  class="ml">
+            @if (User.Identity != null && User.Identity.IsAuthenticated) {
+                <span style="display:none;" class="ribbon-badge">🟢 Secure Session</span>
+            } else {
+                <span class="ribbon-badge" style="background: var(--saffron);display:none;">🌐 Public Access</span>
+            }
+            <span style="opacity:.5;">|</span>
+            <span>@DateTime.Now.ToString("ddd, dd MMM yyyy")</span>
+        </div>
+    </div>
+
+    <header class="top-header">
+        <a href="/" style="display:flex; align-items:center; gap:15px;width:50%!important; text-decoration:none;">
+            <img src="~/img/logo.png" style="height: 100px; width: auto;margin-left:10%" alt="Logo">
+            <div class="header-text" >
+                <div class="title"><h2>Chandigarh CMS</h2></div>
+                <div class=""><h6>Complaint Management System</h6></div>
             </div>
+        </a>
+
+        <div style="flex:1;"></div>
+
+        <nav class="site-nav">
+            @* <a asp-controller="Home" asp-action="Index">Home</a> *@
+            @if (User.Identity != null && User.Identity.IsAuthenticated) {
+                if (User.IsInRole("Admin")) {
+                    <a asp-controller="Admin" asp-action="Index">Admin Control Panel</a>
+                } else if (User.IsInRole("Helpdesk")) {
+                    <a asp-controller="Complaint" asp-action="Dashboard">Helpdesk Dashboard</a>
+                    <a asp-controller="Complaint" asp-action="DirectSubmit">Register Complaint</a>
+                    <a href="/Complaint/Dashboard#assignments">Assign Officer</a>
+                } else {
+                    <a asp-controller="Complaint" asp-action="Dashboard">My History</a>
+                    <a asp-controller="Complaint" asp-action="Submit">File New</a>
+                }
+            }
         </nav>
+
+        <!-- Hamburger (mobile only) -->
+        <button class="hamburger-btn" id="mobileMenuBtn" aria-label="Open menu" onclick="openMobileNav()">
+            <span></span><span></span><span></span>
+        </button>
+
+        @if (User.Identity != null && User.Identity.IsAuthenticated) {
+            <div class="auth-badge">
+                <div class="auth-avatar">@(User.Identity.Name?[0].ToString().ToUpper() ?? "U")</div>
+                <div class="auth-info">
+                    <div class="name">@User.Identity.Name</div>
+                    <div class="role">@(User.IsInRole("Admin") ? "System Administrator" : User.IsInRole("Helpdesk") ? "Helpdesk Officer" : "Verified Client")</div>
+                </div>
+                <a asp-controller="Account" asp-action="Logout" style="margin-left:10px; font-size:18px; color:var(--red);" title="Logout">🚪</a>
+            </div>
+        } else {
+            <a href="/#loginModal" class="hide-mob" style="text-decoration:none;margin-bottom:-6%;" onclick="$('#loginModal').modal('show')">Login to Portal</a>
+        }
+        <img src="~/img/emblem.png" style="height: 100px; width: auto; margin-left:15px;margin-right:6%" alt="Emblem">
     </header>
-    <div class="container-fluid">
+    <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
     <footer class="border-top footer text-muted">
-        <div class="container-fluid">
-            &copy; 2026 - CMS - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        <div class="container">
+            &copy; 2026 - CMS
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Mobile Nav Drawer -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
+    <div class="mobile-nav-drawer" id="mobileNavDrawer">
+        <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+        @if (User.Identity != null && User.Identity.IsAuthenticated) {
+            if (User.IsInRole("Admin")) {
+                <a href="/Admin/Index">🏛 Admin Control Panel</a>
+            } else if (User.IsInRole("Helpdesk")) {
+                <a href="/Complaint/Dashboard">📊 Helpdesk Dashboard</a>
+                <a href="/Complaint/DirectSubmit">📝 Register Complaint</a>
+                <a href="/Complaint/Dashboard#assignments">🔀 Assign Officer</a>
+            } else {
+                <a href="/Complaint/Dashboard">📋 My History</a>
+                <a href="/Complaint/Submit">📝 File New</a>
+            }
+            <hr style="border-color:#e2e8f0;margin:8px 0;">
+            <a href="/Account/Logout" style="color:var(--red);">🚪 Logout</a>
+        } else {
+            <a href="/#loginModal" onclick="closeMobileNav(); $('#loginModal').modal('show')">🔑 Login to Portal</a>
+            <a href="/Account/Register">📝 Register Account</a>
+        }
+    </div>
+    <script>
+        function openMobileNav() {
+            document.getElementById('mobileNavDrawer').classList.add('open');
+            document.getElementById('mobileNavOverlay').classList.add('open');
+        }
+        function closeMobileNav() {
+            document.getElementById('mobileNavDrawer').classList.remove('open');
+            document.getElementById('mobileNavOverlay').classList.remove('open');
+        }
+    </script>
 </body>
 </html>

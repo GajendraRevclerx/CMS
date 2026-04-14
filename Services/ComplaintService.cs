@@ -28,18 +28,24 @@ namespace CMS.Services
             return result.SequenceValue;
         }
 
+        public async Task<string> GetNextComplaintIdAsync()
+        {
+            var filter = Builders<Counter>.Filter.Eq(c => c.Id, "complaint_seq");
+            var result = await _context.Counters.Find(filter).FirstOrDefaultAsync();
+            var sequence = (result?.SequenceValue ?? 0) + 1;
+            return $"{DateTime.UtcNow.Year}/{sequence:D4}";
+        }
+ 
         public async Task CreateComplaintAsync(Complaint complaint)
         {
             var sequence = await GetNextSequenceValueAsync("complaint_seq");
             var year = DateTime.UtcNow.Year;
             
-            // In a real scenario, you'd match the Codes from Master table.
-            // Our seed creates Code="ELE" etc, let's assume the frontend passes the Code directly.
-            
-            complaint.ComplaintNo = $"{year}/{sequence:D5}";
+            // Format: [Year]/[Sequence] (e.g., 2026/0001)
+            complaint.ComplaintNo = $"{year}/{sequence:D4}";
             complaint.CreatedDate = DateTime.UtcNow;
-            complaint.Status = "Pending";
-
+            complaint.Status = string.IsNullOrEmpty(complaint.AssignedToId) ? "Pending" : "Assigned";
+ 
             await _context.Complaints.InsertOneAsync(complaint);
         }
     }

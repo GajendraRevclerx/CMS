@@ -9,188 +9,465 @@ using System.Linq;
 
 namespace CMS.Controllers
 {
-    [Authorize] // Ideally restrict to Roles="Admin", but omitted simply here or can be added [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly MongoDbContext _context;
+        private readonly IEmailService _emailService;
+        private readonly IReportingService _reportingService;
+        private readonly EmailSettings _emailSettings;
+        private readonly Microsoft.Extensions.Options.IOptions<EmailSettings> _options;
 
-        public AdminController(MongoDbContext context)
+        public AdminController(MongoDbContext context, IEmailService emailService, IReportingService reportingService, Microsoft.Extensions.Options.IOptions<EmailSettings> options)
         {
             _context = context;
+            _emailService = emailService;
+            _reportingService = reportingService;
+            _options = options;
+            _emailSettings = options.Value;
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var allComplaints = await _context.Complaints
+            var complaints = await _context.Complaints
                 .Find(_ => true)
                 .SortByDescending(c => c.CreatedDate)
                 .ToListAsync();
 
-            var departments = await _context.Departments
-                .Find(_ => true)
-                .ToListAsync();
+            ViewBag.Total = complaints.Count;
+            ViewBag.Pending = complaints.Count(c => c.Status == "Pending");
+            ViewBag.Assigned = complaints.Count(c => c.Status == "Assigned");
+            ViewBag.Unassigned = complaints.Count(c => string.IsNullOrEmpty(c.AssignedToId));
+            ViewBag.Resolved = complaints.Count(c => c.Status == "Resolved");
+            
+            var now = System.DateTime.UtcNow;
+            ViewBag.Escalated = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 1);
+            ViewBag.Notifications = complaints.Count(c => (now - c.CreatedDate).TotalDays <= 1);
+            ViewBag.SLA = complaints.Count(c => c.Status != "Resolved" && c.Status != "Closed" && (now - c.CreatedDate).TotalDays > 3);
 
-            var officers = await _context.Users
-                .Find(u => u.Role == "Officer")
-                .ToListAsync();
-
-            var viewModel = new AdminDashboardViewModel
+            // Analytics Data
+            var resolvedComplaints = complaints.Where(c => c.Status == "Resolved").ToList();
+            
+            double avgTime = 0;
+            if (resolvedComplaints.Any(c => c.ResolutionDate != null))
             {
-                TotalComplaints = allComplaints.Count,
-                PendingComplaints = allComplaints.Count(c => c.Status == "Pending"),
-                ResolvedComplaints = allComplaints.Count(c => c.Status == "Resolved"),
-                InProgressComplaints = allComplaints.Count(c => c.Status == "In Progress"),
-                EscalatedComplaints = allComplaints.Count(c => c.Status == "Escalated"),
-                AvgResolutionTimeDays = 3.8,
-                AvgCitizenRating = 4.1,
-                OfficersOnDuty = officers.Count(o => o.Status != "Inactive"),
-                
-                RecentComplaints = allComplaints.Take(5).ToList(),
-                AllComplaints = allComplaints,
-                Departments = departments,
-                Officers = officers
-            };
+                avgTime = resolvedComplaints.Where(c => c.ResolutionDate != null)
+                            .Average(c => (c.ResolutionDate!.Value - c.CreatedDate).TotalDays);
+            }
+            ViewBag.AvgResolutionTime = avgTime.ToString("F1") + "d";
+            
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            ViewBag.AllDepartments = master?.Departments.Select(d => new CMS.Models.DepartmentBrief { Name = d.Name, Code = d.Code }).ToList();
 
-            return View(viewModel);
+            var ratedComplaints = complaints.Where(c => c.Rating > 0).ToList();
+            double avgRating = ratedComplaints.Any() ? ratedComplaints.Average(c => c.Rating) : 0;
+            ViewBag.AvgRating = avgRating.ToString("F1") + "/5";
+
+            // Category Breakdown
+            var categoryData = complaints.GroupBy(c => c.ComplaintTitle)
+                .Select(g => new {
+                    CategoryName = g.Key,
+                    Count = g.Count(),
+                    Percentage = complaints.Count > 0 ? (int)((double)g.Count() / complaints.Count * 100) : 0
+                })
+                .OrderByDescending(x => x.Count)
+                .Take(5)
+                .ToList();
+            ViewBag.CategoryBreakdown = categoryData;
+
+            // Officer Leaderboard
+            var leaderboard = resolvedComplaints
+                .Where(c => !string.IsNullOrEmpty(c.AssignedToName))
+                .GroupBy(c => new { c.AssignedToId, c.AssignedToName })
+                .Select(g => new {
+                    OfficerName = g.Key.AssignedToName,
+                    ResolvedCount = g.Count(),
+                    AvgRating = g.Where(x => x.Rating > 0).Any() ? g.Where(x => x.Rating > 0).Average(x => x.Rating) : 0
+                })
+                .OrderByDescending(x => x.ResolvedCount)
+                .ToList();
+            ViewBag.OfficerLeaderboard = leaderboard;
+
+            // User Management Data
+            ViewBag.Users = await _context.Users.Find(_ => true).ToListAsync();
+            // All Officers
+            ViewBag.Heads = await _context.Users.Find(u => u.Role == "DeptHead").ToListAsync();
+            
+            // Fetch Master Data for Departments
+            var masters = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            ViewBag.Masters = masters ?? new Master();
+
+            return View(complaints);
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveDepartment(Department dept)
+        public async Task<IActionResult> EditUser(User user)
         {
-            if (string.IsNullOrEmpty(dept.Id))
+            try
             {
-                await _context.Departments.InsertOneAsync(dept);
-            }
-            else
-            {
-                var filter = Builders<Department>.Filter.Eq(d => d.Id, dept.Id);
-                await _context.Departments.ReplaceOneAsync(filter, dept);
-            }
-            return RedirectToAction("Index");
-        }
-
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> DeleteDepartment([FromForm] string id)
-        {
-            if (!string.IsNullOrEmpty(id))
-            {
-                var filter = Builders<Department>.Filter.Eq(d => d.Id, id);
-                var result = await _context.Departments.DeleteOneAsync(filter);
-                if (result.DeletedCount > 0)
-                {
-                    TempData["SuccessMsg"] = "Department permanently deleted.";
-                }
-                else
-                {
-                    TempData["ErrorMsg"] = "Department not found in database.";
-                }
-            }
-            else
-            {
-                TempData["ErrorMsg"] = "Empty ID submitted.";
-            }
-            return RedirectToAction("Index");
-        }
-
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> DeleteOfficer([FromForm] string id)
-        {
-            if (!string.IsNullOrEmpty(id))
-            {
-                var filter = Builders<User>.Filter.Eq(u => u.Id, id);
-                var result = await _context.Users.DeleteOneAsync(filter);
-                TempData[result.DeletedCount > 0 ? "SuccessMsg" : "ErrorMsg"] =
-                    result.DeletedCount > 0 ? "Officer permanently deleted." : "Officer not found.";
-            }
-            else
-            {
-                TempData["ErrorMsg"] = "Empty ID submitted.";
-            }
-            return RedirectToAction("Index");
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> SaveOfficer(User officer)
-        {
-            if (string.IsNullOrEmpty(officer.Id))
-            {
-                // Create New
-                officer.Role = "Officer";
-                
-                // Check if mobile already exists
-                var existing = await _context.Users.Find(u => u.MobileNo == officer.MobileNo).FirstOrDefaultAsync();
-                if (existing != null)
-                {
-                    // If exists, update its role and details
-                    var filter = Builders<User>.Filter.Eq(u => u.Id, existing.Id);
-                    var update = Builders<User>.Update
-                        .Set(u => u.Role, "Officer")
-                        .Set(u => u.FullName, officer.FullName)
-                        .Set(u => u.Department, officer.Department)
-                        .Set(u => u.Designation, officer.Designation)
-                        .Set(u => u.Email, officer.Email)
-                        .Set(u => u.Landline, officer.Landline)
-                        .Set(u => u.AreaOfJurisdiction, officer.AreaOfJurisdiction)
-                        .Set(u => u.Status, string.IsNullOrEmpty(officer.Status) ? "Active" : officer.Status);
-                    
-                    if (!string.IsNullOrEmpty(officer.Password))
-                        update = update.Set(u => u.Password, officer.Password);
-
-                    await _context.Users.UpdateOneAsync(filter, update);
-                }
-                else
-                {
-                    await _context.Users.InsertOneAsync(officer);
-                }
-            }
-            else
-            {
-                // Update Existing
-                var filter = Builders<User>.Filter.Eq(u => u.Id, officer.Id);
+                var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
                 var update = Builders<User>.Update
-                    .Set(u => u.FullName, officer.FullName)
-                    .Set(u => u.Department, officer.Department)
-                    .Set(u => u.Designation, officer.Designation)
-                    .Set(u => u.Email, officer.Email)
-                    .Set(u => u.Landline, officer.Landline)
-                    .Set(u => u.AreaOfJurisdiction, officer.AreaOfJurisdiction)
-                    .Set(u => u.Status, string.IsNullOrEmpty(officer.Status) ? "Active" : officer.Status);
-                
-                if (!string.IsNullOrEmpty(officer.Password))
-                {
-                    update = update.Set(u => u.Password, officer.Password);
-                }
+                    .Set(u => u.FullName, user.FullName)
+                    .Set(u => u.MobileNo, user.MobileNo)
+                    .Set(u => u.Email, user.Email)
+                    .Set(u => u.Role, user.Role)
+                    .Set(u => u.Department, user.Department)
+                    .Set(u => u.Division, user.Division)
+                    .Set(u => u.SubDivision, user.SubDivision)
+                    .Set(u => u.Area, user.Area)
+                    .Set(u => u.AreaOfJurisdiction, user.AreaOfJurisdiction)
+                    .Set(u => u.Landline, user.Landline)
+                    .Set(u => u.Designation, user.Designation);
 
                 await _context.Users.UpdateOneAsync(filter, update);
+                return Json(new { success = true });
             }
-            return RedirectToAction("Index");
+            catch (System.Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]
-        public async Task<IActionResult> AssignComplaint(string complaintId, string officerId, string officerName)
+        public async Task<IActionResult> CreateUser(User user)
+        {
+            try
+            {
+                await _context.Users.InsertOneAsync(user);
+                return Json(new { success = true });
+            }
+            catch (System.Exception ex)
+            {
+                return Json(new { success = false, message = "Could not create user: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddDepartment(DepartmentMaster dept)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Push(m => m.Departments, dept);
+            await _context.Masters.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditDepartment(string oldCode, DepartmentMaster dept)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var existing = master.Departments.FirstOrDefault(d => d.Code == oldCode);
+                if (existing != null)
+                {
+                    existing.Name = dept.Name;
+                    existing.Code = dept.Code;
+                    existing.HeadName = dept.HeadName;
+                    existing.SLADays = dept.SLADays;
+                    existing.Icon = dept.Icon;
+                    existing.Email = dept.Email;
+                    existing.Status = dept.Status;
+
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.Departments, master.Departments);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Reassign(string complaintId, string headId, string headName)
         {
             var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var officer = await _context.Users.Find(u => u.Id == headId).FirstOrDefaultAsync();
             var update = Builders<Complaint>.Update
-                .Set(c => c.Status, "Assigned")
-                .Set(c => c.AssignedToOfficerId, officerId)
-                .Set(c => c.AssignedToOfficerName, officerName);
+                .Set(c => c.AssignedToId, headId)
+                .Set(c => c.AssignedToName, headName)
+                .Set(c => c.AssignedToMobile, officer?.MobileNo)
+                .Set(c => c.Division, officer?.Division)
+                .Set(c => c.SubDivision, officer?.SubDivision)
+                .Set(c => c.Status, "Assigned");
 
             await _context.Complaints.UpdateOneAsync(filter, update);
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateStatus(string complaintId, string status)
+        public async Task<IActionResult> UpdateStatus(string complaintId, string status, string? remark)
         {
             var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
             var update = Builders<Complaint>.Update.Set(c => c.Status, status);
+            
+            if (status == "Resolved") {
+                update = update.Set(c => c.ResolutionDate, System.DateTime.UtcNow)
+                               .Set(c => c.ResolutionRemark, remark);
+            }
 
             await _context.Complaints.UpdateOneAsync(filter, update);
 
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdatePriority(string complaintId, string priority)
+        {
+            var filter = Builders<Complaint>.Filter.Eq(c => c.Id, complaintId);
+            var update = Builders<Complaint>.Update.Set(c => c.Priority, priority);
+
+            await _context.Complaints.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddSector(string state, string city, string sectorName)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Push(m => m.Sectors, new SectorMapping { State = state, City = city, SectorName = sectorName });
+            await _context.Masters.UpdateOneAsync(filter, update);
+
             return RedirectToAction("Index");
         }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteSector(string state, string city, string sectorName)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var sector = master.Sectors.FirstOrDefault(s => s.State == state && s.City == city && s.SectorName == sectorName);
+                if (sector != null)
+                {
+                    master.Sectors.Remove(sector);
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.Sectors, master.Sectors);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetSectors()
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            // Define Chandigarh sectors 1-61 (excluding 13, including 38 West)
+            var chd_sectors = new List<string>();
+            for (int i = 1; i <= 61; i++) {
+                if (i == 13) continue;
+                chd_sectors.Add("Sector " + i);
+            }
+            chd_sectors.Add("Sector 38 West");
+            chd_sectors.Add("Manimajra");
+            chd_sectors.Add("Industrial Area Phase 1");
+            chd_sectors.Add("Industrial Area Phase 2");
+            chd_sectors.Sort();
+
+            var newSectors = chd_sectors.Select(s => new SectorMapping { 
+                State = "Chandigarh", 
+                City = "Chandigarh", 
+                SectorName = s 
+            }).ToList();
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Set(m => m.Sectors, newSectors);
+            await _context.Masters.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true, message = "Sectors reset to Chandigarh official list." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteDepartment(string code)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var dept = master.Departments.FirstOrDefault(d => d.Code == code);
+                if (dept != null)
+                {
+                    master.Departments.Remove(dept);
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.Departments, master.Departments);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddDivision(DivisionMaster div)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Push(m => m.Divisions, div);
+            await _context.Masters.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditDivision(string oldCode, DivisionMaster div)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var existing = master.Divisions.FirstOrDefault(d => d.Code == oldCode);
+                if (existing != null)
+                {
+                    existing.Name = div.Name;
+                    existing.Code = div.Code;
+                    existing.DepartmentName = div.DepartmentName;
+                    existing.Status = div.Status;
+
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.Divisions, master.Divisions);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteDivision(string code)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var div = master.Divisions.FirstOrDefault(d => d.Code == code);
+                if (div != null)
+                {
+                    master.Divisions.Remove(div);
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.Divisions, master.Divisions);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddSubDivision(SubDivisionMaster sub)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master == null)
+            {
+                master = new Master();
+                await _context.Masters.InsertOneAsync(master);
+            }
+
+            var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+            var update = Builders<Master>.Update.Push(m => m.SubDivisions, sub);
+            await _context.Masters.UpdateOneAsync(filter, update);
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditSubDivision(string oldCode, SubDivisionMaster sub)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var existing = master.SubDivisions.FirstOrDefault(d => d.Code == oldCode);
+                if (existing != null)
+                {
+                    existing.Name = sub.Name;
+                    existing.Code = sub.Code;
+                    existing.DepartmentName = sub.DepartmentName;
+                    existing.DivisionName = sub.DivisionName;
+                    existing.Status = sub.Status;
+
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.SubDivisions, master.SubDivisions);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteSubDivision(string code)
+        {
+            var master = await _context.Masters.Find(_ => true).FirstOrDefaultAsync();
+            if (master != null)
+            {
+                var sub = master.SubDivisions.FirstOrDefault(d => d.Code == code);
+                if (sub != null)
+                {
+                    master.SubDivisions.Remove(sub);
+                    var filter = Builders<Master>.Filter.Eq(m => m.Id, master.Id);
+                    var update = Builders<Master>.Update.Set(m => m.SubDivisions, master.SubDivisions);
+                    await _context.Masters.UpdateOneAsync(filter, update);
+                }
+            }
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
+            await _context.Users.DeleteOneAsync(filter);
+            return Json(new { success = true });
+        }
+        [HttpPost]
+        public async Task<IActionResult> TestEmailReport()
+        {
+            try
+            {
+                var (body, csvData, fileName) = await _reportingService.GenerateDailyReportAsync();
+                
+                // Fetch all admins from DB
+                var admins = await _context.Users.Find(u => u.Role == "Admin").ToListAsync();
+                var adminEmails = string.Join(",", admins.Select(a => a.Email).Where(e => !string.IsNullOrEmpty(e)));
+
+                if (string.IsNullOrEmpty(adminEmails))
+                {
+                    return Json(new { success = false, message = "No administrators found in the database. Email not sent." });
+                }
+
+                await _emailService.SendEmailWithAttachmentAsync(adminEmails, "Manual CLI Report Trigger", body, csvData, fileName);
+                return Json(new { success = true, message = "Manual report successfully sent to " + admins.Count + " administrators: " + adminEmails });
+            }
+            catch (System.Exception ex)
+            {
+                var fullError = ex.Message;
+                if (ex.InnerException != null) {
+                    fullError += " (Inner: " + ex.InnerException.Message + ")";
+                }
+                return Json(new { success = false, message = "Failed to send test email: " + fullError });
+            }
+        }
+
     }
 }
