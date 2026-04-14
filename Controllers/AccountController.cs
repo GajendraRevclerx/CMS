@@ -31,6 +31,7 @@ namespace CMS.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Normal Citizen DB Check
                 var user = await _context.Users.Find(u => u.MobileNo == model.MobileNo && u.Password == model.Password).FirstOrDefaultAsync();
                 
                 if (user != null)
