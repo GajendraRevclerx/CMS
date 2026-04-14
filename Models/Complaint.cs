@@ -56,5 +56,12 @@ namespace CMS.Models
         public string Priority { get; set; } = "Medium";
 
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public string Street { get; set; } = string.Empty;
+        public string Locality { get; set; } = string.Empty;
+        public string PinCode { get; set; } = string.Empty;
+        public string Source { get; set; } = string.Empty;
+        public string Site { get; set; } = string.Empty;
+        public string IncidentDate { get; set; } = string.Empty;
+        public string? EvidencePath { get; set; }
     }
 }
